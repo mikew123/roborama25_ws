@@ -56,7 +56,7 @@ def quaternion_from_euler(roll, pitch, yaw):
 
     return q   
 
-class SensorSerialNode(Node):
+class Roborama25SensorSerialNode(Node):
     # parameters?
 
     timerRateHz = 30.0; # Rate to check serial port for messages
@@ -68,7 +68,7 @@ class SensorSerialNode(Node):
     serial_port:str = "/dev/serial/by-id/usb-Waveshare_RP2040_Zero_E6625C05E790A423-if00"
 
     def __init__(self):
-        super().__init__('sensor_serial_node')
+        super().__init__('roborama25_sensor_serial_node')
 
         self.sensor_serial_port = serial.Serial(self.serial_port, 2000000)
         # configure interface
@@ -414,7 +414,7 @@ class SensorSerialNode(Node):
 def main(args=None):
     rclpy.init(args=args)
 
-    node = SensorSerialNode()
+    node = Roborama25SensorSerialNode()
     rclpy.spin(node)
     
     node.destroy_node()

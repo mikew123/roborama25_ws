@@ -1,5 +1,6 @@
 
-# MRW 1/25/2024 Added robot_localization
+# MRW 3/12/2025 added RPlidar from example
+# MRW renamed this file roborama25_bringup_launch.py and added roborama25 prefix to files
 
 import launch
 import launch_ros.actions
@@ -29,12 +30,12 @@ def generate_launch_description():
     angle_compensate = LaunchConfiguration('angle_compensate', default='true')
     scan_mode = LaunchConfiguration('scan_mode', default='Standard')
 
-    # IMU 
-    efk_config = os.path.join(
-        get_package_share_directory('robo24_localization'),
-        'config',
-        'efk_config.yaml'
-        )
+    # # IMU 
+    # efk_config = os.path.join(
+    #     get_package_share_directory('robo24_localization'),
+    #     'config',
+    #     'efk_config.yaml'
+    #     )
  
  
     return launch.LaunchDescription([
@@ -91,61 +92,61 @@ def generate_launch_description():
 
         ##### MY ROBOT
         # launch_ros.actions.Node(
-        #     package='robo24_stuff',
+        #     package='roborama25_stuff',
         #     executable='robo24_can_xy_node',
         #     name='robo24_can_xy'
         # ),
 
         launch_ros.actions.Node(
-            package='robo24_stuff',
-            executable='sensor_serial_node',
+            package='roborama25_stuff',
+            executable='roborama25_sensor_serial_node',
             name='sensor_serial'
         ),
 
         # launch_ros.actions.Node(
-        #     package='robo24_stuff',
+        #     package='roborama25_stuff',
         #     executable='openmv_serial_node',
         #     name='openmv_serial'
         # ),
 
         launch_ros.actions.Node(
-            package='robo24_stuff',
-            executable='robo24_teleop_node',
-            name='robo24_teleop'
+            package='roborama25_stuff',
+            executable='roborama25_teleop_node',
+            name='teleop'
         ),
 
         launch_ros.actions.Node(
-            package='robo24_stuff',
-            executable='robo24_wheel_controller_node',
-            name='robo24_wheel_controller'
+            package='roborama25_stuff',
+            executable='roborama25_wheel_controller_node',
+            name='wheel_controller'
         ),
 
         # launch_ros.actions.Node(
-        #     package='robo24_stuff',
+        #     package='roborama25_stuff',
         #     executable='robo24_diynav_node',
         #     name='robo24_diynav'
         # ),
 
         # launch_ros.actions.Node(
-        #     package='robo24_stuff',
+        #     package='roborama25_stuff',
         #     executable='robo24_diyslam_node',
         #     name='robo24_diyslam'
         # ),
 
         # launch_ros.actions.Node(
-        #     package='robo24_stuff',
+        #     package='roborama25_stuff',
         #     executable='robo24_imu_serial_node',
         #     name='robo24_imu_serial'
         # ),
 
         # launch_ros.actions.Node(
-        #     package='robo24_stuff',
+        #     package='roborama25_stuff',
         #     executable='robo24_watch_serial_node',
         #     name='robo24_watch_serial'
         # ),
 
         # Ros2 system stuff
-        # TODO: remove when integrated into robo24_teleop
+        # TODO: remove when integrated into roborama25_teleop
         launch_ros.actions.Node(
             package='teleop_twist_joy',
             executable='teleop_node',

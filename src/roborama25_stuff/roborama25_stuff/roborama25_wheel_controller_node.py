@@ -21,9 +21,9 @@ from tf2_ros.transform_broadcaster import TransformBroadcaster
 from robo24_interfaces.srv import Claw
 import json
 
-class Robo24WheelControllerNode(Node):
+class Roborama25WheelControllerNode(Node):
     # parameters?
-    name = "robo24"
+    name = "wheels"
 
     # Enable TF odom->base_link
     #tf_enable = False # false when ekf is used
@@ -77,7 +77,7 @@ class Robo24WheelControllerNode(Node):
     serial_port = "/dev/serial/by-id/usb-Waveshare_RP2040_Zero_E6617C93E33D6927-if00"
 
     def __init__(self):
-        super().__init__('robo24_wheel_controller_node')
+        super().__init__('roborama25_wheel_controller_node')
 
         #self.wheel_serial_port = serial.Serial('/dev/ttyACM0', 115200)  # doublecheck find way to autodetect
         self.wheel_serial_port = serial.Serial(self.serial_port, 115200)
@@ -88,7 +88,7 @@ class Robo24WheelControllerNode(Node):
         self.joy_subscription = self.create_subscription(Joy, '/joy', self.joy_callback, 10)
         
         #self.watch_json_subscription = self.create_subscription(String, 'watch_json', self.watch_json_callback, 10)
-        self.robo24_json_subscription = self.create_subscription(String, 'robo24_json', self.robo24_json_callback, 10)
+        self.robot_json_subscription = self.create_subscription(String, 'robot_json', self.robot_json_callback, 10)
 
         self.encoders_msg_publisher = self.create_publisher(String, 'encoders_msg', 10)
         self.odometry_publisher = self.create_publisher(Odometry, 'wheel_odom', 10)
@@ -108,7 +108,7 @@ class Robo24WheelControllerNode(Node):
 
         self.get_logger().info(f"{self.wheel_serial_port.rts=} {self.wheel_serial_port.dtr=} {self.wheel_serial_port.cts=} {self.wheel_serial_port.dsr=} {self.wheel_serial_port.ri=} {self.wheel_serial_port.cd=}")
 
-        self.get_logger().info(f"Robo24WheelNode Started: Odometry rate = {self.odometryRateHz} Hz")
+        self.get_logger().info(f"WheelControllerNode Started: Odometry rate = {self.odometryRateHz} Hz")
 
     # Get button commands from Joy message
     def joy_callback(self, msg):
@@ -342,7 +342,7 @@ class Robo24WheelControllerNode(Node):
 
     CPmsg = ""
 
-    def robo24_json_callback(self, msg) :
+    def robot_json_callback(self, msg) :
         #self.get_logger().info(f"{msg}")
 
         try :
@@ -358,7 +358,7 @@ class Robo24WheelControllerNode(Node):
                 #self.get_logger().info(f"{packet}")
 
         except Exception as ex:
-            self.get_logger().error(f"wheel controller robo24_json_callback exception {ex}")        
+            self.get_logger().error(f"wheel controller robot_json_callback exception {ex}")        
 
     # check serial port at timerRateHz and parse out messages to publish
     # TODO: actually parse the messages (currently only OD encoder messages)
@@ -439,7 +439,7 @@ class Robo24WheelControllerNode(Node):
 def main(args=None):
     rclpy.init(args=args)
 
-    node = Robo24WheelControllerNode()
+    node = Roborama25WheelControllerNode()
     rclpy.spin(node)
     
     node.destroy_node()

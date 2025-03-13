@@ -13,9 +13,9 @@ from geometry_msgs.msg import Twist
 #from geometry_msgs.msg import TransformStamped
 from sensor_msgs.msg import Joy
 
-class Robo24TeleopNode(Node):
+class Roborama25TeleopNode(Node):
     # parameters?
-    name = "robo24_teleop"
+    name = "teleop"
 
     spin_last = 0
     fwdRev_last = 0
@@ -26,12 +26,12 @@ class Robo24TeleopNode(Node):
     pi = 3.14159265
 
     def __init__(self):
-        super().__init__('robo24_wheel_node')
+        super().__init__('roborama_teleop_node')
 
         self.joy_subscription = self.create_subscription(Joy, '/joy', self.joy_callback, 10)
         self.cmd_vel_publisher = self.create_publisher(Twist, '/cmd_vel', 10)
 
-        self.get_logger().info("Robo24 Teleop Started")
+        self.get_logger().info("Teleop Started")
        
     # Get button commands from Joy message
     # TODO: Process steering joystick controls, replace teleop_twist_joy 
@@ -89,7 +89,7 @@ class Robo24TeleopNode(Node):
 def main(args=None):
     rclpy.init(args=args)
 
-    node = Robo24TeleopNode()
+    node = Roborama25TeleopNode()
     rclpy.spin(node)
     
     node.destroy_node()
