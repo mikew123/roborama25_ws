@@ -189,7 +189,7 @@ class Roborama25SensorSerialNode(Node):
             fovPt = fov/8 # FOV for each sensor point
             fovPtRad = fovPt*(math.pi/180) #scaled to Radians
             # angle in degrees of each of the 4 sensors LL,LR,Rl,RR
-            mntOff = 5 # Tweak so that only 1 can is seen in Rviz
+            mntOff = 3.5 # Tweak so that only 1 can is seen in Rviz at 1 meter
             mntAngle = [45+mntOff,0+mntOff,0-mntOff,-45-mntOff]
             
             #convert string data to integer mm distance
