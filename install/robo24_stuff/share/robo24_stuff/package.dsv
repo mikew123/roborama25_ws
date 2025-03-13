@@ -1,6 +1,0 @@
-source;share/robo24_stuff/hook/pythonpath.ps1
-source;share/robo24_stuff/hook/pythonpath.dsv
-source;share/robo24_stuff/hook/pythonpath.sh
-source;share/robo24_stuff/hook/ament_prefix_path.ps1
-source;share/robo24_stuff/hook/ament_prefix_path.dsv
-source;share/robo24_stuff/hook/ament_prefix_path.sh

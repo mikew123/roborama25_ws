@@ -1,5 +1,0 @@
-  File "/home/mike/roborama25_ws/install/robo24_stuff/lib/python3.10/site-packages/robo24_stuff/sensor_serial_node.py", line 74
-    for i in range(1:num_data):
-                    ^
-SyntaxError: invalid syntax
-
