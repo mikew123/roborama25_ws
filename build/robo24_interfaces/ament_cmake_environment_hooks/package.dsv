@@ -1,0 +1,4 @@
+source;share/robo24_interfaces/local_setup.bash
+source;share/robo24_interfaces/local_setup.dsv
+source;share/robo24_interfaces/local_setup.sh
+source;share/robo24_interfaces/local_setup.zsh

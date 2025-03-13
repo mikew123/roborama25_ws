@@ -1,0 +1,151 @@
+[0.104s] Invoking command in '/home/mike/roborama25_ws/build/robo24_interfaces': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/home/mike/roborama25_ws/install/robo24_stuff:/home/mike/ros2_ws/install/robo24_stuff:/home/mike/ros2_ws/install/robo24_nav:/home/mike/ros2_ws/install/robo24_localization:/home/mike/ros2_ws/install/robo24_bringup:/home/mike/ros2_ws/install/moonday24_demo:/opt/ros/humble /usr/bin/cmake --build /home/mike/roborama25_ws/build/robo24_interfaces -- -j4 -l4
+[1.661s] [  3%] Built target robo24_interfaces__cpp
+[1.661s] [ 12%] Built target robo24_interfaces__rosidl_generator_c
+[1.662s] [ 12%] Built target ament_cmake_python_copy_robo24_interfaces
+[1.662s] [ 22%] Built target robo24_interfaces__rosidl_typesupport_cpp
+[1.663s] [ 32%] Built target robo24_interfaces__rosidl_typesupport_introspection_cpp
+[1.663s] [ 48%] Built target robo24_interfaces__rosidl_typesupport_fastrtps_c
+[1.663s] [ 51%] Built target robo24_interfaces__rosidl_typesupport_fastrtps_cpp
+[1.664s] [ 61%] Built target robo24_interfaces__rosidl_typesupport_c
+[1.664s] [ 70%] Built target robo24_interfaces__rosidl_typesupport_introspection_c
+[1.665s] [ 70%] Built target robo24_interfaces
+[1.665s] [ 74%] Built target robo24_interfaces__py
+[1.665s] [ 80%] Built target robo24_interfaces__rosidl_generator_py
+[1.666s] [ 87%] Built target robo24_interfaces__rosidl_typesupport_fastrtps_c__pyext
+[1.666s] [ 93%] Built target robo24_interfaces__rosidl_typesupport_introspection_c__pyext
+[1.666s] [100%] Built target robo24_interfaces__rosidl_typesupport_c__pyext
+[1.964s] running egg_info
+[1.967s] writing robo24_interfaces.egg-info/PKG-INFO
+[1.969s] writing dependency_links to robo24_interfaces.egg-info/dependency_links.txt
+[1.970s] writing top-level names to robo24_interfaces.egg-info/top_level.txt
+[1.983s] reading manifest file 'robo24_interfaces.egg-info/SOURCES.txt'
+[1.986s] writing manifest file 'robo24_interfaces.egg-info/SOURCES.txt'
+[2.139s] [100%] Built target ament_cmake_python_build_robo24_interfaces_egg
+[2.204s] Invoked command in '/home/mike/roborama25_ws/build/robo24_interfaces' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/home/mike/roborama25_ws/install/robo24_stuff:/home/mike/ros2_ws/install/robo24_stuff:/home/mike/ros2_ws/install/robo24_nav:/home/mike/ros2_ws/install/robo24_localization:/home/mike/ros2_ws/install/robo24_bringup:/home/mike/ros2_ws/install/moonday24_demo:/opt/ros/humble /usr/bin/cmake --build /home/mike/roborama25_ws/build/robo24_interfaces -- -j4 -l4
+[2.239s] Invoking command in '/home/mike/roborama25_ws/build/robo24_interfaces': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/home/mike/roborama25_ws/install/robo24_stuff:/home/mike/ros2_ws/install/robo24_stuff:/home/mike/ros2_ws/install/robo24_nav:/home/mike/ros2_ws/install/robo24_localization:/home/mike/ros2_ws/install/robo24_bringup:/home/mike/ros2_ws/install/moonday24_demo:/opt/ros/humble /usr/bin/cmake --install /home/mike/roborama25_ws/build/robo24_interfaces
+[2.256s] -- Install configuration: ""
+[2.261s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/share/ament_index/resource_index/rosidl_interfaces/robo24_interfaces
+[2.262s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/include/robo24_interfaces/robo24_interfaces
+[2.264s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/include/robo24_interfaces/robo24_interfaces/msg
+[2.266s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/include/robo24_interfaces/robo24_interfaces/msg/rosidl_generator_c__visibility_control.h
+[2.267s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/include/robo24_interfaces/robo24_interfaces/srv
+[2.268s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/include/robo24_interfaces/robo24_interfaces/srv/detail
+[2.270s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/include/robo24_interfaces/robo24_interfaces/srv/detail/claw__type_support.h
+[2.271s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/include/robo24_interfaces/robo24_interfaces/srv/detail/claw__struct.h
+[2.272s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/include/robo24_interfaces/robo24_interfaces/srv/detail/claw__functions.h
+[2.272s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/include/robo24_interfaces/robo24_interfaces/srv/detail/claw__functions.c
+[2.275s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/include/robo24_interfaces/robo24_interfaces/srv/claw.h
+[2.276s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/share/robo24_interfaces/environment/library_path.sh
+[2.278s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/share/robo24_interfaces/environment/library_path.dsv
+[2.279s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/lib/librobo24_interfaces__rosidl_generator_c.so
+[2.279s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/include/robo24_interfaces/robo24_interfaces
+[2.281s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/include/robo24_interfaces/robo24_interfaces/msg
+[2.282s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/include/robo24_interfaces/robo24_interfaces/msg/rosidl_typesupport_fastrtps_c__visibility_control.h
+[2.284s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/include/robo24_interfaces/robo24_interfaces/srv
+[2.286s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/include/robo24_interfaces/robo24_interfaces/srv/detail
+[2.287s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/include/robo24_interfaces/robo24_interfaces/srv/detail/claw__rosidl_typesupport_fastrtps_c.h
+[2.289s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/lib/librobo24_interfaces__rosidl_typesupport_fastrtps_c.so
+[2.290s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/include/robo24_interfaces/robo24_interfaces
+[2.290s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/include/robo24_interfaces/robo24_interfaces/msg
+[2.291s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/include/robo24_interfaces/robo24_interfaces/msg/rosidl_typesupport_introspection_c__visibility_control.h
+[2.291s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/include/robo24_interfaces/robo24_interfaces/srv
+[2.292s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/include/robo24_interfaces/robo24_interfaces/srv/detail
+[2.292s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/include/robo24_interfaces/robo24_interfaces/srv/detail/claw__rosidl_typesupport_introspection_c.h
+[2.292s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/include/robo24_interfaces/robo24_interfaces/srv/detail/claw__type_support.c
+[2.293s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/lib/librobo24_interfaces__rosidl_typesupport_introspection_c.so
+[2.305s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/lib/librobo24_interfaces__rosidl_typesupport_c.so
+[2.306s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/include/robo24_interfaces/robo24_interfaces
+[2.306s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/include/robo24_interfaces/robo24_interfaces/msg
+[2.307s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/include/robo24_interfaces/robo24_interfaces/msg/rosidl_generator_cpp__visibility_control.hpp
+[2.308s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/include/robo24_interfaces/robo24_interfaces/srv
+[2.308s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/include/robo24_interfaces/robo24_interfaces/srv/detail
+[2.309s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/include/robo24_interfaces/robo24_interfaces/srv/detail/claw__struct.hpp
+[2.309s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/include/robo24_interfaces/robo24_interfaces/srv/detail/claw__type_support.hpp
+[2.310s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/include/robo24_interfaces/robo24_interfaces/srv/detail/claw__builder.hpp
+[2.310s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/include/robo24_interfaces/robo24_interfaces/srv/detail/claw__traits.hpp
+[2.311s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/include/robo24_interfaces/robo24_interfaces/srv/claw.hpp
+[2.311s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/include/robo24_interfaces/robo24_interfaces
+[2.311s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/include/robo24_interfaces/robo24_interfaces/msg
+[2.312s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/include/robo24_interfaces/robo24_interfaces/msg/rosidl_typesupport_fastrtps_cpp__visibility_control.h
+[2.312s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/include/robo24_interfaces/robo24_interfaces/srv
+[2.313s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/include/robo24_interfaces/robo24_interfaces/srv/detail
+[2.313s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/include/robo24_interfaces/robo24_interfaces/srv/detail/dds_fastrtps
+[2.313s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/include/robo24_interfaces/robo24_interfaces/srv/detail/claw__rosidl_typesupport_fastrtps_cpp.hpp
+[2.314s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/lib/librobo24_interfaces__rosidl_typesupport_fastrtps_cpp.so
+[2.314s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/include/robo24_interfaces/robo24_interfaces
+[2.314s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/include/robo24_interfaces/robo24_interfaces/srv
+[2.315s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/include/robo24_interfaces/robo24_interfaces/srv/detail
+[2.315s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/include/robo24_interfaces/robo24_interfaces/srv/detail/claw__type_support.cpp
+[2.316s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/include/robo24_interfaces/robo24_interfaces/srv/detail/claw__rosidl_typesupport_introspection_cpp.hpp
+[2.316s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/lib/librobo24_interfaces__rosidl_typesupport_introspection_cpp.so
+[2.318s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/lib/librobo24_interfaces__rosidl_typesupport_cpp.so
+[2.330s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/share/robo24_interfaces/environment/pythonpath.sh
+[2.331s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/share/robo24_interfaces/environment/pythonpath.dsv
+[2.334s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/local/lib/python3.10/dist-packages/robo24_interfaces-0.0.0-py3.10.egg-info
+[2.339s] -- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/local/lib/python3.10/dist-packages/robo24_interfaces-0.0.0-py3.10.egg-info/SOURCES.txt
+[2.339s] -- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/local/lib/python3.10/dist-packages/robo24_interfaces-0.0.0-py3.10.egg-info/dependency_links.txt
+[2.341s] -- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/local/lib/python3.10/dist-packages/robo24_interfaces-0.0.0-py3.10.egg-info/PKG-INFO
+[2.344s] -- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/local/lib/python3.10/dist-packages/robo24_interfaces-0.0.0-py3.10.egg-info/top_level.txt
+[2.347s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/local/lib/python3.10/dist-packages/robo24_interfaces
+[2.348s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/local/lib/python3.10/dist-packages/robo24_interfaces/librobo24_interfaces__rosidl_generator_py.so
+[2.348s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/local/lib/python3.10/dist-packages/robo24_interfaces/robo24_interfaces_s__rosidl_typesupport_fastrtps_c.cpython-310-aarch64-linux-gnu.so
+[2.351s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/local/lib/python3.10/dist-packages/robo24_interfaces/_robo24_interfaces_s.ep.rosidl_typesupport_fastrtps_c.c
+[2.352s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/local/lib/python3.10/dist-packages/robo24_interfaces/robo24_interfaces_s__rosidl_typesupport_introspection_c.cpython-310-aarch64-linux-gnu.so
+[2.352s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/local/lib/python3.10/dist-packages/robo24_interfaces/robo24_interfaces_s__rosidl_typesupport_c.cpython-310-aarch64-linux-gnu.so
+[2.353s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/local/lib/python3.10/dist-packages/robo24_interfaces/_robo24_interfaces_s.ep.rosidl_typesupport_introspection_c.c
+[2.357s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/local/lib/python3.10/dist-packages/robo24_interfaces/_robo24_interfaces_s.ep.rosidl_typesupport_c.c
+[2.359s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/local/lib/python3.10/dist-packages/robo24_interfaces/srv
+[2.359s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/local/lib/python3.10/dist-packages/robo24_interfaces/srv/_claw.py
+[2.360s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/local/lib/python3.10/dist-packages/robo24_interfaces/srv/__init__.py
+[2.362s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/local/lib/python3.10/dist-packages/robo24_interfaces/srv/_claw_s.c
+[2.366s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/local/lib/python3.10/dist-packages/robo24_interfaces/__init__.py
+[2.476s] Listing '/home/mike/roborama25_ws/install/robo24_interfaces/local/lib/python3.10/dist-packages/robo24_interfaces'...
+[2.478s] Listing '/home/mike/roborama25_ws/install/robo24_interfaces/local/lib/python3.10/dist-packages/robo24_interfaces/srv'...
+[2.502s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/local/lib/python3.10/dist-packages/robo24_interfaces/robo24_interfaces_s__rosidl_typesupport_fastrtps_c.cpython-310-aarch64-linux-gnu.so
+[2.505s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/local/lib/python3.10/dist-packages/robo24_interfaces/robo24_interfaces_s__rosidl_typesupport_introspection_c.cpython-310-aarch64-linux-gnu.so
+[2.508s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/local/lib/python3.10/dist-packages/robo24_interfaces/robo24_interfaces_s__rosidl_typesupport_c.cpython-310-aarch64-linux-gnu.so
+[2.510s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/lib/librobo24_interfaces__rosidl_generator_py.so
+[2.512s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/share/robo24_interfaces/srv/Claw.idl
+[2.513s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/share/robo24_interfaces/srv/Claw.srv
+[2.513s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/share/robo24_interfaces/srv/Claw_Request.msg
+[2.514s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/share/robo24_interfaces/srv/Claw_Response.msg
+[2.515s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/share/ament_index/resource_index/package_run_dependencies/robo24_interfaces
+[2.517s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/share/ament_index/resource_index/parent_prefix_path/robo24_interfaces
+[2.518s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/share/robo24_interfaces/environment/ament_prefix_path.sh
+[2.518s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/share/robo24_interfaces/environment/ament_prefix_path.dsv
+[2.519s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/share/robo24_interfaces/environment/path.sh
+[2.521s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/share/robo24_interfaces/environment/path.dsv
+[2.522s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/share/robo24_interfaces/local_setup.bash
+[2.523s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/share/robo24_interfaces/local_setup.sh
+[2.524s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/share/robo24_interfaces/local_setup.zsh
+[2.525s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/share/robo24_interfaces/local_setup.dsv
+[2.525s] -- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/share/robo24_interfaces/package.dsv
+[2.526s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/share/ament_index/resource_index/packages/robo24_interfaces
+[2.527s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/share/robo24_interfaces/cmake/export_robo24_interfaces__rosidl_generator_cExport.cmake
+[2.528s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/share/robo24_interfaces/cmake/export_robo24_interfaces__rosidl_generator_cExport-noconfig.cmake
+[2.529s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/share/robo24_interfaces/cmake/export_robo24_interfaces__rosidl_typesupport_fastrtps_cExport.cmake
+[2.529s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/share/robo24_interfaces/cmake/export_robo24_interfaces__rosidl_typesupport_fastrtps_cExport-noconfig.cmake
+[2.530s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/share/robo24_interfaces/cmake/robo24_interfaces__rosidl_typesupport_introspection_cExport.cmake
+[2.531s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/share/robo24_interfaces/cmake/robo24_interfaces__rosidl_typesupport_introspection_cExport-noconfig.cmake
+[2.531s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/share/robo24_interfaces/cmake/robo24_interfaces__rosidl_typesupport_cExport.cmake
+[2.532s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/share/robo24_interfaces/cmake/robo24_interfaces__rosidl_typesupport_cExport-noconfig.cmake
+[2.533s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/share/robo24_interfaces/cmake/export_robo24_interfaces__rosidl_generator_cppExport.cmake
+[2.534s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/share/robo24_interfaces/cmake/export_robo24_interfaces__rosidl_typesupport_fastrtps_cppExport.cmake
+[2.535s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/share/robo24_interfaces/cmake/export_robo24_interfaces__rosidl_typesupport_fastrtps_cppExport-noconfig.cmake
+[2.536s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/share/robo24_interfaces/cmake/robo24_interfaces__rosidl_typesupport_introspection_cppExport.cmake
+[2.537s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/share/robo24_interfaces/cmake/robo24_interfaces__rosidl_typesupport_introspection_cppExport-noconfig.cmake
+[2.539s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/share/robo24_interfaces/cmake/robo24_interfaces__rosidl_typesupport_cppExport.cmake
+[2.539s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/share/robo24_interfaces/cmake/robo24_interfaces__rosidl_typesupport_cppExport-noconfig.cmake
+[2.540s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/share/robo24_interfaces/cmake/export_robo24_interfaces__rosidl_generator_pyExport.cmake
+[2.540s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/share/robo24_interfaces/cmake/export_robo24_interfaces__rosidl_generator_pyExport-noconfig.cmake
+[2.541s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/share/robo24_interfaces/cmake/rosidl_cmake-extras.cmake
+[2.542s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/share/robo24_interfaces/cmake/ament_cmake_export_include_directories-extras.cmake
+[2.543s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/share/robo24_interfaces/cmake/ament_cmake_export_libraries-extras.cmake
+[2.543s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/share/robo24_interfaces/cmake/ament_cmake_export_targets-extras.cmake
+[2.544s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/share/robo24_interfaces/cmake/rosidl_cmake_export_typesupport_targets-extras.cmake
+[2.545s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/share/robo24_interfaces/cmake/ament_cmake_export_dependencies-extras.cmake
+[2.547s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/share/robo24_interfaces/cmake/rosidl_cmake_export_typesupport_libraries-extras.cmake
+[2.550s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/share/robo24_interfaces/cmake/robo24_interfacesConfig.cmake
+[2.551s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/share/robo24_interfaces/cmake/robo24_interfacesConfig-version.cmake
+[2.551s] -- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/share/robo24_interfaces/package.xml
+[2.552s] Invoked command in '/home/mike/roborama25_ws/build/robo24_interfaces' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/home/mike/roborama25_ws/install/robo24_stuff:/home/mike/ros2_ws/install/robo24_stuff:/home/mike/ros2_ws/install/robo24_nav:/home/mike/ros2_ws/install/robo24_localization:/home/mike/ros2_ws/install/robo24_bringup:/home/mike/ros2_ws/install/moonday24_demo:/opt/ros/humble /usr/bin/cmake --install /home/mike/roborama25_ws/build/robo24_interfaces

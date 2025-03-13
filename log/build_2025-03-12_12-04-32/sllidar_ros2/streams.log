@@ -1,0 +1,55 @@
+[1.652s] Invoking command in '/home/mike/roborama25_ws/build/sllidar_ros2': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/home/mike/roborama25_ws/install/robo24_stuff:/home/mike/ros2_ws/install/robo24_stuff:/home/mike/ros2_ws/install/robo24_nav:/home/mike/ros2_ws/install/robo24_localization:/home/mike/ros2_ws/install/robo24_bringup:/home/mike/ros2_ws/install/moonday24_demo:/opt/ros/humble /usr/bin/cmake --build /home/mike/roborama25_ws/build/sllidar_ros2 -- -j4 -l4
+[1.844s] [35m[1mConsolidate compiler generated dependencies of target sllidar_client[0m
+[1.866s] [35m[1mConsolidate compiler generated dependencies of target sllidar_node[0m
+[2.052s] [ 10%] Built target sllidar_client
+[2.094s] [100%] Built target sllidar_node
+[2.146s] Invoked command in '/home/mike/roborama25_ws/build/sllidar_ros2' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/home/mike/roborama25_ws/install/robo24_stuff:/home/mike/ros2_ws/install/robo24_stuff:/home/mike/ros2_ws/install/robo24_nav:/home/mike/ros2_ws/install/robo24_localization:/home/mike/ros2_ws/install/robo24_bringup:/home/mike/ros2_ws/install/moonday24_demo:/opt/ros/humble /usr/bin/cmake --build /home/mike/roborama25_ws/build/sllidar_ros2 -- -j4 -l4
+[2.183s] Invoking command in '/home/mike/roborama25_ws/build/sllidar_ros2': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/home/mike/roborama25_ws/install/robo24_stuff:/home/mike/ros2_ws/install/robo24_stuff:/home/mike/ros2_ws/install/robo24_nav:/home/mike/ros2_ws/install/robo24_localization:/home/mike/ros2_ws/install/robo24_bringup:/home/mike/ros2_ws/install/moonday24_demo:/opt/ros/humble /usr/bin/cmake --install /home/mike/roborama25_ws/build/sllidar_ros2
+[2.214s] -- Install configuration: ""
+[2.215s] -- Up-to-date: /home/mike/roborama25_ws/install/sllidar_ros2/share/sllidar_ros2/launch
+[2.217s] -- Up-to-date: /home/mike/roborama25_ws/install/sllidar_ros2/share/sllidar_ros2/launch/view_sllidar_a3_launch.py
+[2.219s] -- Up-to-date: /home/mike/roborama25_ws/install/sllidar_ros2/share/sllidar_ros2/launch/view_sllidar_a2m8_launch.py
+[2.222s] -- Up-to-date: /home/mike/roborama25_ws/install/sllidar_ros2/share/sllidar_ros2/launch/view_sllidar_c1_launch.py
+[2.223s] -- Up-to-date: /home/mike/roborama25_ws/install/sllidar_ros2/share/sllidar_ros2/launch/sllidar_a3_launch.py
+[2.225s] -- Up-to-date: /home/mike/roborama25_ws/install/sllidar_ros2/share/sllidar_ros2/launch/view_sllidar_s3_launch.py
+[2.227s] -- Up-to-date: /home/mike/roborama25_ws/install/sllidar_ros2/share/sllidar_ros2/launch/view_sllidar_s2e_launch.py
+[2.228s] -- Up-to-date: /home/mike/roborama25_ws/install/sllidar_ros2/share/sllidar_ros2/launch/sllidar_s1_launch.py
+[2.230s] -- Up-to-date: /home/mike/roborama25_ws/install/sllidar_ros2/share/sllidar_ros2/launch/sllidar_s1_tcp_launch.py
+[2.231s] -- Up-to-date: /home/mike/roborama25_ws/install/sllidar_ros2/share/sllidar_ros2/launch/sllidar_s2_launch.py
+[2.231s] -- Up-to-date: /home/mike/roborama25_ws/install/sllidar_ros2/share/sllidar_ros2/launch/sllidar_a1_launch.py
+[2.232s] -- Up-to-date: /home/mike/roborama25_ws/install/sllidar_ros2/share/sllidar_ros2/launch/view_sllidar_s1_launch.py
+[2.232s] -- Up-to-date: /home/mike/roborama25_ws/install/sllidar_ros2/share/sllidar_ros2/launch/sllidar_c1_launch.py
+[2.241s] -- Up-to-date: /home/mike/roborama25_ws/install/sllidar_ros2/share/sllidar_ros2/launch/sllidar_s3_launch.py
+[2.245s] -- Up-to-date: /home/mike/roborama25_ws/install/sllidar_ros2/share/sllidar_ros2/launch/view_sllidar_a2m7_launch.py
+[2.246s] -- Up-to-date: /home/mike/roborama25_ws/install/sllidar_ros2/share/sllidar_ros2/launch/sllidar_t1_launch.py
+[2.247s] -- Up-to-date: /home/mike/roborama25_ws/install/sllidar_ros2/share/sllidar_ros2/launch/view_sllidar_a2m12_launch.py
+[2.250s] -- Up-to-date: /home/mike/roborama25_ws/install/sllidar_ros2/share/sllidar_ros2/launch/sllidar_a2m12_launch .py
+[2.254s] -- Up-to-date: /home/mike/roborama25_ws/install/sllidar_ros2/share/sllidar_ros2/launch/view_sllidar_s2_launch.py
+[2.256s] -- Up-to-date: /home/mike/roborama25_ws/install/sllidar_ros2/share/sllidar_ros2/launch/view_sllidar_s1_tcp_launch.py
+[2.258s] -- Up-to-date: /home/mike/roborama25_ws/install/sllidar_ros2/share/sllidar_ros2/launch/view_sllidar_a1_launch.py
+[2.261s] -- Up-to-date: /home/mike/roborama25_ws/install/sllidar_ros2/share/sllidar_ros2/launch/sllidar_a2m7_launch.py
+[2.262s] -- Up-to-date: /home/mike/roborama25_ws/install/sllidar_ros2/share/sllidar_ros2/launch/view_sllidar_t1_launch.py
+[2.263s] -- Up-to-date: /home/mike/roborama25_ws/install/sllidar_ros2/share/sllidar_ros2/launch/sllidar_a2m8_launch.py
+[2.264s] -- Up-to-date: /home/mike/roborama25_ws/install/sllidar_ros2/share/sllidar_ros2/launch/sllidar_s2e_launch.py
+[2.266s] -- Up-to-date: /home/mike/roborama25_ws/install/sllidar_ros2/share/sllidar_ros2/rviz
+[2.267s] -- Up-to-date: /home/mike/roborama25_ws/install/sllidar_ros2/share/sllidar_ros2/rviz/sllidar_ros2.rviz
+[2.268s] -- Up-to-date: /home/mike/roborama25_ws/install/sllidar_ros2/lib/sllidar_ros2/sllidar_node
+[2.269s] -- Up-to-date: /home/mike/roborama25_ws/install/sllidar_ros2/lib/sllidar_ros2/sllidar_client
+[2.271s] -- Up-to-date: /home/mike/roborama25_ws/install/sllidar_ros2/share/ament_index/resource_index/package_run_dependencies/sllidar_ros2
+[2.274s] -- Up-to-date: /home/mike/roborama25_ws/install/sllidar_ros2/share/ament_index/resource_index/parent_prefix_path/sllidar_ros2
+[2.275s] -- Up-to-date: /home/mike/roborama25_ws/install/sllidar_ros2/share/sllidar_ros2/environment/ament_prefix_path.sh
+[2.276s] -- Up-to-date: /home/mike/roborama25_ws/install/sllidar_ros2/share/sllidar_ros2/environment/ament_prefix_path.dsv
+[2.277s] -- Up-to-date: /home/mike/roborama25_ws/install/sllidar_ros2/share/sllidar_ros2/environment/path.sh
+[2.279s] -- Up-to-date: /home/mike/roborama25_ws/install/sllidar_ros2/share/sllidar_ros2/environment/path.dsv
+[2.281s] -- Up-to-date: /home/mike/roborama25_ws/install/sllidar_ros2/share/sllidar_ros2/local_setup.bash
+[2.290s] -- Up-to-date: /home/mike/roborama25_ws/install/sllidar_ros2/share/sllidar_ros2/local_setup.sh
+[2.292s] -- Up-to-date: /home/mike/roborama25_ws/install/sllidar_ros2/share/sllidar_ros2/local_setup.zsh
+[2.296s] -- Up-to-date: /home/mike/roborama25_ws/install/sllidar_ros2/share/sllidar_ros2/local_setup.dsv
+[2.296s] -- Installing: /home/mike/roborama25_ws/install/sllidar_ros2/share/sllidar_ros2/package.dsv
+[2.297s] -- Up-to-date: /home/mike/roborama25_ws/install/sllidar_ros2/share/ament_index/resource_index/packages/sllidar_ros2
+[2.298s] -- Up-to-date: /home/mike/roborama25_ws/install/sllidar_ros2/share/sllidar_ros2/cmake/ament_cmake_export_dependencies-extras.cmake
+[2.299s] -- Up-to-date: /home/mike/roborama25_ws/install/sllidar_ros2/share/sllidar_ros2/cmake/ament_cmake_export_include_directories-extras.cmake
+[2.300s] -- Up-to-date: /home/mike/roborama25_ws/install/sllidar_ros2/share/sllidar_ros2/cmake/sllidar_ros2Config.cmake
+[2.300s] -- Up-to-date: /home/mike/roborama25_ws/install/sllidar_ros2/share/sllidar_ros2/cmake/sllidar_ros2Config-version.cmake
+[2.301s] -- Up-to-date: /home/mike/roborama25_ws/install/sllidar_ros2/share/sllidar_ros2/package.xml
+[2.307s] Invoked command in '/home/mike/roborama25_ws/build/sllidar_ros2' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/home/mike/roborama25_ws/install/robo24_stuff:/home/mike/ros2_ws/install/robo24_stuff:/home/mike/ros2_ws/install/robo24_nav:/home/mike/ros2_ws/install/robo24_localization:/home/mike/ros2_ws/install/robo24_bringup:/home/mike/ros2_ws/install/moonday24_demo:/opt/ros/humble /usr/bin/cmake --install /home/mike/roborama25_ws/build/sllidar_ros2

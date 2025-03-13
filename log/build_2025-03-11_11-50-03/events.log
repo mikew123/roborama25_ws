@@ -1,0 +1,523 @@
+[0.000000] (-) TimerEvent: {}
+[0.001602] (robo24_interfaces) JobQueued: {'identifier': 'robo24_interfaces', 'dependencies': OrderedDict()}
+[0.002188] (robo24_stuff) JobQueued: {'identifier': 'robo24_stuff', 'dependencies': OrderedDict()}
+[0.002664] (robo24_interfaces) JobStarted: {'identifier': 'robo24_interfaces'}
+[0.032063] (robo24_stuff) JobStarted: {'identifier': 'robo24_stuff'}
+[0.067356] (robo24_interfaces) JobProgress: {'identifier': 'robo24_interfaces', 'progress': 'cmake'}
+[0.069691] (robo24_interfaces) Command: {'cmd': ['/usr/bin/cmake', '/home/mike/roborama25_ws/src/robo24_interfaces', '-DCMAKE_INSTALL_PREFIX=/home/mike/roborama25_ws/install/robo24_interfaces'], 'cwd': '/home/mike/roborama25_ws/build/robo24_interfaces', 'env': OrderedDict([('LESSOPEN', '| /usr/bin/lesspipe %s'), ('USER', 'mike'), ('SSH_CLIENT', '192.168.1.42 42220 22'), ('XDG_SESSION_TYPE', 'tty'), ('SHLVL', '1'), ('LD_LIBRARY_PATH', '/home/mike/roborama25_ws/install/robo24_interfaces/lib:/home/mike/ros2_ws/install/robo24_interfaces/lib:/opt/ros/humble/opt/rviz_ogre_vendor/lib:/opt/ros/humble/lib/aarch64-linux-gnu:/opt/ros/humble/lib'), ('MOTD_SHOWN', 'pam'), ('HOME', '/home/mike'), ('OLDPWD', '/home/mike'), ('SSH_TTY', '/dev/pts/0'), ('ROS_PYTHON_VERSION', '3'), ('DBUS_SESSION_BUS_ADDRESS', 'unix:path=/run/user/1000/bus'), ('COLCON_PREFIX_PATH', '/home/mike/roborama25_ws/install:/home/mike/ros2_ws/install'), ('ROS_DISTRO', 'humble'), ('LOGNAME', 'mike'), ('_', '/usr/bin/colcon'), ('ROS_VERSION', '2'), ('XDG_SESSION_CLASS', 'user'), ('TERM', 'xterm-256color'), ('XDG_SESSION_ID', '1'), ('ROS_LOCALHOST_ONLY', '0'), ('PATH', '/opt/ros/humble/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin'), ('XDG_RUNTIME_DIR', '/run/user/1000'), ('LANG', 'C.UTF-8'), ('LS_COLORS', 'rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:mi=00:su=37;41:sg=30;43:ca=30;41:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.tar=01;31:*.tgz=01;31:*.arc=01;31:*.arj=01;31:*.taz=01;31:*.lha=01;31:*.lz4=01;31:*.lzh=01;31:*.lzma=01;31:*.tlz=01;31:*.txz=01;31:*.tzo=01;31:*.t7z=01;31:*.zip=01;31:*.z=01;31:*.dz=01;31:*.gz=01;31:*.lrz=01;31:*.lz=01;31:*.lzo=01;31:*.xz=01;31:*.zst=01;31:*.tzst=01;31:*.bz2=01;31:*.bz=01;31:*.tbz=01;31:*.tbz2=01;31:*.tz=01;31:*.deb=01;31:*.rpm=01;31:*.jar=01;31:*.war=01;31:*.ear=01;31:*.sar=01;31:*.rar=01;31:*.alz=01;31:*.ace=01;31:*.zoo=01;31:*.cpio=01;31:*.7z=01;31:*.rz=01;31:*.cab=01;31:*.wim=01;31:*.swm=01;31:*.dwm=01;31:*.esd=01;31:*.jpg=01;35:*.jpeg=01;35:*.mjpg=01;35:*.mjpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.webm=01;35:*.webp=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=00;36:*.au=00;36:*.flac=00;36:*.m4a=00;36:*.mid=00;36:*.midi=00;36:*.mka=00;36:*.mp3=00;36:*.mpc=00;36:*.ogg=00;36:*.ra=00;36:*.wav=00;36:*.oga=00;36:*.opus=00;36:*.spx=00;36:*.xspf=00;36:'), ('AMENT_PREFIX_PATH', '/home/mike/roborama25_ws/install/robo24_stuff:/home/mike/roborama25_ws/install/robo24_interfaces:/home/mike/ros2_ws/install/robo24_stuff:/home/mike/ros2_ws/install/robo24_nav:/home/mike/ros2_ws/install/robo24_localization:/home/mike/ros2_ws/install/robo24_interfaces:/home/mike/ros2_ws/install/robo24_bringup:/home/mike/ros2_ws/install/moonday24_demo:/opt/ros/humble'), ('SHELL', '/bin/bash'), ('LESSCLOSE', '/usr/bin/lesspipe %s %s'), ('PWD', '/home/mike/roborama25_ws/build/robo24_interfaces'), ('LC_ALL', 'en_US.UTF-8'), ('SSH_CONNECTION', '192.168.1.42 42220 192.168.1.180 22'), ('XDG_DATA_DIRS', '/usr/local/share:/usr/share:/var/lib/snapd/desktop'), ('PYTHONPATH', '/home/mike/roborama25_ws/install/robo24_stuff/lib/python3.10/site-packages:/home/mike/roborama25_ws/install/robo24_interfaces/local/lib/python3.10/dist-packages:/home/mike/ros2_ws/install/robo24_stuff/lib/python3.10/site-packages:/home/mike/ros2_ws/install/robo24_nav/lib/python3.10/site-packages:/home/mike/ros2_ws/install/robo24_localization/lib/python3.10/site-packages:/home/mike/ros2_ws/install/robo24_interfaces/local/lib/python3.10/dist-packages:/home/mike/ros2_ws/install/robo24_bringup/lib/python3.10/site-packages:/home/mike/ros2_ws/install/moonday24_demo/lib/python3.10/site-packages:/opt/ros/humble/lib/python3.10/site-packages:/opt/ros/humble/local/lib/python3.10/dist-packages'), ('COLCON', '1'), ('CMAKE_PREFIX_PATH', '/home/mike/roborama25_ws/install/robo24_interfaces:/home/mike/ros2_ws/install/robo24_interfaces:/home/mike/roborama25_ws/install/robo24_stuff:/home/mike/ros2_ws/install/robo24_stuff:/home/mike/ros2_ws/install/robo24_nav:/home/mike/ros2_ws/install/robo24_localization:/home/mike/ros2_ws/install/robo24_bringup:/home/mike/ros2_ws/install/moonday24_demo:/opt/ros/humble')]), 'shell': False}
+[0.099098] (-) TimerEvent: {}
+[0.200266] (-) TimerEvent: {}
+[0.301089] (-) TimerEvent: {}
+[0.401788] (-) TimerEvent: {}
+[0.502546] (-) TimerEvent: {}
+[0.603321] (-) TimerEvent: {}
+[0.704137] (-) TimerEvent: {}
+[0.804832] (-) TimerEvent: {}
+[0.840768] (robo24_interfaces) StdoutLine: {'line': b'-- The C compiler identification is GNU 11.4.0\n'}
+[0.905007] (-) TimerEvent: {}
+[1.006072] (-) TimerEvent: {}
+[1.107550] (-) TimerEvent: {}
+[1.208239] (-) TimerEvent: {}
+[1.309241] (-) TimerEvent: {}
+[1.410346] (-) TimerEvent: {}
+[1.511066] (-) TimerEvent: {}
+[1.582206] (robo24_interfaces) StdoutLine: {'line': b'-- The CXX compiler identification is GNU 11.4.0\n'}
+[1.611284] (-) TimerEvent: {}
+[1.618726] (robo24_interfaces) StdoutLine: {'line': b'-- Detecting C compiler ABI info\n'}
+[1.711453] (-) TimerEvent: {}
+[1.812310] (-) TimerEvent: {}
+[1.913316] (-) TimerEvent: {}
+[1.959527] (robo24_interfaces) StdoutLine: {'line': b'-- Detecting C compiler ABI info - done\n'}
+[1.984532] (robo24_interfaces) StdoutLine: {'line': b'-- Check for working C compiler: /usr/bin/cc - skipped\n'}
+[1.986601] (robo24_interfaces) StdoutLine: {'line': b'-- Detecting C compile features\n'}
+[1.989260] (robo24_interfaces) StdoutLine: {'line': b'-- Detecting C compile features - done\n'}
+[2.001834] (robo24_interfaces) StdoutLine: {'line': b'-- Detecting CXX compiler ABI info\n'}
+[2.013473] (-) TimerEvent: {}
+[2.114403] (-) TimerEvent: {}
+[2.215348] (-) TimerEvent: {}
+[2.316318] (-) TimerEvent: {}
+[2.366094] (robo24_interfaces) StdoutLine: {'line': b'-- Detecting CXX compiler ABI info - done\n'}
+[2.392575] (robo24_interfaces) StdoutLine: {'line': b'-- Check for working CXX compiler: /usr/bin/c++ - skipped\n'}
+[2.393740] (robo24_interfaces) StdoutLine: {'line': b'-- Detecting CXX compile features\n'}
+[2.395422] (robo24_interfaces) StdoutLine: {'line': b'-- Detecting CXX compile features - done\n'}
+[2.416459] (-) TimerEvent: {}
+[2.434039] (robo24_interfaces) StdoutLine: {'line': b'-- Found ament_cmake: 1.3.11 (/opt/ros/humble/share/ament_cmake/cmake)\n'}
+[2.516671] (-) TimerEvent: {}
+[2.617617] (-) TimerEvent: {}
+[2.718458] (-) TimerEvent: {}
+[2.819402] (-) TimerEvent: {}
+[2.920322] (-) TimerEvent: {}
+[3.021279] (-) TimerEvent: {}
+[3.122394] (-) TimerEvent: {}
+[3.223547] (-) TimerEvent: {}
+[3.302742] (robo24_stuff) Command: {'cmd': ['/usr/bin/python3', '-W', 'ignore:setup.py install is deprecated', '-W', 'ignore:easy_install command is deprecated', 'setup.py', 'egg_info', '--egg-base', '../../build/robo24_stuff', 'build', '--build-base', '/home/mike/roborama25_ws/build/robo24_stuff/build', 'install', '--record', '/home/mike/roborama25_ws/build/robo24_stuff/install.log', '--single-version-externally-managed', 'install_data'], 'cwd': '/home/mike/roborama25_ws/src/robo24_stuff', 'env': {'LESSOPEN': '| /usr/bin/lesspipe %s', 'USER': 'mike', 'SSH_CLIENT': '192.168.1.42 42220 22', 'XDG_SESSION_TYPE': 'tty', 'SHLVL': '1', 'LD_LIBRARY_PATH': '/home/mike/roborama25_ws/install/robo24_interfaces/lib:/home/mike/ros2_ws/install/robo24_interfaces/lib:/opt/ros/humble/opt/rviz_ogre_vendor/lib:/opt/ros/humble/lib/aarch64-linux-gnu:/opt/ros/humble/lib', 'MOTD_SHOWN': 'pam', 'HOME': '/home/mike', 'OLDPWD': '/home/mike', 'SSH_TTY': '/dev/pts/0', 'ROS_PYTHON_VERSION': '3', 'DBUS_SESSION_BUS_ADDRESS': 'unix:path=/run/user/1000/bus', 'COLCON_PREFIX_PATH': '/home/mike/roborama25_ws/install:/home/mike/ros2_ws/install', 'ROS_DISTRO': 'humble', 'LOGNAME': 'mike', '_': '/usr/bin/colcon', 'ROS_VERSION': '2', 'XDG_SESSION_CLASS': 'user', 'TERM': 'xterm-256color', 'XDG_SESSION_ID': '1', 'ROS_LOCALHOST_ONLY': '0', 'PATH': '/opt/ros/humble/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin', 'XDG_RUNTIME_DIR': '/run/user/1000', 'LANG': 'C.UTF-8', 'LS_COLORS': 'rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:mi=00:su=37;41:sg=30;43:ca=30;41:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.tar=01;31:*.tgz=01;31:*.arc=01;31:*.arj=01;31:*.taz=01;31:*.lha=01;31:*.lz4=01;31:*.lzh=01;31:*.lzma=01;31:*.tlz=01;31:*.txz=01;31:*.tzo=01;31:*.t7z=01;31:*.zip=01;31:*.z=01;31:*.dz=01;31:*.gz=01;31:*.lrz=01;31:*.lz=01;31:*.lzo=01;31:*.xz=01;31:*.zst=01;31:*.tzst=01;31:*.bz2=01;31:*.bz=01;31:*.tbz=01;31:*.tbz2=01;31:*.tz=01;31:*.deb=01;31:*.rpm=01;31:*.jar=01;31:*.war=01;31:*.ear=01;31:*.sar=01;31:*.rar=01;31:*.alz=01;31:*.ace=01;31:*.zoo=01;31:*.cpio=01;31:*.7z=01;31:*.rz=01;31:*.cab=01;31:*.wim=01;31:*.swm=01;31:*.dwm=01;31:*.esd=01;31:*.jpg=01;35:*.jpeg=01;35:*.mjpg=01;35:*.mjpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.webm=01;35:*.webp=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=00;36:*.au=00;36:*.flac=00;36:*.m4a=00;36:*.mid=00;36:*.midi=00;36:*.mka=00;36:*.mp3=00;36:*.mpc=00;36:*.ogg=00;36:*.ra=00;36:*.wav=00;36:*.oga=00;36:*.opus=00;36:*.spx=00;36:*.xspf=00;36:', 'AMENT_PREFIX_PATH': '/home/mike/roborama25_ws/install/robo24_stuff:/home/mike/roborama25_ws/install/robo24_interfaces:/home/mike/ros2_ws/install/robo24_stuff:/home/mike/ros2_ws/install/robo24_nav:/home/mike/ros2_ws/install/robo24_localization:/home/mike/ros2_ws/install/robo24_interfaces:/home/mike/ros2_ws/install/robo24_bringup:/home/mike/ros2_ws/install/moonday24_demo:/opt/ros/humble', 'SHELL': '/bin/bash', 'LESSCLOSE': '/usr/bin/lesspipe %s %s', 'PWD': '/home/mike/roborama25_ws/build/robo24_stuff', 'LC_ALL': 'en_US.UTF-8', 'SSH_CONNECTION': '192.168.1.42 42220 192.168.1.180 22', 'XDG_DATA_DIRS': '/usr/local/share:/usr/share:/var/lib/snapd/desktop', 'PYTHONPATH': '/home/mike/roborama25_ws/build/robo24_stuff/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/mike/roborama25_ws/install/robo24_stuff/lib/python3.10/site-packages:/home/mike/roborama25_ws/install/robo24_stuff/lib/python3.10/site-packages:/home/mike/roborama25_ws/install/robo24_interfaces/local/lib/python3.10/dist-packages:/home/mike/ros2_ws/install/robo24_stuff/lib/python3.10/site-packages:/home/mike/ros2_ws/install/robo24_nav/lib/python3.10/site-packages:/home/mike/ros2_ws/install/robo24_localization/lib/python3.10/site-packages:/home/mike/ros2_ws/install/robo24_interfaces/local/lib/python3.10/dist-packages:/home/mike/ros2_ws/install/robo24_bringup/lib/python3.10/site-packages:/home/mike/ros2_ws/install/moonday24_demo/lib/python3.10/site-packages:/opt/ros/humble/lib/python3.10/site-packages:/opt/ros/humble/local/lib/python3.10/dist-packages', 'COLCON': '1', 'CMAKE_PREFIX_PATH': '/home/mike/roborama25_ws/install/robo24_interfaces:/home/mike/ros2_ws/install/robo24_interfaces'}, 'shell': False}
+[3.323689] (-) TimerEvent: {}
+[3.366494] (robo24_interfaces) StdoutLine: {'line': b'-- Found Python3: /usr/bin/python3 (found version "3.10.12") found components: Interpreter \n'}
+[3.423884] (-) TimerEvent: {}
+[3.524744] (-) TimerEvent: {}
+[3.625771] (-) TimerEvent: {}
+[3.726627] (-) TimerEvent: {}
+[3.827693] (-) TimerEvent: {}
+[3.928459] (-) TimerEvent: {}
+[4.029150] (-) TimerEvent: {}
+[4.129912] (-) TimerEvent: {}
+[4.165087] (robo24_interfaces) StdoutLine: {'line': b'-- Found rosidl_default_generators: 1.2.0 (/opt/ros/humble/share/rosidl_default_generators/cmake)\n'}
+[4.201929] (robo24_interfaces) StdoutLine: {'line': b'-- Using all available rosidl_typesupport_c: rosidl_typesupport_fastrtps_c;rosidl_typesupport_introspection_c\n'}
+[4.230087] (-) TimerEvent: {}
+[4.292979] (robo24_interfaces) StdoutLine: {'line': b'-- Found rosidl_adapter: 3.1.6 (/opt/ros/humble/share/rosidl_adapter/cmake)\n'}
+[4.330253] (-) TimerEvent: {}
+[4.431023] (-) TimerEvent: {}
+[4.479207] (robo24_stuff) StdoutLine: {'line': b'running egg_info\n'}
+[4.481279] (robo24_stuff) StdoutLine: {'line': b'creating ../../build/robo24_stuff/robo24_stuff.egg-info\n'}
+[4.482088] (robo24_stuff) StdoutLine: {'line': b'writing ../../build/robo24_stuff/robo24_stuff.egg-info/PKG-INFO\n'}
+[4.483345] (robo24_stuff) StdoutLine: {'line': b'writing dependency_links to ../../build/robo24_stuff/robo24_stuff.egg-info/dependency_links.txt\n'}
+[4.484295] (robo24_stuff) StdoutLine: {'line': b'writing entry points to ../../build/robo24_stuff/robo24_stuff.egg-info/entry_points.txt\n'}
+[4.484892] (robo24_stuff) StdoutLine: {'line': b'writing requirements to ../../build/robo24_stuff/robo24_stuff.egg-info/requires.txt\n'}
+[4.485598] (robo24_stuff) StdoutLine: {'line': b'writing top-level names to ../../build/robo24_stuff/robo24_stuff.egg-info/top_level.txt\n'}
+[4.487342] (robo24_stuff) StdoutLine: {'line': b"writing manifest file '../../build/robo24_stuff/robo24_stuff.egg-info/SOURCES.txt'\n"}
+[4.494844] (robo24_stuff) StdoutLine: {'line': b"reading manifest file '../../build/robo24_stuff/robo24_stuff.egg-info/SOURCES.txt'\n"}
+[4.498251] (robo24_stuff) StdoutLine: {'line': b"writing manifest file '../../build/robo24_stuff/robo24_stuff.egg-info/SOURCES.txt'\n"}
+[4.498966] (robo24_stuff) StdoutLine: {'line': b'running build\n'}
+[4.499541] (robo24_stuff) StdoutLine: {'line': b'running build_py\n'}
+[4.500225] (robo24_stuff) StdoutLine: {'line': b'creating /home/mike/roborama25_ws/build/robo24_stuff/build\n'}
+[4.500898] (robo24_stuff) StdoutLine: {'line': b'creating /home/mike/roborama25_ws/build/robo24_stuff/build/lib\n'}
+[4.501426] (robo24_stuff) StdoutLine: {'line': b'creating /home/mike/roborama25_ws/build/robo24_stuff/build/lib/robo24_stuff\n'}
+[4.501809] (robo24_stuff) StdoutLine: {'line': b'copying robo24_stuff/robo24_teleop_node.py -> /home/mike/roborama25_ws/build/robo24_stuff/build/lib/robo24_stuff\n'}
+[4.502311] (robo24_stuff) StdoutLine: {'line': b'copying robo24_stuff/openmv_serial_node.py -> /home/mike/roborama25_ws/build/robo24_stuff/build/lib/robo24_stuff\n'}
+[4.502928] (robo24_stuff) StdoutLine: {'line': b'copying robo24_stuff/robo24_can_xy_node.py -> /home/mike/roborama25_ws/build/robo24_stuff/build/lib/robo24_stuff\n'}
+[4.503802] (robo24_stuff) StdoutLine: {'line': b'copying robo24_stuff/robo24_imu_serial_node.py -> /home/mike/roborama25_ws/build/robo24_stuff/build/lib/robo24_stuff\n'}
+[4.504561] (robo24_stuff) StdoutLine: {'line': b'copying robo24_stuff/sensor_serial_node.py -> /home/mike/roborama25_ws/build/robo24_stuff/build/lib/robo24_stuff\n'}
+[4.505309] (robo24_stuff) StdoutLine: {'line': b'copying robo24_stuff/robo24_diynav_node.py -> /home/mike/roborama25_ws/build/robo24_stuff/build/lib/robo24_stuff\n'}
+[4.506544] (robo24_stuff) StdoutLine: {'line': b'copying robo24_stuff/robo24_watch_serial_node.py -> /home/mike/roborama25_ws/build/robo24_stuff/build/lib/robo24_stuff\n'}
+[4.507494] (robo24_stuff) StdoutLine: {'line': b'copying robo24_stuff/__init__.py -> /home/mike/roborama25_ws/build/robo24_stuff/build/lib/robo24_stuff\n'}
+[4.508194] (robo24_stuff) StdoutLine: {'line': b'copying robo24_stuff/robo24_wheel_controller_node.py -> /home/mike/roborama25_ws/build/robo24_stuff/build/lib/robo24_stuff\n'}
+[4.509104] (robo24_stuff) StdoutLine: {'line': b'copying robo24_stuff/robo24_diyslam_node.py -> /home/mike/roborama25_ws/build/robo24_stuff/build/lib/robo24_stuff\n'}
+[4.510688] (robo24_stuff) StdoutLine: {'line': b'running install\n'}
+[4.512198] (robo24_stuff) StdoutLine: {'line': b'running install_lib\n'}
+[4.515297] (robo24_stuff) StdoutLine: {'line': b'creating /home/mike/roborama25_ws/install/robo24_stuff/lib/python3.10/site-packages/robo24_stuff\n'}
+[4.516001] (robo24_stuff) StdoutLine: {'line': b'copying /home/mike/roborama25_ws/build/robo24_stuff/build/lib/robo24_stuff/robo24_teleop_node.py -> /home/mike/roborama25_ws/install/robo24_stuff/lib/python3.10/site-packages/robo24_stuff\n'}
+[4.516629] (robo24_stuff) StdoutLine: {'line': b'copying /home/mike/roborama25_ws/build/robo24_stuff/build/lib/robo24_stuff/openmv_serial_node.py -> /home/mike/roborama25_ws/install/robo24_stuff/lib/python3.10/site-packages/robo24_stuff\n'}
+[4.517394] (robo24_stuff) StdoutLine: {'line': b'copying /home/mike/roborama25_ws/build/robo24_stuff/build/lib/robo24_stuff/robo24_can_xy_node.py -> /home/mike/roborama25_ws/install/robo24_stuff/lib/python3.10/site-packages/robo24_stuff\n'}
+[4.518228] (robo24_stuff) StdoutLine: {'line': b'copying /home/mike/roborama25_ws/build/robo24_stuff/build/lib/robo24_stuff/robo24_imu_serial_node.py -> /home/mike/roborama25_ws/install/robo24_stuff/lib/python3.10/site-packages/robo24_stuff\n'}
+[4.519029] (robo24_stuff) StdoutLine: {'line': b'copying /home/mike/roborama25_ws/build/robo24_stuff/build/lib/robo24_stuff/sensor_serial_node.py -> /home/mike/roborama25_ws/install/robo24_stuff/lib/python3.10/site-packages/robo24_stuff\n'}
+[4.519961] (robo24_stuff) StdoutLine: {'line': b'copying /home/mike/roborama25_ws/build/robo24_stuff/build/lib/robo24_stuff/robo24_diynav_node.py -> /home/mike/roborama25_ws/install/robo24_stuff/lib/python3.10/site-packages/robo24_stuff\n'}
+[4.521211] (robo24_stuff) StdoutLine: {'line': b'copying /home/mike/roborama25_ws/build/robo24_stuff/build/lib/robo24_stuff/robo24_watch_serial_node.py -> /home/mike/roborama25_ws/install/robo24_stuff/lib/python3.10/site-packages/robo24_stuff\n'}
+[4.521965] (robo24_stuff) StdoutLine: {'line': b'copying /home/mike/roborama25_ws/build/robo24_stuff/build/lib/robo24_stuff/__init__.py -> /home/mike/roborama25_ws/install/robo24_stuff/lib/python3.10/site-packages/robo24_stuff\n'}
+[4.522684] (robo24_stuff) StdoutLine: {'line': b'copying /home/mike/roborama25_ws/build/robo24_stuff/build/lib/robo24_stuff/robo24_wheel_controller_node.py -> /home/mike/roborama25_ws/install/robo24_stuff/lib/python3.10/site-packages/robo24_stuff\n'}
+[4.523636] (robo24_stuff) StdoutLine: {'line': b'copying /home/mike/roborama25_ws/build/robo24_stuff/build/lib/robo24_stuff/robo24_diyslam_node.py -> /home/mike/roborama25_ws/install/robo24_stuff/lib/python3.10/site-packages/robo24_stuff\n'}
+[4.526650] (robo24_stuff) StdoutLine: {'line': b'byte-compiling /home/mike/roborama25_ws/install/robo24_stuff/lib/python3.10/site-packages/robo24_stuff/robo24_teleop_node.py to robo24_teleop_node.cpython-310.pyc\n'}
+[4.529521] (robo24_stuff) StdoutLine: {'line': b'byte-compiling /home/mike/roborama25_ws/install/robo24_stuff/lib/python3.10/site-packages/robo24_stuff/openmv_serial_node.py to openmv_serial_node.cpython-310.pyc\n'}
+[4.531168] (-) TimerEvent: {}
+[4.531850] (robo24_stuff) StdoutLine: {'line': b'byte-compiling /home/mike/roborama25_ws/install/robo24_stuff/lib/python3.10/site-packages/robo24_stuff/robo24_can_xy_node.py to robo24_can_xy_node.cpython-310.pyc\n'}
+[4.538820] (robo24_stuff) StdoutLine: {'line': b'byte-compiling /home/mike/roborama25_ws/install/robo24_stuff/lib/python3.10/site-packages/robo24_stuff/robo24_imu_serial_node.py to robo24_imu_serial_node.cpython-310.pyc\n'}
+[4.541989] (robo24_stuff) StdoutLine: {'line': b'byte-compiling /home/mike/roborama25_ws/install/robo24_stuff/lib/python3.10/site-packages/robo24_stuff/sensor_serial_node.py to sensor_serial_node.cpython-310.pyc\n'}
+[4.544960] (robo24_stuff) StdoutLine: {'line': b'byte-compiling /home/mike/roborama25_ws/install/robo24_stuff/lib/python3.10/site-packages/robo24_stuff/robo24_diynav_node.py to robo24_diynav_node.cpython-310.pyc\n'}
+[4.577030] (robo24_stuff) StdoutLine: {'line': b'byte-compiling /home/mike/roborama25_ws/install/robo24_stuff/lib/python3.10/site-packages/robo24_stuff/robo24_watch_serial_node.py to robo24_watch_serial_node.cpython-310.pyc\n'}
+[4.580585] (robo24_stuff) StdoutLine: {'line': b'byte-compiling /home/mike/roborama25_ws/install/robo24_stuff/lib/python3.10/site-packages/robo24_stuff/__init__.py to __init__.cpython-310.pyc\n'}
+[4.581815] (robo24_stuff) StdoutLine: {'line': b'byte-compiling /home/mike/roborama25_ws/install/robo24_stuff/lib/python3.10/site-packages/robo24_stuff/robo24_wheel_controller_node.py to robo24_wheel_controller_node.cpython-310.pyc\n'}
+[4.589566] (robo24_stuff) StdoutLine: {'line': b'byte-compiling /home/mike/roborama25_ws/install/robo24_stuff/lib/python3.10/site-packages/robo24_stuff/robo24_diyslam_node.py to robo24_diyslam_node.cpython-310.pyc\n'}
+[4.602959] (robo24_stuff) StdoutLine: {'line': b'running install_data\n'}
+[4.604062] (robo24_stuff) StdoutLine: {'line': b'creating /home/mike/roborama25_ws/install/robo24_stuff/share/ament_index\n'}
+[4.604780] (robo24_stuff) StdoutLine: {'line': b'creating /home/mike/roborama25_ws/install/robo24_stuff/share/ament_index/resource_index\n'}
+[4.605474] (robo24_stuff) StdoutLine: {'line': b'creating /home/mike/roborama25_ws/install/robo24_stuff/share/ament_index/resource_index/packages\n'}
+[4.606174] (robo24_stuff) StdoutLine: {'line': b'copying resource/robo24_stuff -> /home/mike/roborama25_ws/install/robo24_stuff/share/ament_index/resource_index/packages\n'}
+[4.606941] (robo24_stuff) StdoutLine: {'line': b'copying package.xml -> /home/mike/roborama25_ws/install/robo24_stuff/share/robo24_stuff\n'}
+[4.607744] (robo24_stuff) StdoutLine: {'line': b'creating /home/mike/roborama25_ws/install/robo24_stuff/share/robo24_stuff/launch\n'}
+[4.608220] (robo24_stuff) StdoutLine: {'line': b'copying launch/robo24_bringup_launch.py -> /home/mike/roborama25_ws/install/robo24_stuff/share/robo24_stuff/launch\n'}
+[4.608704] (robo24_stuff) StdoutLine: {'line': b'running install_egg_info\n'}
+[4.614735] (robo24_stuff) StdoutLine: {'line': b'Copying ../../build/robo24_stuff/robo24_stuff.egg-info to /home/mike/roborama25_ws/install/robo24_stuff/lib/python3.10/site-packages/robo24_stuff-0.0.0-py3.10.egg-info\n'}
+[4.620731] (robo24_stuff) StdoutLine: {'line': b'running install_scripts\n'}
+[4.631364] (-) TimerEvent: {}
+[4.693166] (robo24_interfaces) StdoutLine: {'line': b'-- Using all available rosidl_typesupport_cpp: rosidl_typesupport_fastrtps_cpp;rosidl_typesupport_introspection_cpp\n'}
+[4.696315] (robo24_stuff) StdoutLine: {'line': b'Installing openmv_serial_node script to /home/mike/roborama25_ws/install/robo24_stuff/lib/robo24_stuff\n'}
+[4.697077] (robo24_stuff) StdoutLine: {'line': b'Installing robo24_can_xy_node script to /home/mike/roborama25_ws/install/robo24_stuff/lib/robo24_stuff\n'}
+[4.697756] (robo24_stuff) StdoutLine: {'line': b'Installing robo24_diynav_node script to /home/mike/roborama25_ws/install/robo24_stuff/lib/robo24_stuff\n'}
+[4.698473] (robo24_stuff) StdoutLine: {'line': b'Installing robo24_diyslam_node script to /home/mike/roborama25_ws/install/robo24_stuff/lib/robo24_stuff\n'}
+[4.699142] (robo24_stuff) StdoutLine: {'line': b'Installing robo24_imu_serial_node script to /home/mike/roborama25_ws/install/robo24_stuff/lib/robo24_stuff\n'}
+[4.699847] (robo24_stuff) StdoutLine: {'line': b'Installing robo24_teleop_node script to /home/mike/roborama25_ws/install/robo24_stuff/lib/robo24_stuff\n'}
+[4.700496] (robo24_stuff) StdoutLine: {'line': b'Installing robo24_watch_serial_node script to /home/mike/roborama25_ws/install/robo24_stuff/lib/robo24_stuff\n'}
+[4.701140] (robo24_stuff) StdoutLine: {'line': b'Installing robo24_wheel_controller_node script to /home/mike/roborama25_ws/install/robo24_stuff/lib/robo24_stuff\n'}
+[4.701769] (robo24_stuff) StdoutLine: {'line': b'Installing sensor_serial_node script to /home/mike/roborama25_ws/install/robo24_stuff/lib/robo24_stuff\n'}
+[4.703733] (robo24_stuff) StdoutLine: {'line': b"writing list of installed files to '/home/mike/roborama25_ws/build/robo24_stuff/install.log'\n"}
+[4.731709] (-) TimerEvent: {}
+[4.833140] (-) TimerEvent: {}
+[4.836854] (robo24_stuff) CommandEnded: {'returncode': 0}
+[4.884591] (robo24_stuff) JobEnded: {'identifier': 'robo24_stuff', 'rc': 0}
+[4.933313] (-) TimerEvent: {}
+[5.034024] (-) TimerEvent: {}
+[5.134875] (-) TimerEvent: {}
+[5.236147] (-) TimerEvent: {}
+[5.336803] (-) TimerEvent: {}
+[5.437648] (-) TimerEvent: {}
+[5.538645] (-) TimerEvent: {}
+[5.639770] (-) TimerEvent: {}
+[5.740491] (-) TimerEvent: {}
+[5.841421] (-) TimerEvent: {}
+[5.942319] (-) TimerEvent: {}
+[6.043090] (-) TimerEvent: {}
+[6.144013] (-) TimerEvent: {}
+[6.166000] (robo24_interfaces) StdoutLine: {'line': b'-- Found ament_cmake_ros: 0.10.0 (/opt/ros/humble/share/ament_cmake_ros/cmake)\n'}
+[6.244179] (-) TimerEvent: {}
+[6.344896] (-) TimerEvent: {}
+[6.445628] (-) TimerEvent: {}
+[6.546466] (-) TimerEvent: {}
+[6.647128] (-) TimerEvent: {}
+[6.747920] (-) TimerEvent: {}
+[6.848716] (-) TimerEvent: {}
+[6.949550] (-) TimerEvent: {}
+[7.050248] (-) TimerEvent: {}
+[7.101094] (robo24_interfaces) StdoutLine: {'line': b'-- Using all available rosidl_typesupport_c: rosidl_typesupport_fastrtps_c;rosidl_typesupport_introspection_c\n'}
+[7.150399] (-) TimerEvent: {}
+[7.251067] (-) TimerEvent: {}
+[7.351897] (-) TimerEvent: {}
+[7.452676] (-) TimerEvent: {}
+[7.553623] (-) TimerEvent: {}
+[7.654868] (-) TimerEvent: {}
+[7.756009] (-) TimerEvent: {}
+[7.856724] (-) TimerEvent: {}
+[7.957584] (-) TimerEvent: {}
+[8.058266] (-) TimerEvent: {}
+[8.159026] (-) TimerEvent: {}
+[8.241562] (robo24_interfaces) StdoutLine: {'line': b'-- Using all available rosidl_typesupport_cpp: rosidl_typesupport_fastrtps_cpp;rosidl_typesupport_introspection_cpp\n'}
+[8.259279] (-) TimerEvent: {}
+[8.358270] (robo24_interfaces) StdoutLine: {'line': b'-- Found PythonInterp: /usr/bin/python3 (found suitable version "3.10.12", minimum required is "3.6") \n'}
+[8.359341] (-) TimerEvent: {}
+[8.385675] (robo24_interfaces) StdoutLine: {'line': b'-- Found python_cmake_module: 0.10.0 (/opt/ros/humble/share/python_cmake_module/cmake)\n'}
+[8.459514] (-) TimerEvent: {}
+[8.516951] (robo24_interfaces) StdoutLine: {'line': b'-- Found PythonLibs: /usr/lib/aarch64-linux-gnu/libpython3.10.so (found suitable version "3.10.12", minimum required is "3.5") \n'}
+[8.517974] (robo24_interfaces) StdoutLine: {'line': b'-- Using PYTHON_EXECUTABLE: /usr/bin/python3\n'}
+[8.518519] (robo24_interfaces) StdoutLine: {'line': b'-- Using PYTHON_INCLUDE_DIRS: /usr/include/python3.10\n'}
+[8.518989] (robo24_interfaces) StdoutLine: {'line': b'-- Using PYTHON_LIBRARIES: /usr/lib/aarch64-linux-gnu/libpython3.10.so\n'}
+[8.559712] (-) TimerEvent: {}
+[8.627397] (robo24_interfaces) StdoutLine: {'line': b'-- Found PythonExtra: .so  \n'}
+[8.659840] (-) TimerEvent: {}
+[8.760548] (-) TimerEvent: {}
+[8.813152] (robo24_interfaces) StdoutLine: {'line': b'-- Found ament_lint_auto: 0.12.11 (/opt/ros/humble/share/ament_lint_auto/cmake)\n'}
+[8.860703] (-) TimerEvent: {}
+[8.961383] (-) TimerEvent: {}
+[9.042718] (robo24_interfaces) StdoutLine: {'line': b"-- Added test 'lint_cmake' to check CMake code style\n"}
+[9.054541] (robo24_interfaces) StdoutLine: {'line': b"-- Added test 'xmllint' to check XML markup files\n"}
+[9.061567] (-) TimerEvent: {}
+[9.073412] (robo24_interfaces) StdoutLine: {'line': b'-- Configuring done\n'}
+[9.161762] (-) TimerEvent: {}
+[9.232302] (robo24_interfaces) StdoutLine: {'line': b'-- Generating done\n'}
+[9.261947] (-) TimerEvent: {}
+[9.274330] (robo24_interfaces) StdoutLine: {'line': b'-- Build files have been written to: /home/mike/roborama25_ws/build/robo24_interfaces\n'}
+[9.293624] (robo24_interfaces) CommandEnded: {'returncode': 0}
+[9.295402] (robo24_interfaces) JobProgress: {'identifier': 'robo24_interfaces', 'progress': 'build'}
+[9.297803] (robo24_interfaces) Command: {'cmd': ['/usr/bin/cmake', '--build', '/home/mike/roborama25_ws/build/robo24_interfaces', '--', '-j4', '-l4'], 'cwd': '/home/mike/roborama25_ws/build/robo24_interfaces', 'env': OrderedDict([('LESSOPEN', '| /usr/bin/lesspipe %s'), ('USER', 'mike'), ('SSH_CLIENT', '192.168.1.42 42220 22'), ('XDG_SESSION_TYPE', 'tty'), ('SHLVL', '1'), ('LD_LIBRARY_PATH', '/home/mike/roborama25_ws/install/robo24_interfaces/lib:/home/mike/ros2_ws/install/robo24_interfaces/lib:/opt/ros/humble/opt/rviz_ogre_vendor/lib:/opt/ros/humble/lib/aarch64-linux-gnu:/opt/ros/humble/lib'), ('MOTD_SHOWN', 'pam'), ('HOME', '/home/mike'), ('OLDPWD', '/home/mike'), ('SSH_TTY', '/dev/pts/0'), ('ROS_PYTHON_VERSION', '3'), ('DBUS_SESSION_BUS_ADDRESS', 'unix:path=/run/user/1000/bus'), ('COLCON_PREFIX_PATH', '/home/mike/roborama25_ws/install:/home/mike/ros2_ws/install'), ('ROS_DISTRO', 'humble'), ('LOGNAME', 'mike'), ('_', '/usr/bin/colcon'), ('ROS_VERSION', '2'), ('XDG_SESSION_CLASS', 'user'), ('TERM', 'xterm-256color'), ('XDG_SESSION_ID', '1'), ('ROS_LOCALHOST_ONLY', '0'), ('PATH', '/opt/ros/humble/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin'), ('XDG_RUNTIME_DIR', '/run/user/1000'), ('LANG', 'C.UTF-8'), ('LS_COLORS', 'rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:mi=00:su=37;41:sg=30;43:ca=30;41:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.tar=01;31:*.tgz=01;31:*.arc=01;31:*.arj=01;31:*.taz=01;31:*.lha=01;31:*.lz4=01;31:*.lzh=01;31:*.lzma=01;31:*.tlz=01;31:*.txz=01;31:*.tzo=01;31:*.t7z=01;31:*.zip=01;31:*.z=01;31:*.dz=01;31:*.gz=01;31:*.lrz=01;31:*.lz=01;31:*.lzo=01;31:*.xz=01;31:*.zst=01;31:*.tzst=01;31:*.bz2=01;31:*.bz=01;31:*.tbz=01;31:*.tbz2=01;31:*.tz=01;31:*.deb=01;31:*.rpm=01;31:*.jar=01;31:*.war=01;31:*.ear=01;31:*.sar=01;31:*.rar=01;31:*.alz=01;31:*.ace=01;31:*.zoo=01;31:*.cpio=01;31:*.7z=01;31:*.rz=01;31:*.cab=01;31:*.wim=01;31:*.swm=01;31:*.dwm=01;31:*.esd=01;31:*.jpg=01;35:*.jpeg=01;35:*.mjpg=01;35:*.mjpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.webm=01;35:*.webp=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=00;36:*.au=00;36:*.flac=00;36:*.m4a=00;36:*.mid=00;36:*.midi=00;36:*.mka=00;36:*.mp3=00;36:*.mpc=00;36:*.ogg=00;36:*.ra=00;36:*.wav=00;36:*.oga=00;36:*.opus=00;36:*.spx=00;36:*.xspf=00;36:'), ('AMENT_PREFIX_PATH', '/home/mike/roborama25_ws/install/robo24_stuff:/home/mike/roborama25_ws/install/robo24_interfaces:/home/mike/ros2_ws/install/robo24_stuff:/home/mike/ros2_ws/install/robo24_nav:/home/mike/ros2_ws/install/robo24_localization:/home/mike/ros2_ws/install/robo24_interfaces:/home/mike/ros2_ws/install/robo24_bringup:/home/mike/ros2_ws/install/moonday24_demo:/opt/ros/humble'), ('SHELL', '/bin/bash'), ('LESSCLOSE', '/usr/bin/lesspipe %s %s'), ('PWD', '/home/mike/roborama25_ws/build/robo24_interfaces'), ('LC_ALL', 'en_US.UTF-8'), ('SSH_CONNECTION', '192.168.1.42 42220 192.168.1.180 22'), ('XDG_DATA_DIRS', '/usr/local/share:/usr/share:/var/lib/snapd/desktop'), ('PYTHONPATH', '/home/mike/roborama25_ws/install/robo24_stuff/lib/python3.10/site-packages:/home/mike/roborama25_ws/install/robo24_interfaces/local/lib/python3.10/dist-packages:/home/mike/ros2_ws/install/robo24_stuff/lib/python3.10/site-packages:/home/mike/ros2_ws/install/robo24_nav/lib/python3.10/site-packages:/home/mike/ros2_ws/install/robo24_localization/lib/python3.10/site-packages:/home/mike/ros2_ws/install/robo24_interfaces/local/lib/python3.10/dist-packages:/home/mike/ros2_ws/install/robo24_bringup/lib/python3.10/site-packages:/home/mike/ros2_ws/install/moonday24_demo/lib/python3.10/site-packages:/opt/ros/humble/lib/python3.10/site-packages:/opt/ros/humble/local/lib/python3.10/dist-packages'), ('COLCON', '1'), ('CMAKE_PREFIX_PATH', '/home/mike/roborama25_ws/install/robo24_interfaces:/home/mike/ros2_ws/install/robo24_interfaces:/home/mike/roborama25_ws/install/robo24_stuff:/home/mike/ros2_ws/install/robo24_stuff:/home/mike/ros2_ws/install/robo24_nav:/home/mike/ros2_ws/install/robo24_localization:/home/mike/ros2_ws/install/robo24_bringup:/home/mike/ros2_ws/install/moonday24_demo:/opt/ros/humble')]), 'shell': False}
+[9.362213] (-) TimerEvent: {}
+[9.463179] (-) TimerEvent: {}
+[9.480086] (robo24_interfaces) StdoutLine: {'line': b'[  3%] \x1b[34m\x1b[1mGenerating C code for ROS interfaces\x1b[0m\n'}
+[9.513400] (robo24_interfaces) StdoutLine: {'line': b'[  6%] \x1b[34m\x1b[1mGenerating C++ code for ROS interfaces\x1b[0m\n'}
+[9.562052] (robo24_interfaces) StdoutLine: {'line': b'[  6%] Built target ament_cmake_python_copy_robo24_interfaces\n'}
+[9.563342] (-) TimerEvent: {}
+[9.665015] (-) TimerEvent: {}
+[9.766945] (-) TimerEvent: {}
+[9.868690] (-) TimerEvent: {}
+[9.970575] (-) TimerEvent: {}
+[10.072624] (-) TimerEvent: {}
+[10.175025] (-) TimerEvent: {}
+[10.276799] (-) TimerEvent: {}
+[10.378507] (-) TimerEvent: {}
+[10.480201] (-) TimerEvent: {}
+[10.581798] (-) TimerEvent: {}
+[10.683499] (-) TimerEvent: {}
+[10.785472] (-) TimerEvent: {}
+[10.888809] (-) TimerEvent: {}
+[10.985910] (robo24_interfaces) StdoutLine: {'line': b'[  6%] Built target robo24_interfaces__cpp\n'}
+[10.988972] (-) TimerEvent: {}
+[11.036310] (robo24_interfaces) StdoutLine: {'line': b'[  9%] \x1b[34m\x1b[1mGenerating C++ type support for eProsima Fast-RTPS\x1b[0m\n'}
+[11.038455] (robo24_interfaces) StdoutLine: {'line': b'[ 12%] \x1b[34m\x1b[1mGenerating C++ introspection for ROS interfaces\x1b[0m\n'}
+[11.069450] (robo24_interfaces) StdoutLine: {'line': b'[ 16%] \x1b[32mBuilding C object CMakeFiles/robo24_interfaces__rosidl_generator_c.dir/rosidl_generator_c/robo24_interfaces/srv/detail/claw__functions.c.o\x1b[0m\n'}
+[11.089268] (-) TimerEvent: {}
+[11.124257] (robo24_interfaces) StdoutLine: {'line': b'running egg_info\n'}
+[11.127887] (robo24_interfaces) StdoutLine: {'line': b'creating robo24_interfaces.egg-info\n'}
+[11.131700] (robo24_interfaces) StdoutLine: {'line': b'writing robo24_interfaces.egg-info/PKG-INFO\n'}
+[11.133850] (robo24_interfaces) StdoutLine: {'line': b'writing dependency_links to robo24_interfaces.egg-info/dependency_links.txt\n'}
+[11.136237] (robo24_interfaces) StdoutLine: {'line': b'writing top-level names to robo24_interfaces.egg-info/top_level.txt\n'}
+[11.138483] (robo24_interfaces) StdoutLine: {'line': b"writing manifest file 'robo24_interfaces.egg-info/SOURCES.txt'\n"}
+[11.151601] (robo24_interfaces) StdoutLine: {'line': b"reading manifest file 'robo24_interfaces.egg-info/SOURCES.txt'\n"}
+[11.155044] (robo24_interfaces) StdoutLine: {'line': b"writing manifest file 'robo24_interfaces.egg-info/SOURCES.txt'\n"}
+[11.189475] (-) TimerEvent: {}
+[11.290371] (-) TimerEvent: {}
+[11.334711] (robo24_interfaces) StdoutLine: {'line': b'[ 16%] Built target ament_cmake_python_build_robo24_interfaces_egg\n'}
+[11.390620] (-) TimerEvent: {}
+[11.398164] (robo24_interfaces) StdoutLine: {'line': b'[ 19%] \x1b[34m\x1b[1mGenerating C++ type support dispatch for ROS interfaces\x1b[0m\n'}
+[11.490977] (-) TimerEvent: {}
+[11.554986] (robo24_interfaces) StdoutLine: {'line': b'[ 22%] \x1b[32m\x1b[1mLinking C shared library librobo24_interfaces__rosidl_generator_c.so\x1b[0m\n'}
+[11.591168] (-) TimerEvent: {}
+[11.692834] (-) TimerEvent: {}
+[11.793695] (-) TimerEvent: {}
+[11.795936] (robo24_interfaces) StdoutLine: {'line': b'[ 22%] Built target robo24_interfaces__rosidl_generator_c\n'}
+[11.850568] (robo24_interfaces) StdoutLine: {'line': b'[ 25%] \x1b[34m\x1b[1mGenerating C type support for eProsima Fast-RTPS\x1b[0m\n'}
+[11.893907] (-) TimerEvent: {}
+[11.994774] (-) TimerEvent: {}
+[12.095575] (-) TimerEvent: {}
+[12.196414] (-) TimerEvent: {}
+[12.297237] (-) TimerEvent: {}
+[12.398111] (-) TimerEvent: {}
+[12.499316] (-) TimerEvent: {}
+[12.567623] (robo24_interfaces) StdoutLine: {'line': b'[ 29%] \x1b[32mBuilding CXX object CMakeFiles/robo24_interfaces__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/robo24_interfaces/srv/detail/claw__type_support.cpp.o\x1b[0m\n'}
+[12.599397] (-) TimerEvent: {}
+[12.691905] (robo24_interfaces) StdoutLine: {'line': b'[ 32%] \x1b[32mBuilding CXX object CMakeFiles/robo24_interfaces__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/robo24_interfaces/srv/detail/dds_fastrtps/claw__type_support.cpp.o\x1b[0m\n'}
+[12.699695] (-) TimerEvent: {}
+[12.800867] (-) TimerEvent: {}
+[12.827306] (robo24_interfaces) StdoutLine: {'line': b'[ 35%] \x1b[32mBuilding CXX object CMakeFiles/robo24_interfaces__rosidl_typesupport_cpp.dir/rosidl_typesupport_cpp/robo24_interfaces/srv/claw__type_support.cpp.o\x1b[0m\n'}
+[12.901067] (-) TimerEvent: {}
+[13.002772] (-) TimerEvent: {}
+[13.105288] (-) TimerEvent: {}
+[13.207164] (-) TimerEvent: {}
+[13.310126] (-) TimerEvent: {}
+[13.409335] (robo24_interfaces) StdoutLine: {'line': b'[ 38%] \x1b[32mBuilding CXX object CMakeFiles/robo24_interfaces__rosidl_typesupport_fastrtps_c.dir/rosidl_typesupport_fastrtps_c/robo24_interfaces/srv/detail/claw__type_support_c.cpp.o\x1b[0m\n'}
+[13.410551] (-) TimerEvent: {}
+[13.513315] (-) TimerEvent: {}
+[13.615621] (-) TimerEvent: {}
+[13.718062] (-) TimerEvent: {}
+[13.820173] (-) TimerEvent: {}
+[13.922388] (-) TimerEvent: {}
+[14.025084] (-) TimerEvent: {}
+[14.127270] (-) TimerEvent: {}
+[14.228468] (-) TimerEvent: {}
+[14.329490] (-) TimerEvent: {}
+[14.429811] (robo24_interfaces) StdoutLine: {'line': b'[ 41%] \x1b[32m\x1b[1mLinking CXX shared library librobo24_interfaces__rosidl_typesupport_cpp.so\x1b[0m\n'}
+[14.431191] (-) TimerEvent: {}
+[14.532449] (-) TimerEvent: {}
+[14.633405] (-) TimerEvent: {}
+[14.651881] (robo24_interfaces) StdoutLine: {'line': b'[ 41%] Built target robo24_interfaces__rosidl_typesupport_cpp\n'}
+[14.708888] (robo24_interfaces) StdoutLine: {'line': b'[ 45%] \x1b[34m\x1b[1mGenerating C introspection for ROS interfaces\x1b[0m\n'}
+[14.733702] (-) TimerEvent: {}
+[14.834818] (-) TimerEvent: {}
+[14.935829] (-) TimerEvent: {}
+[15.037088] (-) TimerEvent: {}
+[15.089956] (robo24_interfaces) StdoutLine: {'line': b'[ 48%] \x1b[32m\x1b[1mLinking CXX shared library librobo24_interfaces__rosidl_typesupport_introspection_cpp.so\x1b[0m\n'}
+[15.137329] (-) TimerEvent: {}
+[15.239378] (-) TimerEvent: {}
+[15.341292] (-) TimerEvent: {}
+[15.443636] (-) TimerEvent: {}
+[15.461360] (robo24_interfaces) StdoutLine: {'line': b'[ 48%] Built target robo24_interfaces__rosidl_typesupport_introspection_cpp\n'}
+[15.513405] (robo24_interfaces) StdoutLine: {'line': b'[ 51%] \x1b[34m\x1b[1mGenerating C type support dispatch for ROS interfaces\x1b[0m\n'}
+[15.543823] (-) TimerEvent: {}
+[15.637371] (robo24_interfaces) StdoutLine: {'line': b'[ 54%] \x1b[32m\x1b[1mLinking CXX shared library librobo24_interfaces__rosidl_typesupport_fastrtps_cpp.so\x1b[0m\n'}
+[15.644018] (-) TimerEvent: {}
+[15.732815] (robo24_interfaces) StdoutLine: {'line': b'[ 58%] \x1b[32m\x1b[1mLinking CXX shared library librobo24_interfaces__rosidl_typesupport_fastrtps_c.so\x1b[0m\n'}
+[15.744247] (-) TimerEvent: {}
+[15.845151] (-) TimerEvent: {}
+[15.946856] (-) TimerEvent: {}
+[16.048525] (-) TimerEvent: {}
+[16.063971] (robo24_interfaces) StdoutLine: {'line': b'[ 58%] Built target robo24_interfaces__rosidl_typesupport_fastrtps_cpp\n'}
+[16.146951] (robo24_interfaces) StdoutLine: {'line': b'[ 58%] Built target robo24_interfaces__rosidl_typesupport_fastrtps_c\n'}
+[16.149511] (-) TimerEvent: {}
+[16.252389] (-) TimerEvent: {}
+[16.299668] (robo24_interfaces) StdoutLine: {'line': b'[ 61%] \x1b[32mBuilding C object CMakeFiles/robo24_interfaces__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/robo24_interfaces/srv/detail/claw__type_support.c.o\x1b[0m\n'}
+[16.352557] (-) TimerEvent: {}
+[16.453718] (-) TimerEvent: {}
+[16.478946] (robo24_interfaces) StdoutLine: {'line': b'[ 64%] \x1b[32m\x1b[1mLinking C shared library librobo24_interfaces__rosidl_typesupport_introspection_c.so\x1b[0m\n'}
+[16.553905] (-) TimerEvent: {}
+[16.600862] (robo24_interfaces) StdoutLine: {'line': b'[ 64%] Built target robo24_interfaces__rosidl_typesupport_introspection_c\n'}
+[16.654240] (-) TimerEvent: {}
+[16.755136] (-) TimerEvent: {}
+[16.760022] (robo24_interfaces) StdoutLine: {'line': b'[ 67%] \x1b[32mBuilding CXX object CMakeFiles/robo24_interfaces__rosidl_typesupport_c.dir/rosidl_typesupport_c/robo24_interfaces/srv/claw__type_support.cpp.o\x1b[0m\n'}
+[16.855386] (-) TimerEvent: {}
+[16.911880] (robo24_interfaces) StdoutLine: {'line': b'[ 70%] \x1b[32m\x1b[1mLinking CXX shared library librobo24_interfaces__rosidl_typesupport_c.so\x1b[0m\n'}
+[16.955572] (-) TimerEvent: {}
+[17.056435] (-) TimerEvent: {}
+[17.074592] (robo24_interfaces) StdoutLine: {'line': b'[ 70%] Built target robo24_interfaces__rosidl_typesupport_c\n'}
+[17.156650] (-) TimerEvent: {}
+[17.161904] (robo24_interfaces) StdoutLine: {'line': b'[ 70%] Built target robo24_interfaces\n'}
+[17.251295] (robo24_interfaces) StdoutLine: {'line': b'[ 74%] \x1b[34m\x1b[1mGenerating Python code for ROS interfaces\x1b[0m\n'}
+[17.256819] (-) TimerEvent: {}
+[17.357595] (-) TimerEvent: {}
+[17.458360] (-) TimerEvent: {}
+[17.559069] (-) TimerEvent: {}
+[17.659811] (-) TimerEvent: {}
+[17.760520] (-) TimerEvent: {}
+[17.861247] (-) TimerEvent: {}
+[17.961941] (-) TimerEvent: {}
+[18.062661] (-) TimerEvent: {}
+[18.163349] (-) TimerEvent: {}
+[18.264038] (-) TimerEvent: {}
+[18.364706] (-) TimerEvent: {}
+[18.465631] (-) TimerEvent: {}
+[18.566322] (-) TimerEvent: {}
+[18.667074] (-) TimerEvent: {}
+[18.747005] (robo24_interfaces) StdoutLine: {'line': b'[ 74%] Built target robo24_interfaces__py\n'}
+[18.767345] (-) TimerEvent: {}
+[18.839006] (robo24_interfaces) StdoutLine: {'line': b'[ 77%] \x1b[32mBuilding C object CMakeFiles/robo24_interfaces__rosidl_generator_py.dir/rosidl_generator_py/robo24_interfaces/srv/_claw_s.c.o\x1b[0m\n'}
+[18.867589] (-) TimerEvent: {}
+[18.968448] (-) TimerEvent: {}
+[19.069200] (-) TimerEvent: {}
+[19.169921] (-) TimerEvent: {}
+[19.270721] (-) TimerEvent: {}
+[19.371623] (-) TimerEvent: {}
+[19.424576] (robo24_interfaces) StdoutLine: {'line': b'[ 80%] \x1b[32m\x1b[1mLinking C shared library rosidl_generator_py/robo24_interfaces/librobo24_interfaces__rosidl_generator_py.so\x1b[0m\n'}
+[19.471816] (-) TimerEvent: {}
+[19.572572] (-) TimerEvent: {}
+[19.600398] (robo24_interfaces) StdoutLine: {'line': b'[ 80%] Built target robo24_interfaces__rosidl_generator_py\n'}
+[19.672854] (-) TimerEvent: {}
+[19.690063] (robo24_interfaces) StdoutLine: {'line': b'[ 83%] \x1b[32mBuilding C object CMakeFiles/robo24_interfaces__rosidl_typesupport_fastrtps_c__pyext.dir/rosidl_generator_py/robo24_interfaces/_robo24_interfaces_s.ep.rosidl_typesupport_fastrtps_c.c.o\x1b[0m\n'}
+[19.694247] (robo24_interfaces) StdoutLine: {'line': b'[ 87%] \x1b[32mBuilding C object CMakeFiles/robo24_interfaces__rosidl_typesupport_introspection_c__pyext.dir/rosidl_generator_py/robo24_interfaces/_robo24_interfaces_s.ep.rosidl_typesupport_introspection_c.c.o\x1b[0m\n'}
+[19.699733] (robo24_interfaces) StdoutLine: {'line': b'[ 90%] \x1b[32mBuilding C object CMakeFiles/robo24_interfaces__rosidl_typesupport_c__pyext.dir/rosidl_generator_py/robo24_interfaces/_robo24_interfaces_s.ep.rosidl_typesupport_c.c.o\x1b[0m\n'}
+[19.773047] (-) TimerEvent: {}
+[19.874913] (-) TimerEvent: {}
+[19.976868] (-) TimerEvent: {}
+[20.078806] (-) TimerEvent: {}
+[20.158485] (robo24_interfaces) StdoutLine: {'line': b'[ 93%] \x1b[32m\x1b[1mLinking C shared library rosidl_generator_py/robo24_interfaces/robo24_interfaces_s__rosidl_typesupport_c.cpython-310-aarch64-linux-gnu.so\x1b[0m\n'}
+[20.166112] (robo24_interfaces) StdoutLine: {'line': b'[ 96%] \x1b[32m\x1b[1mLinking C shared library rosidl_generator_py/robo24_interfaces/robo24_interfaces_s__rosidl_typesupport_introspection_c.cpython-310-aarch64-linux-gnu.so\x1b[0m\n'}
+[20.179052] (-) TimerEvent: {}
+[20.202277] (robo24_interfaces) StdoutLine: {'line': b'[100%] \x1b[32m\x1b[1mLinking C shared library rosidl_generator_py/robo24_interfaces/robo24_interfaces_s__rosidl_typesupport_fastrtps_c.cpython-310-aarch64-linux-gnu.so\x1b[0m\n'}
+[20.279413] (-) TimerEvent: {}
+[20.336496] (robo24_interfaces) StdoutLine: {'line': b'[100%] Built target robo24_interfaces__rosidl_typesupport_c__pyext\n'}
+[20.342355] (robo24_interfaces) StdoutLine: {'line': b'[100%] Built target robo24_interfaces__rosidl_typesupport_introspection_c__pyext\n'}
+[20.379581] (-) TimerEvent: {}
+[20.382121] (robo24_interfaces) StdoutLine: {'line': b'[100%] Built target robo24_interfaces__rosidl_typesupport_fastrtps_c__pyext\n'}
+[20.424110] (robo24_interfaces) CommandEnded: {'returncode': 0}
+[20.426292] (robo24_interfaces) JobProgress: {'identifier': 'robo24_interfaces', 'progress': 'install'}
+[20.459910] (robo24_interfaces) Command: {'cmd': ['/usr/bin/cmake', '--install', '/home/mike/roborama25_ws/build/robo24_interfaces'], 'cwd': '/home/mike/roborama25_ws/build/robo24_interfaces', 'env': OrderedDict([('LESSOPEN', '| /usr/bin/lesspipe %s'), ('USER', 'mike'), ('SSH_CLIENT', '192.168.1.42 42220 22'), ('XDG_SESSION_TYPE', 'tty'), ('SHLVL', '1'), ('LD_LIBRARY_PATH', '/home/mike/roborama25_ws/install/robo24_interfaces/lib:/home/mike/ros2_ws/install/robo24_interfaces/lib:/opt/ros/humble/opt/rviz_ogre_vendor/lib:/opt/ros/humble/lib/aarch64-linux-gnu:/opt/ros/humble/lib'), ('MOTD_SHOWN', 'pam'), ('HOME', '/home/mike'), ('OLDPWD', '/home/mike'), ('SSH_TTY', '/dev/pts/0'), ('ROS_PYTHON_VERSION', '3'), ('DBUS_SESSION_BUS_ADDRESS', 'unix:path=/run/user/1000/bus'), ('COLCON_PREFIX_PATH', '/home/mike/roborama25_ws/install:/home/mike/ros2_ws/install'), ('ROS_DISTRO', 'humble'), ('LOGNAME', 'mike'), ('_', '/usr/bin/colcon'), ('ROS_VERSION', '2'), ('XDG_SESSION_CLASS', 'user'), ('TERM', 'xterm-256color'), ('XDG_SESSION_ID', '1'), ('ROS_LOCALHOST_ONLY', '0'), ('PATH', '/opt/ros/humble/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin'), ('XDG_RUNTIME_DIR', '/run/user/1000'), ('LANG', 'C.UTF-8'), ('LS_COLORS', 'rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:mi=00:su=37;41:sg=30;43:ca=30;41:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.tar=01;31:*.tgz=01;31:*.arc=01;31:*.arj=01;31:*.taz=01;31:*.lha=01;31:*.lz4=01;31:*.lzh=01;31:*.lzma=01;31:*.tlz=01;31:*.txz=01;31:*.tzo=01;31:*.t7z=01;31:*.zip=01;31:*.z=01;31:*.dz=01;31:*.gz=01;31:*.lrz=01;31:*.lz=01;31:*.lzo=01;31:*.xz=01;31:*.zst=01;31:*.tzst=01;31:*.bz2=01;31:*.bz=01;31:*.tbz=01;31:*.tbz2=01;31:*.tz=01;31:*.deb=01;31:*.rpm=01;31:*.jar=01;31:*.war=01;31:*.ear=01;31:*.sar=01;31:*.rar=01;31:*.alz=01;31:*.ace=01;31:*.zoo=01;31:*.cpio=01;31:*.7z=01;31:*.rz=01;31:*.cab=01;31:*.wim=01;31:*.swm=01;31:*.dwm=01;31:*.esd=01;31:*.jpg=01;35:*.jpeg=01;35:*.mjpg=01;35:*.mjpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.webm=01;35:*.webp=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=00;36:*.au=00;36:*.flac=00;36:*.m4a=00;36:*.mid=00;36:*.midi=00;36:*.mka=00;36:*.mp3=00;36:*.mpc=00;36:*.ogg=00;36:*.ra=00;36:*.wav=00;36:*.oga=00;36:*.opus=00;36:*.spx=00;36:*.xspf=00;36:'), ('AMENT_PREFIX_PATH', '/home/mike/roborama25_ws/install/robo24_stuff:/home/mike/roborama25_ws/install/robo24_interfaces:/home/mike/ros2_ws/install/robo24_stuff:/home/mike/ros2_ws/install/robo24_nav:/home/mike/ros2_ws/install/robo24_localization:/home/mike/ros2_ws/install/robo24_interfaces:/home/mike/ros2_ws/install/robo24_bringup:/home/mike/ros2_ws/install/moonday24_demo:/opt/ros/humble'), ('SHELL', '/bin/bash'), ('LESSCLOSE', '/usr/bin/lesspipe %s %s'), ('PWD', '/home/mike/roborama25_ws/build/robo24_interfaces'), ('LC_ALL', 'en_US.UTF-8'), ('SSH_CONNECTION', '192.168.1.42 42220 192.168.1.180 22'), ('XDG_DATA_DIRS', '/usr/local/share:/usr/share:/var/lib/snapd/desktop'), ('PYTHONPATH', '/home/mike/roborama25_ws/install/robo24_stuff/lib/python3.10/site-packages:/home/mike/roborama25_ws/install/robo24_interfaces/local/lib/python3.10/dist-packages:/home/mike/ros2_ws/install/robo24_stuff/lib/python3.10/site-packages:/home/mike/ros2_ws/install/robo24_nav/lib/python3.10/site-packages:/home/mike/ros2_ws/install/robo24_localization/lib/python3.10/site-packages:/home/mike/ros2_ws/install/robo24_interfaces/local/lib/python3.10/dist-packages:/home/mike/ros2_ws/install/robo24_bringup/lib/python3.10/site-packages:/home/mike/ros2_ws/install/moonday24_demo/lib/python3.10/site-packages:/opt/ros/humble/lib/python3.10/site-packages:/opt/ros/humble/local/lib/python3.10/dist-packages'), ('COLCON', '1'), ('CMAKE_PREFIX_PATH', '/home/mike/roborama25_ws/install/robo24_interfaces:/home/mike/ros2_ws/install/robo24_interfaces:/home/mike/roborama25_ws/install/robo24_stuff:/home/mike/ros2_ws/install/robo24_stuff:/home/mike/ros2_ws/install/robo24_nav:/home/mike/ros2_ws/install/robo24_localization:/home/mike/ros2_ws/install/robo24_bringup:/home/mike/ros2_ws/install/moonday24_demo:/opt/ros/humble')]), 'shell': False}
+[20.479790] (-) TimerEvent: {}
+[20.496055] (robo24_interfaces) StdoutLine: {'line': b'-- Install configuration: ""\n'}
+[20.497149] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/share/ament_index/resource_index/rosidl_interfaces/robo24_interfaces\n'}
+[20.498477] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/include/robo24_interfaces/robo24_interfaces\n'}
+[20.499305] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/include/robo24_interfaces/robo24_interfaces/msg\n'}
+[20.500012] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/include/robo24_interfaces/robo24_interfaces/msg/rosidl_generator_c__visibility_control.h\n'}
+[20.501184] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/include/robo24_interfaces/robo24_interfaces/srv\n'}
+[20.501950] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/include/robo24_interfaces/robo24_interfaces/srv/detail\n'}
+[20.502628] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/include/robo24_interfaces/robo24_interfaces/srv/detail/claw__type_support.h\n'}
+[20.503822] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/include/robo24_interfaces/robo24_interfaces/srv/detail/claw__struct.h\n'}
+[20.504976] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/include/robo24_interfaces/robo24_interfaces/srv/detail/claw__functions.h\n'}
+[20.506142] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/include/robo24_interfaces/robo24_interfaces/srv/detail/claw__functions.c\n'}
+[20.507450] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/include/robo24_interfaces/robo24_interfaces/srv/claw.h\n'}
+[20.509098] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/share/robo24_interfaces/environment/library_path.sh\n'}
+[20.510251] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/share/robo24_interfaces/environment/library_path.dsv\n'}
+[20.511788] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/lib/librobo24_interfaces__rosidl_generator_c.so\n'}
+[20.514366] (robo24_interfaces) StdoutLine: {'line': b'-- Set runtime path of "/home/mike/roborama25_ws/install/robo24_interfaces/lib/librobo24_interfaces__rosidl_generator_c.so" to ""\n'}
+[20.514964] (robo24_interfaces) StdoutLine: {'line': b'-- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/include/robo24_interfaces/robo24_interfaces\n'}
+[20.515495] (robo24_interfaces) StdoutLine: {'line': b'-- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/include/robo24_interfaces/robo24_interfaces/msg\n'}
+[20.515949] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/include/robo24_interfaces/robo24_interfaces/msg/rosidl_typesupport_fastrtps_c__visibility_control.h\n'}
+[20.516870] (robo24_interfaces) StdoutLine: {'line': b'-- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/include/robo24_interfaces/robo24_interfaces/srv\n'}
+[20.517376] (robo24_interfaces) StdoutLine: {'line': b'-- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/include/robo24_interfaces/robo24_interfaces/srv/detail\n'}
+[20.517771] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/include/robo24_interfaces/robo24_interfaces/srv/detail/claw__rosidl_typesupport_fastrtps_c.h\n'}
+[20.519239] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/lib/librobo24_interfaces__rosidl_typesupport_fastrtps_c.so\n'}
+[20.521926] (robo24_interfaces) StdoutLine: {'line': b'-- Set runtime path of "/home/mike/roborama25_ws/install/robo24_interfaces/lib/librobo24_interfaces__rosidl_typesupport_fastrtps_c.so" to ""\n'}
+[20.522471] (robo24_interfaces) StdoutLine: {'line': b'-- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/include/robo24_interfaces/robo24_interfaces\n'}
+[20.522887] (robo24_interfaces) StdoutLine: {'line': b'-- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/include/robo24_interfaces/robo24_interfaces/msg\n'}
+[20.523314] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/include/robo24_interfaces/robo24_interfaces/msg/rosidl_typesupport_introspection_c__visibility_control.h\n'}
+[20.524340] (robo24_interfaces) StdoutLine: {'line': b'-- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/include/robo24_interfaces/robo24_interfaces/srv\n'}
+[20.524845] (robo24_interfaces) StdoutLine: {'line': b'-- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/include/robo24_interfaces/robo24_interfaces/srv/detail\n'}
+[20.525257] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/include/robo24_interfaces/robo24_interfaces/srv/detail/claw__rosidl_typesupport_introspection_c.h\n'}
+[20.526533] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/include/robo24_interfaces/robo24_interfaces/srv/detail/claw__type_support.c\n'}
+[20.528173] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/lib/librobo24_interfaces__rosidl_typesupport_introspection_c.so\n'}
+[20.530627] (robo24_interfaces) StdoutLine: {'line': b'-- Set runtime path of "/home/mike/roborama25_ws/install/robo24_interfaces/lib/librobo24_interfaces__rosidl_typesupport_introspection_c.so" to ""\n'}
+[20.531147] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/lib/librobo24_interfaces__rosidl_typesupport_c.so\n'}
+[20.533505] (robo24_interfaces) StdoutLine: {'line': b'-- Set runtime path of "/home/mike/roborama25_ws/install/robo24_interfaces/lib/librobo24_interfaces__rosidl_typesupport_c.so" to ""\n'}
+[20.534046] (robo24_interfaces) StdoutLine: {'line': b'-- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/include/robo24_interfaces/robo24_interfaces\n'}
+[20.534448] (robo24_interfaces) StdoutLine: {'line': b'-- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/include/robo24_interfaces/robo24_interfaces/msg\n'}
+[20.534843] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/include/robo24_interfaces/robo24_interfaces/msg/rosidl_generator_cpp__visibility_control.hpp\n'}
+[20.535809] (robo24_interfaces) StdoutLine: {'line': b'-- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/include/robo24_interfaces/robo24_interfaces/srv\n'}
+[20.536348] (robo24_interfaces) StdoutLine: {'line': b'-- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/include/robo24_interfaces/robo24_interfaces/srv/detail\n'}
+[20.536785] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/include/robo24_interfaces/robo24_interfaces/srv/detail/claw__struct.hpp\n'}
+[20.538010] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/include/robo24_interfaces/robo24_interfaces/srv/detail/claw__type_support.hpp\n'}
+[20.539144] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/include/robo24_interfaces/robo24_interfaces/srv/detail/claw__builder.hpp\n'}
+[20.540454] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/include/robo24_interfaces/robo24_interfaces/srv/detail/claw__traits.hpp\n'}
+[20.541583] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/include/robo24_interfaces/robo24_interfaces/srv/claw.hpp\n'}
+[20.542721] (robo24_interfaces) StdoutLine: {'line': b'-- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/include/robo24_interfaces/robo24_interfaces\n'}
+[20.543314] (robo24_interfaces) StdoutLine: {'line': b'-- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/include/robo24_interfaces/robo24_interfaces/msg\n'}
+[20.543790] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/include/robo24_interfaces/robo24_interfaces/msg/rosidl_typesupport_fastrtps_cpp__visibility_control.h\n'}
+[20.544826] (robo24_interfaces) StdoutLine: {'line': b'-- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/include/robo24_interfaces/robo24_interfaces/srv\n'}
+[20.545338] (robo24_interfaces) StdoutLine: {'line': b'-- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/include/robo24_interfaces/robo24_interfaces/srv/detail\n'}
+[20.545754] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/include/robo24_interfaces/robo24_interfaces/srv/detail/dds_fastrtps\n'}
+[20.546404] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/include/robo24_interfaces/robo24_interfaces/srv/detail/claw__rosidl_typesupport_fastrtps_cpp.hpp\n'}
+[20.547949] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/lib/librobo24_interfaces__rosidl_typesupport_fastrtps_cpp.so\n'}
+[20.550682] (robo24_interfaces) StdoutLine: {'line': b'-- Set runtime path of "/home/mike/roborama25_ws/install/robo24_interfaces/lib/librobo24_interfaces__rosidl_typesupport_fastrtps_cpp.so" to ""\n'}
+[20.551254] (robo24_interfaces) StdoutLine: {'line': b'-- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/include/robo24_interfaces/robo24_interfaces\n'}
+[20.551783] (robo24_interfaces) StdoutLine: {'line': b'-- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/include/robo24_interfaces/robo24_interfaces/srv\n'}
+[20.552121] (robo24_interfaces) StdoutLine: {'line': b'-- Up-to-date: /home/mike/roborama25_ws/install/robo24_interfaces/include/robo24_interfaces/robo24_interfaces/srv/detail\n'}
+[20.552514] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/include/robo24_interfaces/robo24_interfaces/srv/detail/claw__type_support.cpp\n'}
+[20.553633] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/include/robo24_interfaces/robo24_interfaces/srv/detail/claw__rosidl_typesupport_introspection_cpp.hpp\n'}
+[20.555150] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/lib/librobo24_interfaces__rosidl_typesupport_introspection_cpp.so\n'}
+[20.557946] (robo24_interfaces) StdoutLine: {'line': b'-- Set runtime path of "/home/mike/roborama25_ws/install/robo24_interfaces/lib/librobo24_interfaces__rosidl_typesupport_introspection_cpp.so" to ""\n'}
+[20.558472] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/lib/librobo24_interfaces__rosidl_typesupport_cpp.so\n'}
+[20.560835] (robo24_interfaces) StdoutLine: {'line': b'-- Set runtime path of "/home/mike/roborama25_ws/install/robo24_interfaces/lib/librobo24_interfaces__rosidl_typesupport_cpp.so" to ""\n'}
+[20.561388] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/share/robo24_interfaces/environment/pythonpath.sh\n'}
+[20.562412] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/share/robo24_interfaces/environment/pythonpath.dsv\n'}
+[20.563605] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/local/lib/python3.10/dist-packages/robo24_interfaces-0.0.0-py3.10.egg-info\n'}
+[20.564651] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/local/lib/python3.10/dist-packages/robo24_interfaces-0.0.0-py3.10.egg-info/SOURCES.txt\n'}
+[20.565855] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/local/lib/python3.10/dist-packages/robo24_interfaces-0.0.0-py3.10.egg-info/dependency_links.txt\n'}
+[20.567023] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/local/lib/python3.10/dist-packages/robo24_interfaces-0.0.0-py3.10.egg-info/PKG-INFO\n'}
+[20.568184] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/local/lib/python3.10/dist-packages/robo24_interfaces-0.0.0-py3.10.egg-info/top_level.txt\n'}
+[20.569456] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/local/lib/python3.10/dist-packages/robo24_interfaces\n'}
+[20.570305] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/local/lib/python3.10/dist-packages/robo24_interfaces/librobo24_interfaces__rosidl_generator_py.so\n'}
+[20.571880] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/local/lib/python3.10/dist-packages/robo24_interfaces/robo24_interfaces_s__rosidl_typesupport_fastrtps_c.cpython-310-aarch64-linux-gnu.so\n'}
+[20.573337] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/local/lib/python3.10/dist-packages/robo24_interfaces/_robo24_interfaces_s.ep.rosidl_typesupport_fastrtps_c.c\n'}
+[20.574663] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/local/lib/python3.10/dist-packages/robo24_interfaces/robo24_interfaces_s__rosidl_typesupport_introspection_c.cpython-310-aarch64-linux-gnu.so\n'}
+[20.576263] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/local/lib/python3.10/dist-packages/robo24_interfaces/robo24_interfaces_s__rosidl_typesupport_c.cpython-310-aarch64-linux-gnu.so\n'}
+[20.577683] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/local/lib/python3.10/dist-packages/robo24_interfaces/_robo24_interfaces_s.ep.rosidl_typesupport_introspection_c.c\n'}
+[20.579010] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/local/lib/python3.10/dist-packages/robo24_interfaces/_robo24_interfaces_s.ep.rosidl_typesupport_c.c\n'}
+[20.579867] (-) TimerEvent: {}
+[20.580352] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/local/lib/python3.10/dist-packages/robo24_interfaces/srv\n'}
+[20.581058] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/local/lib/python3.10/dist-packages/robo24_interfaces/srv/_claw.py\n'}
+[20.582260] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/local/lib/python3.10/dist-packages/robo24_interfaces/srv/__init__.py\n'}
+[20.583341] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/local/lib/python3.10/dist-packages/robo24_interfaces/srv/_claw_s.c\n'}
+[20.584665] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/local/lib/python3.10/dist-packages/robo24_interfaces/__init__.py\n'}
+[20.680038] (-) TimerEvent: {}
+[20.763000] (robo24_interfaces) StdoutLine: {'line': b"Listing '/home/mike/roborama25_ws/install/robo24_interfaces/local/lib/python3.10/dist-packages/robo24_interfaces'...\n"}
+[20.764442] (robo24_interfaces) StdoutLine: {'line': b"Compiling '/home/mike/roborama25_ws/install/robo24_interfaces/local/lib/python3.10/dist-packages/robo24_interfaces/__init__.py'...\n"}
+[20.765605] (robo24_interfaces) StdoutLine: {'line': b"Listing '/home/mike/roborama25_ws/install/robo24_interfaces/local/lib/python3.10/dist-packages/robo24_interfaces/srv'...\n"}
+[20.766713] (robo24_interfaces) StdoutLine: {'line': b"Compiling '/home/mike/roborama25_ws/install/robo24_interfaces/local/lib/python3.10/dist-packages/robo24_interfaces/srv/__init__.py'...\n"}
+[20.767766] (robo24_interfaces) StdoutLine: {'line': b"Compiling '/home/mike/roborama25_ws/install/robo24_interfaces/local/lib/python3.10/dist-packages/robo24_interfaces/srv/_claw.py'...\n"}
+[20.780323] (-) TimerEvent: {}
+[20.789246] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/local/lib/python3.10/dist-packages/robo24_interfaces/robo24_interfaces_s__rosidl_typesupport_fastrtps_c.cpython-310-aarch64-linux-gnu.so\n'}
+[20.792071] (robo24_interfaces) StdoutLine: {'line': b'-- Set runtime path of "/home/mike/roborama25_ws/install/robo24_interfaces/local/lib/python3.10/dist-packages/robo24_interfaces/robo24_interfaces_s__rosidl_typesupport_fastrtps_c.cpython-310-aarch64-linux-gnu.so" to ""\n'}
+[20.793598] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/local/lib/python3.10/dist-packages/robo24_interfaces/robo24_interfaces_s__rosidl_typesupport_introspection_c.cpython-310-aarch64-linux-gnu.so\n'}
+[20.797634] (robo24_interfaces) StdoutLine: {'line': b'-- Set runtime path of "/home/mike/roborama25_ws/install/robo24_interfaces/local/lib/python3.10/dist-packages/robo24_interfaces/robo24_interfaces_s__rosidl_typesupport_introspection_c.cpython-310-aarch64-linux-gnu.so" to ""\n'}
+[20.799735] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/local/lib/python3.10/dist-packages/robo24_interfaces/robo24_interfaces_s__rosidl_typesupport_c.cpython-310-aarch64-linux-gnu.so\n'}
+[20.803742] (robo24_interfaces) StdoutLine: {'line': b'-- Set runtime path of "/home/mike/roborama25_ws/install/robo24_interfaces/local/lib/python3.10/dist-packages/robo24_interfaces/robo24_interfaces_s__rosidl_typesupport_c.cpython-310-aarch64-linux-gnu.so" to ""\n'}
+[20.804612] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/lib/librobo24_interfaces__rosidl_generator_py.so\n'}
+[20.807714] (robo24_interfaces) StdoutLine: {'line': b'-- Set runtime path of "/home/mike/roborama25_ws/install/robo24_interfaces/lib/librobo24_interfaces__rosidl_generator_py.so" to ""\n'}
+[20.808395] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/share/robo24_interfaces/srv/Claw.idl\n'}
+[20.809756] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/share/robo24_interfaces/srv/Claw.srv\n'}
+[20.810830] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/share/robo24_interfaces/srv/Claw_Request.msg\n'}
+[20.812200] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/share/robo24_interfaces/srv/Claw_Response.msg\n'}
+[20.813648] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/share/ament_index/resource_index/package_run_dependencies/robo24_interfaces\n'}
+[20.815421] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/share/ament_index/resource_index/parent_prefix_path/robo24_interfaces\n'}
+[20.816716] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/share/robo24_interfaces/environment/ament_prefix_path.sh\n'}
+[20.818123] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/share/robo24_interfaces/environment/ament_prefix_path.dsv\n'}
+[20.819507] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/share/robo24_interfaces/environment/path.sh\n'}
+[20.820800] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/share/robo24_interfaces/environment/path.dsv\n'}
+[20.821988] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/share/robo24_interfaces/local_setup.bash\n'}
+[20.823156] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/share/robo24_interfaces/local_setup.sh\n'}
+[20.824458] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/share/robo24_interfaces/local_setup.zsh\n'}
+[20.825575] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/share/robo24_interfaces/local_setup.dsv\n'}
+[20.826757] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/share/robo24_interfaces/package.dsv\n'}
+[20.828281] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/share/ament_index/resource_index/packages/robo24_interfaces\n'}
+[20.829944] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/share/robo24_interfaces/cmake/export_robo24_interfaces__rosidl_generator_cExport.cmake\n'}
+[20.831406] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/share/robo24_interfaces/cmake/export_robo24_interfaces__rosidl_generator_cExport-noconfig.cmake\n'}
+[20.832919] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/share/robo24_interfaces/cmake/export_robo24_interfaces__rosidl_typesupport_fastrtps_cExport.cmake\n'}
+[20.834426] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/share/robo24_interfaces/cmake/export_robo24_interfaces__rosidl_typesupport_fastrtps_cExport-noconfig.cmake\n'}
+[20.835998] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/share/robo24_interfaces/cmake/robo24_interfaces__rosidl_typesupport_introspection_cExport.cmake\n'}
+[20.837489] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/share/robo24_interfaces/cmake/robo24_interfaces__rosidl_typesupport_introspection_cExport-noconfig.cmake\n'}
+[20.839006] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/share/robo24_interfaces/cmake/robo24_interfaces__rosidl_typesupport_cExport.cmake\n'}
+[20.840467] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/share/robo24_interfaces/cmake/robo24_interfaces__rosidl_typesupport_cExport-noconfig.cmake\n'}
+[20.841957] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/share/robo24_interfaces/cmake/export_robo24_interfaces__rosidl_generator_cppExport.cmake\n'}
+[20.843695] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/share/robo24_interfaces/cmake/export_robo24_interfaces__rosidl_typesupport_fastrtps_cppExport.cmake\n'}
+[20.845206] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/share/robo24_interfaces/cmake/export_robo24_interfaces__rosidl_typesupport_fastrtps_cppExport-noconfig.cmake\n'}
+[20.846770] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/share/robo24_interfaces/cmake/robo24_interfaces__rosidl_typesupport_introspection_cppExport.cmake\n'}
+[20.848289] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/share/robo24_interfaces/cmake/robo24_interfaces__rosidl_typesupport_introspection_cppExport-noconfig.cmake\n'}
+[20.849843] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/share/robo24_interfaces/cmake/robo24_interfaces__rosidl_typesupport_cppExport.cmake\n'}
+[20.851317] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/share/robo24_interfaces/cmake/robo24_interfaces__rosidl_typesupport_cppExport-noconfig.cmake\n'}
+[20.852926] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/share/robo24_interfaces/cmake/export_robo24_interfaces__rosidl_generator_pyExport.cmake\n'}
+[20.854376] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/share/robo24_interfaces/cmake/export_robo24_interfaces__rosidl_generator_pyExport-noconfig.cmake\n'}
+[20.855829] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/share/robo24_interfaces/cmake/rosidl_cmake-extras.cmake\n'}
+[20.857061] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/share/robo24_interfaces/cmake/ament_cmake_export_include_directories-extras.cmake\n'}
+[20.858390] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/share/robo24_interfaces/cmake/ament_cmake_export_libraries-extras.cmake\n'}
+[20.859920] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/share/robo24_interfaces/cmake/ament_cmake_export_targets-extras.cmake\n'}
+[20.861202] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/share/robo24_interfaces/cmake/rosidl_cmake_export_typesupport_targets-extras.cmake\n'}
+[20.862526] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/share/robo24_interfaces/cmake/ament_cmake_export_dependencies-extras.cmake\n'}
+[20.863960] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/share/robo24_interfaces/cmake/rosidl_cmake_export_typesupport_libraries-extras.cmake\n'}
+[20.865269] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/share/robo24_interfaces/cmake/robo24_interfacesConfig.cmake\n'}
+[20.866311] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/share/robo24_interfaces/cmake/robo24_interfacesConfig-version.cmake\n'}
+[20.867593] (robo24_interfaces) StdoutLine: {'line': b'-- Installing: /home/mike/roborama25_ws/install/robo24_interfaces/share/robo24_interfaces/package.xml\n'}
+[20.874495] (robo24_interfaces) CommandEnded: {'returncode': 0}
+[20.880417] (-) TimerEvent: {}
+[20.957941] (robo24_interfaces) JobEnded: {'identifier': 'robo24_interfaces', 'rc': 0}
+[20.960877] (-) EventReactorShutdown: {}

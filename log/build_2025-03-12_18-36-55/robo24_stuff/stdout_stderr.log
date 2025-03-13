@@ -1,0 +1,27 @@
+running egg_info
+writing ../../build/robo24_stuff/robo24_stuff.egg-info/PKG-INFO
+writing dependency_links to ../../build/robo24_stuff/robo24_stuff.egg-info/dependency_links.txt
+writing entry points to ../../build/robo24_stuff/robo24_stuff.egg-info/entry_points.txt
+writing requirements to ../../build/robo24_stuff/robo24_stuff.egg-info/requires.txt
+writing top-level names to ../../build/robo24_stuff/robo24_stuff.egg-info/top_level.txt
+reading manifest file '../../build/robo24_stuff/robo24_stuff.egg-info/SOURCES.txt'
+writing manifest file '../../build/robo24_stuff/robo24_stuff.egg-info/SOURCES.txt'
+running build
+running build_py
+running install
+running install_lib
+running install_data
+running install_egg_info
+removing '/home/mike/roborama25_ws/install/robo24_stuff/lib/python3.10/site-packages/robo24_stuff-0.0.0-py3.10.egg-info' (and everything under it)
+Copying ../../build/robo24_stuff/robo24_stuff.egg-info to /home/mike/roborama25_ws/install/robo24_stuff/lib/python3.10/site-packages/robo24_stuff-0.0.0-py3.10.egg-info
+running install_scripts
+Installing openmv_serial_node script to /home/mike/roborama25_ws/install/robo24_stuff/lib/robo24_stuff
+Installing robo24_can_xy_node script to /home/mike/roborama25_ws/install/robo24_stuff/lib/robo24_stuff
+Installing robo24_diynav_node script to /home/mike/roborama25_ws/install/robo24_stuff/lib/robo24_stuff
+Installing robo24_diyslam_node script to /home/mike/roborama25_ws/install/robo24_stuff/lib/robo24_stuff
+Installing robo24_imu_serial_node script to /home/mike/roborama25_ws/install/robo24_stuff/lib/robo24_stuff
+Installing robo24_teleop_node script to /home/mike/roborama25_ws/install/robo24_stuff/lib/robo24_stuff
+Installing robo24_watch_serial_node script to /home/mike/roborama25_ws/install/robo24_stuff/lib/robo24_stuff
+Installing robo24_wheel_controller_node script to /home/mike/roborama25_ws/install/robo24_stuff/lib/robo24_stuff
+Installing sensor_serial_node script to /home/mike/roborama25_ws/install/robo24_stuff/lib/robo24_stuff
+writing list of installed files to '/home/mike/roborama25_ws/build/robo24_stuff/install.log'

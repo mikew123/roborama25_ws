@@ -1,0 +1,27 @@
+[3.438s] Invoking command in '/home/mike/roborama25_ws/build/robo24_stuff': PYTHONPATH=/home/mike/roborama25_ws/build/robo24_stuff/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/mike/roborama25_ws/install/robo24_stuff/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/mike/roborama25_ws/build/robo24_stuff/build --no-deps symlink_data --force
+[4.849s] running develop
+[5.674s] running egg_info
+[5.674s] writing robo24_stuff.egg-info/PKG-INFO
+[5.675s] writing dependency_links to robo24_stuff.egg-info/dependency_links.txt
+[5.676s] writing entry points to robo24_stuff.egg-info/entry_points.txt
+[5.677s] writing requirements to robo24_stuff.egg-info/requires.txt
+[5.678s] writing top-level names to robo24_stuff.egg-info/top_level.txt
+[5.686s] reading manifest file 'robo24_stuff.egg-info/SOURCES.txt'
+[5.689s] writing manifest file 'robo24_stuff.egg-info/SOURCES.txt'
+[5.696s] running build_ext
+[5.696s] Creating /home/mike/roborama25_ws/install/robo24_stuff/lib/python3.10/site-packages/robo24-stuff.egg-link (link to .)
+[5.699s] Installing openmv_serial_node script to /home/mike/roborama25_ws/install/robo24_stuff/lib/robo24_stuff
+[5.700s] Installing robo24_can_xy_node script to /home/mike/roborama25_ws/install/robo24_stuff/lib/robo24_stuff
+[5.701s] Installing robo24_diynav_node script to /home/mike/roborama25_ws/install/robo24_stuff/lib/robo24_stuff
+[5.702s] Installing robo24_diyslam_node script to /home/mike/roborama25_ws/install/robo24_stuff/lib/robo24_stuff
+[5.703s] Installing robo24_imu_serial_node script to /home/mike/roborama25_ws/install/robo24_stuff/lib/robo24_stuff
+[5.704s] Installing robo24_teleop_node script to /home/mike/roborama25_ws/install/robo24_stuff/lib/robo24_stuff
+[5.704s] Installing robo24_watch_serial_node script to /home/mike/roborama25_ws/install/robo24_stuff/lib/robo24_stuff
+[5.705s] Installing robo24_wheel_controller_node script to /home/mike/roborama25_ws/install/robo24_stuff/lib/robo24_stuff
+[5.706s] Installing sensor_serial_node script to /home/mike/roborama25_ws/install/robo24_stuff/lib/robo24_stuff
+[5.707s] 
+[5.708s] Installed /home/mike/roborama25_ws/build/robo24_stuff
+[5.708s] running symlink_data
+[5.709s] symbolically linking /home/mike/roborama25_ws/build/robo24_stuff/resource/robo24_stuff -> /home/mike/roborama25_ws/install/robo24_stuff/share/ament_index/resource_index/packages
+[5.709s] symbolically linking /home/mike/roborama25_ws/build/robo24_stuff/package.xml -> /home/mike/roborama25_ws/install/robo24_stuff/share/robo24_stuff
+[5.710s] symbolically linking /home/mike/roborama25_ws/build/robo24_stuff/launch/robo24_bringup_launch.py -> /home/mike/roborama25_ws/install/robo24_stuff/share/robo24_stuff/launch

@@ -1,0 +1,24 @@
+[1.961s] Invoking command in '/home/mike/roborama25_ws/build/sllidar_ros2': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/home/mike/roborama25_ws/install/robo24_stuff:/home/mike/ros2_ws/install/robo24_stuff:/home/mike/ros2_ws/install/robo24_nav:/home/mike/ros2_ws/install/robo24_localization:/home/mike/ros2_ws/install/robo24_bringup:/home/mike/ros2_ws/install/moonday24_demo:/opt/ros/humble /usr/bin/cmake --build /home/mike/roborama25_ws/build/sllidar_ros2 -- -j4 -l4
+[2.360s] [ 10%] Built target sllidar_client
+[2.385s] [ 15%] [32mBuilding CXX object CMakeFiles/sllidar_node.dir/src/sllidar_node.cpp.o[0m
+[13.159s] In file included from [01m[K/home/mike/roborama25_ws/src/sllidar_ros2/./sdk/include/sl_lidar_cmd.h:41[m[K,
+[13.160s]                  from [01m[K/home/mike/roborama25_ws/src/sllidar_ros2/./sdk/include/sl_lidar_driver.h:54[m[K,
+[13.160s]                  from [01m[K/home/mike/roborama25_ws/src/sllidar_ros2/./sdk/include/sl_lidar.h:36[m[K,
+[13.161s]                  from [01m[K/home/mike/roborama25_ws/src/sllidar_ros2/src/sllidar_node.cpp:38[m[K:
+[13.161s] [01m[K/home/mike/roborama25_ws/src/sllidar_ros2/./sdk/include/sl_lidar_protocol.h:66:16:[m[K [01;35m[Kwarning: [m[KISO C++ forbids zero-size array ‘[01m[Kdata[m[K’ [[01;35m[K]8;;https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wpedantic-Wpedantic]8;;[m[K]
+[13.161s]    66 |     sl_u8 data[[01;35m[K0[m[K];
+[13.162s]       |                [01;35m[K^[m[K
+[13.163s] In file included from [01m[K/home/mike/roborama25_ws/src/sllidar_ros2/./sdk/include/sl_lidar_driver.h:54[m[K,
+[13.163s]                  from [01m[K/home/mike/roborama25_ws/src/sllidar_ros2/./sdk/include/sl_lidar.h:36[m[K,
+[13.164s]                  from [01m[K/home/mike/roborama25_ws/src/sllidar_ros2/src/sllidar_node.cpp:38[m[K:
+[13.164s] [01m[K/home/mike/roborama25_ws/src/sllidar_ros2/./sdk/include/sl_lidar_cmd.h:324:20:[m[K [01;35m[Kwarning: [m[KISO C++ forbids zero-size array ‘[01m[Kpayload[m[K’ [[01;35m[K]8;;https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wpedantic-Wpedantic]8;;[m[K]
+[13.164s]   324 |     sl_u8  payload[[01;35m[K0[m[K];
+[13.165s]       |                    [01;35m[K^[m[K
+[13.310s] [01m[K/home/mike/roborama25_ws/src/sllidar_ros2/src/sllidar_node.cpp:[m[K In member function ‘[01m[Kvoid SLlidarNode::publish_scan(rclcpp::Publisher<sensor_msgs::msg::LaserScan_<std::allocator<void> > >::SharedPtr&, sl_lidar_response_measurement_node_hq_t*, size_t, rclcpp::Time, double, bool, float, float, float, std::string)[m[K’:
+[13.310s] [01m[K/home/mike/roborama25_ws/src/sllidar_ros2/src/sllidar_node.cpp:227:9:[m[K [01;31m[Kerror: [m[Kexpected ‘[01m[K;[m[K’ before ‘[01m[Kscan_msg[m[K’
+[13.311s]   227 |         [01;31m[Kscan_msg[m[K->angle_min = M_PI
+[13.311s]       |         [01;31m[K^~~~~~~~[m[K
+[16.843s] gmake[2]: *** [CMakeFiles/sllidar_node.dir/build.make:76: CMakeFiles/sllidar_node.dir/src/sllidar_node.cpp.o] Error 1
+[16.844s] gmake[1]: *** [CMakeFiles/Makefile2:139: CMakeFiles/sllidar_node.dir/all] Error 2
+[16.845s] gmake: *** [Makefile:146: all] Error 2
+[16.851s] Invoked command in '/home/mike/roborama25_ws/build/sllidar_ros2' returned '2': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/home/mike/roborama25_ws/install/robo24_stuff:/home/mike/ros2_ws/install/robo24_stuff:/home/mike/ros2_ws/install/robo24_nav:/home/mike/ros2_ws/install/robo24_localization:/home/mike/ros2_ws/install/robo24_bringup:/home/mike/ros2_ws/install/moonday24_demo:/opt/ros/humble /usr/bin/cmake --build /home/mike/roborama25_ws/build/sllidar_ros2 -- -j4 -l4

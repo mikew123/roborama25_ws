@@ -1,0 +1,6 @@
+{
+  "package_name": "robo24_interfaces",
+  "non_idl_tuples": [
+    "/home/mike/roborama25_ws/src/robo24_interfaces:srv/Claw.srv"
+  ]
+}

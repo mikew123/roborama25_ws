@@ -1,0 +1,17 @@
+// generated from rosidl_adapter/resource/srv.idl.em
+// with input from robo24_interfaces/srv/Claw.srv
+// generated code does not contain a copyright notice
+
+
+module robo24_interfaces {
+  module srv {
+    struct Claw_Request {
+      int16 pct;
+
+      int16 msec;
+    };
+    struct Claw_Response {
+      string resp;
+    };
+  };
+};
