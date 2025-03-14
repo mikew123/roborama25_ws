@@ -91,20 +91,21 @@ class Roborama25SensorSerialNode(Node):
         self.timer = self.create_timer((1.0/self.timerRateHz), self.timer_callback)
 
         #create TF static earth->map frame
-        self.map_tf_static_broadcaster = StaticTransformBroadcaster(self)
-        self.make_map_static_transform()
+        #self.map_tf_static_broadcaster = StaticTransformBroadcaster(self)
+        #self.make_map_static_transform()
         
-        #Create TF links map->odom->base_link->lidar_link
+        #Create TF links earth->map->odom->base_link->lidar_link
         #                                    ->tofL4_link
         #                                    ->tofL5L_link
         #                                    ->tofL5R_link
+        self.map_tf_broadcaster = TransformBroadcaster(self)
         self.odom_tf_broadcaster = TransformBroadcaster(self)
         self.base_link_tf_broadcaster = TransformBroadcaster(self)
         self.lidar_link_tf_broadcaster = TransformBroadcaster(self)
         self.tofL4_link_tf_broadcaster = TransformBroadcaster(self)
         self.tofL5L_link_tf_broadcaster = TransformBroadcaster(self)
         self.tofL5R_link_tf_broadcaster = TransformBroadcaster(self)
-        self.timer = self.create_timer(1.0, self.broadcast_timer_callback)
+        self.timer = self.create_timer(1/10.0, self.broadcast_timer_callback)
         
         
         self.get_logger().info(f"SensorSerialNode Started")
@@ -141,6 +142,11 @@ class Roborama25SensorSerialNode(Node):
 
         t.header.stamp = self.get_clock().now().to_msg()
                 
+        self.zeroTransform(t.transform)
+        t.header.frame_id = 'earth'
+        t.child_frame_id = 'map'
+        self.map_tf_broadcaster.sendTransform(t)
+        
         self.zeroTransform(t.transform)
         t.header.frame_id = 'map'
         t.child_frame_id = 'odom'
