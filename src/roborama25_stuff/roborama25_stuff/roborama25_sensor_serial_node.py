@@ -78,10 +78,11 @@ class Roborama25SensorSerialNode(Node):
         self.sensor_serial_port.write(f"SIGM {self.sigmVal}\n".encode())
 
 
-        self.L5_pcd_publisher = self.create_publisher(PointCloud2, 'L5_pcd', 10)
-        self.L4_rng_publisher = self.create_publisher(Range, 'L4_rng', 10)
-        self.L5_msg_publisher = self.create_publisher(String, 'L5_msg', 10)
-        self.L4_msg_publisher = self.create_publisher(String, 'L4_msg', 10)
+        self.tofL5L_pcd_publisher = self.create_publisher(PointCloud2, 'tofL5L_pcd', 10)
+        self.tofL5R_pcd_publisher = self.create_publisher(PointCloud2, 'tofL5R_pcd', 10)
+        self.tofL4_rng_publisher = self.create_publisher(Range, 'tofL4_rng', 10)
+        self.tofL5_msg_publisher = self.create_publisher(String, 'tofL5_msg', 10)
+        self.tofL4_msg_publisher = self.create_publisher(String, 'tofL4_msg', 10)
         self.IMU_msg_publisher = self.create_publisher(Imu, 'IMU', 10)
         self.CAL_msg_publisher = self.create_publisher(String, 'IMUCAL_msg', 10)
         self.battery_status_msg_publisher = self.create_publisher(BatteryState, 'battery_status', 10)
@@ -94,10 +95,15 @@ class Roborama25SensorSerialNode(Node):
         self.make_map_static_transform()
         
         #Create TF links map->odom->base_link->lidar_link
+        #                                    ->tofL4_link
+        #                                    ->tofL5L_link
+        #                                    ->tofL5R_link
         self.odom_tf_broadcaster = TransformBroadcaster(self)
         self.base_link_tf_broadcaster = TransformBroadcaster(self)
         self.lidar_link_tf_broadcaster = TransformBroadcaster(self)
         self.tofL4_link_tf_broadcaster = TransformBroadcaster(self)
+        self.tofL5L_link_tf_broadcaster = TransformBroadcaster(self)
+        self.tofL5R_link_tf_broadcaster = TransformBroadcaster(self)
         self.timer = self.create_timer(1.0, self.broadcast_timer_callback)
         
         
@@ -106,7 +112,7 @@ class Roborama25SensorSerialNode(Node):
     def make_map_static_transform(self):
         t = TransformStamped()
 
-        #t.header.stamp = self.get_clock().now().to_msg()
+        t.header.stamp = self.get_clock().now().to_msg()
         t.header.frame_id = "earth"
         t.child_frame_id = "map"
 
@@ -160,6 +166,34 @@ class Roborama25SensorSerialNode(Node):
         # TOF range detector is 100mm in front of center
         t.transform.translation.x = 0.1
         self.tofL4_link_tf_broadcaster.sendTransform(t)
+        
+        self.zeroTransform(t.transform)
+        t.header.frame_id = 'base_link'
+        t.child_frame_id = 'tofL5L_link'
+        # TOF range detector is offset x=100mm y=70mm theta=45/2
+        t.transform.translation.x = 0.170
+        t.transform.translation.y = 0.070
+        yaw = +((45.0/2)+3.5)
+        q = quaternion_from_euler(roll=0, pitch=0, yaw=math.pi*yaw/180)
+        t.transform.rotation.x = q[1]
+        t.transform.rotation.y = q[2]
+        t.transform.rotation.z = q[3]
+        t.transform.rotation.w = q[0]        
+        self.tofL5L_link_tf_broadcaster.sendTransform(t)
+        
+        self.zeroTransform(t.transform)
+        t.header.frame_id = 'base_link'
+        t.child_frame_id = 'tofL5R_link'
+        # TOF range detector is offset x=100mm y=70mm theta=-45/2
+        t.transform.translation.x = 0.170
+        t.transform.translation.y = -0.070
+        yaw = -((45.0/2)+3.5)
+        q = quaternion_from_euler(roll=0, pitch=0, yaw=math.pi*yaw/180)
+        t.transform.rotation.x = q[1]
+        t.transform.rotation.y = q[2]
+        t.transform.rotation.z = q[3]
+        t.transform.rotation.w = q[0]        
+        self.tofL5R_link_tf_broadcaster.sendTransform(t)
 
     # check serial port at timerRateHz and parse out messages to publish
     def timer_callback(self):
@@ -189,28 +223,18 @@ class Roborama25SensorSerialNode(Node):
             emsg = String()
             for i in range(1, num_data+1):
                 emsg.data += strArray[i]+" "
-            self.L5_msg_publisher.publish(emsg)
+            self.tofL5_msg_publisher.publish(emsg)
 
             # Publish the TOF distances as a point cloud
-            fov = 45
-            fovPt = fov/8 # FOV for each sensor point
+            fov = 45.0
+            fovPt = fov/8 # FOV for each 8x8 sensor point
             fovPtRad = fovPt*(math.pi/180) #scaled to Radians
-            # angle in degrees of each of the 4 sensors LL,LR,Rl,RR
-            mntOff = 3.5 # Tweak so that only 1 can is seen in Rviz at 1 meter
-            mntAngle = [45+mntOff,0+mntOff,0-mntOff,-45-mntOff]
-            
-            #convert string data to integer mm distance
-            # break up into 4 sets of 8 for each sensor
-            dist:list[[]] = [[0 for x in range(8)]for y in range(4)]
-            #[[0 for x in range(9)] for y in range(9)]
-            for s in range(0, 4):
-                for i in range(0, 8):
-                    d = int(strArray[(s*8)+i+1])
-                    #if d<0: d = 0
-                    dist[s][i] = d
-            
+            # angle in degrees of each of the 2 sensors in pairs (LL,LR) and (Rl,RR)
+            mntAngle = [fov/4, -fov/4]
+
+            # There is a curvature in the distances of the sensors that needs to be corrected
             # Remove the curve by scaling each sensor with a inverted sin() curve over FOV
-            # NOTE: This could be pre-computed since it is constant
+            # NOTE: This could be pre-computed outside the function since it is constant
             tofCurveCor = []
             for n in range(0,8) :
                 theta:float = (n-4+0.5)*fovPtRad + math.pi/2
@@ -218,56 +242,43 @@ class Roborama25SensorSerialNode(Node):
                 if n == 0 : s0 = s
                 tofCurveCor.append(s0/s)
             
-            # calc xy coordinates relative to robot center with 0 deg pointing staight ahead
-            # each sensor distance data point has an effective FOV of 45/8 = 5.6 deg
-            # there are 24 data points n = 0, 1 to 23
-            # theta = (60/8)*1/2 + (n-12)*(60/8) -> 0=-86.25 23=+86.25, 11=-3.75, 12=+3.75
-            xy0:list[np.float32, np.float32, np.float32] = []
-            zz0 = np.float32(0.07) # height meters of sensor from ground
+            #convert string data to integer mm distance
+            # break up into 4 sets of 8 for each sensor
+            # data is in this order L to R LL[8] LR[8] RL[8] RR[8]
+            dist:list[[]] = [[0 for x in range(8)]for y in range(4)]
+            for s in range(0, 4):
+                for i in range(0, 8):
+                    d = int(strArray[(s*8)+i+1])
+                    dist[s][i] = d
+            #self.get_logger().info(f"{dist=}")
             
-            # TODO: offset for map localization
-            x0 = 0
-            y0 = 0
-            th0 = 0
-            c0:float = math.cos(th0)
-            s0:float = math.sin(th0)
-            
-            # XY offset meters from robot center
-            xOff = 175/1000.0
-            yOff = 70/1000.0
-            
-            for s in range(0, 4):            
-                mntAngleRad = mntAngle[s]*(math.pi/180) #scaled to Radians
-                #fovPt = fov/8 # FOV for each sensor point
-                #fovPtRad = fovPt*(math.pi/180) #scaled to Radians
-                if(s==0 or s==1): yOff_ = yOff
-                else: yOff_ = -yOff
-                
-                for n in range(0,8) :
-                    theta = (n-4+0.5)*fovPtRad  - mntAngleRad# scaled to radians
-                    d = dist[s][n]
-                    if d==-1: 
-                        # Bad data-Put point cloud at center or robot at ground
-                        xx0 = 0
-                        yy0 = 0
-                        zz0 = 0
-                    else :
-                        Wx =  int(d*math.cos(theta)*tofCurveCor[n])
-                        Wy = -int(d*math.sin(theta)*tofCurveCor[n])
-                        #Rotate using location offsets x0 y0 c0 s0
-                        #Convert mm to meters
-                        xx_ = np.float32(( (Wx*c0 + Wy*s0)/1000.0) )
-                        yy_ = np.float32((-(Wx*s0 - Wy*c0)/1000.0) )
-                        xx0 = xx_ + x0 + xOff
-                        yy0 = yy_ + y0 + yOff_
-                        # # negated x and y distance to match RPlidar C1 scan on Rviz2 screen
-                        # xx0 = -xx0
-                        # yy0 = -yy0
+            xy0 = [[],[]]
+            zz0 = 0.015 # 15mm from module bottom
+            for m in [0,1]: # 2 sets of sensor modules L=0 R=1
+                for s in [0,1]: # 2 Vl53L4 sensors on each module           
+                    mntAngleRad = mntAngle[s]*(math.pi/(2*fov)) #scaled to Radians
+                    for n in range(0, 8) :
+                        theta = (n-4+0.5)*fovPtRad  - mntAngleRad # scaled to radians
+                        d = dist[s+(2*m)][n]
+                        if d==-1: 
+                            # Bad data-Put point cloud at center of sensor module
+                            xx0 = 0 # use INF ?
+                            yy0 = 0
+                        else :
+                            Wx =  int(d*math.cos(theta)*tofCurveCor[n])
+                            Wy = -int(d*math.sin(theta)*tofCurveCor[n])
+                            #Convert mm to meters
+                            xx0 = np.float32(Wx/1000.0)
+                            yy0 = np.float32(Wy/1000.0)
+                           
+                        xy0[m].append((xx0,yy0,zz0))
                         
-                    xy0.append((xx0,yy0,zz0))
+            #self.get_logger().info(f"{xy0=}")
 
-            pcd = self.point_cloud(xy0, 'base_link')
-            self.L5_pcd_publisher.publish(pcd)
+            pcd = self.point_cloud(xy0[0], 'tofL5L_link')
+            self.tofL5L_pcd_publisher.publish(pcd)
+            pcd = self.point_cloud(xy0[1], 'tofL5R_link')
+            self.tofL5R_pcd_publisher.publish(pcd)
 
             
     def L4_processing(self, strArray):
@@ -277,7 +288,7 @@ class Roborama25SensorSerialNode(Node):
             emsg = String()
             for i in range(1, num_data+1):
                 emsg.data += strArray[i]+" "
-            self.L4_msg_publisher.publish(emsg)
+            self.tofL4_msg_publisher.publish(emsg)
         
             # Create a single point point cloud 
             s = int(strArray[1]) #status
@@ -287,7 +298,7 @@ class Roborama25SensorSerialNode(Node):
             fov = 2*math.pi*18.0/360
             
             rng = self.range_msg(d,fov,"tofL4_link")
-            self.L4_rng_publisher.publish(rng)
+            self.tofL4_rng_publisher.publish(rng)
             
         
     def IMU_processing(self, strArray):
@@ -351,28 +362,20 @@ class Roborama25SensorSerialNode(Node):
             self.temperature_msg_publisher.publish(tmsg)
 
     def range_msg(self, range:float=0, fov:float=0, parent_frame:str="map") -> Range:
-        # uint8 ULTRASOUND=0
-        # uint8 INFRARED=1
-        # std_msgs/msg/Header header
-        # uint8 radiation_type
-        # float field_of_view
-        # float min_range
-        # float max_range
-        # float range
-        
         header = Header(
             frame_id = parent_frame,
-            #stamp = self.get_clock().now().to_msg(),
+            stamp = self.get_clock().now().to_msg(),
             )
         
         return Range(
             header = header,
             radiation_type = Range.INFRARED,
             field_of_view = fov,
-            min_range = 0.05,
+            min_range = 0.010,
             max_range = 4.00,
             range = range
         )        
+        
     def point_cloud(self, points_xy:list[tuple[np.float32]], parent_frame:str="map") -> PointCloud2:
         """
             Input list of tuples (x,y,z) the frame name for xy z is fixed relative offset usually "map"
@@ -398,7 +401,7 @@ class Roborama25SensorSerialNode(Node):
         # coordinate frame it is represented in. 
         header = Header(
             frame_id=parent_frame,
-            #stamp = self.get_clock().now().to_msg(),
+            stamp = self.get_clock().now().to_msg(),
             )
 
         return PointCloud2(
