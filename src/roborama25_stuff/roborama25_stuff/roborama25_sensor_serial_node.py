@@ -15,7 +15,7 @@ from sensor_msgs.msg import Imu
 from sensor_msgs.msg import PointCloud2, PointField, Range
 from tf2_ros.static_transform_broadcaster import StaticTransformBroadcaster
 from tf2_ros import TransformBroadcaster
-from geometry_msgs.msg import TransformStamped
+from geometry_msgs.msg import TransformStamped, Transform
 
 # def quaternion_from_euler(ai, aj, ak):
 #     ai /= 2.0
@@ -89,14 +89,15 @@ class Roborama25SensorSerialNode(Node):
 
         self.timer = self.create_timer((1.0/self.timerRateHz), self.timer_callback)
 
-        #create TF static world->map frame
+        #create TF static earth->map frame
         self.map_tf_static_broadcaster = StaticTransformBroadcaster(self)
         self.make_map_static_transform()
         
-        #Create TF links map->odom->base_link->lidar
+        #Create TF links map->odom->base_link->lidar_link
         self.odom_tf_broadcaster = TransformBroadcaster(self)
         self.base_link_tf_broadcaster = TransformBroadcaster(self)
-        self.lidar_tf_broadcaster = TransformBroadcaster(self)
+        self.lidar_link_tf_broadcaster = TransformBroadcaster(self)
+        self.tofL4_link_tf_broadcaster = TransformBroadcaster(self)
         self.timer = self.create_timer(1.0, self.broadcast_timer_callback)
         
         
@@ -106,7 +107,7 @@ class Roborama25SensorSerialNode(Node):
         t = TransformStamped()
 
         #t.header.stamp = self.get_clock().now().to_msg()
-        t.header.frame_id = "world"
+        t.header.frame_id = "earth"
         t.child_frame_id = "map"
 
         t.transform.translation.x = 0.0
@@ -119,40 +120,46 @@ class Roborama25SensorSerialNode(Node):
 
         self.map_tf_static_broadcaster.sendTransform(t)
         
+    def zeroTransform(self, transform: Transform) :
+        transform.translation.x = 0.0
+        transform.translation.y = 0.0
+        transform.translation.z = 0.0
+        transform.rotation.x = 0.0
+        transform.rotation.y = 0.0
+        transform.rotation.z = 0.0
+        transform.rotation.w = 1.0
+        
     def broadcast_timer_callback(self):
         #Create TF links map->odom->base_link->lidar
         t = TransformStamped()
 
         t.header.stamp = self.get_clock().now().to_msg()
-        
-        t.transform.translation.x = 0.0
-        t.transform.translation.y = 0.0
-        t.transform.translation.z = 0.0
-        t.transform.rotation.x = 0.0
-        t.transform.rotation.y = 0.0
-        t.transform.rotation.z = 0.0
-        t.transform.rotation.w = 1.0
-
+                
+        self.zeroTransform(t.transform)
         t.header.frame_id = 'map'
         t.child_frame_id = 'odom'
         self.odom_tf_broadcaster.sendTransform(t)
         
+        self.zeroTransform(t.transform)
         t.header.frame_id = 'odom'
         t.child_frame_id = 'base_link'
         self.base_link_tf_broadcaster.sendTransform(t)
         
+        self.zeroTransform(t.transform)
         t.header.frame_id = 'base_link'
-        t.child_frame_id = 'lidar'
+        t.child_frame_id = 'lidar_link'
         #rotate 180 deg, raise 100mm
         t.transform.translation.z = 0.1
-        # q = quaternion_from_euler(roll=0, pitch=0, yaw=math.pi)
-        # t.transform.rotation.x = q[1]
-        # t.transform.rotation.y = q[2]
-        # t.transform.rotation.z = q[3]
-        # t.transform.rotation.w = q[0]
         t.transform.rotation.z = 1.0
         t.transform.rotation.w = 0.0
-        self.lidar_tf_broadcaster.sendTransform(t)
+        self.lidar_link_tf_broadcaster.sendTransform(t)
+
+        self.zeroTransform(t.transform)
+        t.header.frame_id = 'base_link'
+        t.child_frame_id = 'tofL4_link'
+        # TOF range detector is 100mm in front of center
+        t.transform.translation.x = 0.1
+        self.tofL4_link_tf_broadcaster.sendTransform(t)
 
     # check serial port at timerRateHz and parse out messages to publish
     def timer_callback(self):
@@ -276,14 +283,10 @@ class Roborama25SensorSerialNode(Node):
             s = int(strArray[1]) #status
             d = int(strArray[2]) #distance mm
            
-            # XY offset meters from robot center
-            xOff = 100/1000.0
-
-            d = ((d/1000.0)+xOff)
-            
+            d = d/1000.0
             fov = 2*math.pi*18.0/360
             
-            rng = self.range_msg(d,fov,"base_link")
+            rng = self.range_msg(d,fov,"tofL4_link")
             self.L4_rng_publisher.publish(rng)
             
         

@@ -111,14 +111,20 @@ class Roborama25WheelControllerNode(Node):
         self.get_logger().info(f"WheelControllerNode Started: Odometry rate = {self.odometryRateHz} Hz")
 
     # Get button commands from Joy message
-    def joy_callback(self, msg):
-        resetAxes = msg.buttons[6] # 1 when pushed
-
-        if resetAxes :
+    def joy_callback(self, msg:Joy):
+        resetAxes:int = msg.buttons[6] # 1 when pushed
+        openClaw:int = msg.buttons[4] # 1 when pushed
+        closeClaw:float = msg.axes[2] # 1.0 when not pushed
+        
+        if resetAxes == 1 :
             # reset encoders and transform
             # TODO: ??reset coders on wheel Pico (needs new pico code cmd)??
             self.odMesssageCount = 0 # resets tf 
 
+        if openClaw == 1 :
+            self.wheel_serial_port.write("CP 0 1000\n".encode())
+        if closeClaw != 1.0 :
+            self.wheel_serial_port.write("CP 100 1000\n".encode())
 
     # Convert /cmd_vel messages to physical 2 wheel diff drive velocities in meters per second
     def cmd_vel_callback(self, msg):
