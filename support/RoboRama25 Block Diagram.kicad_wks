@@ -1,0 +1,917 @@
+(kicad_wks
+	(version 20231118)
+	(generator "pl_editor")
+	(generator_version "9.0")
+	(setup
+		(textsize 1.5 1.5)
+		(linewidth 0.15)
+		(textlinewidth 0.15)
+		(left_margin 10)
+		(right_margin 10)
+		(top_margin 10)
+		(bottom_margin 10)
+	)
+	(rect
+		(name "")
+		(start 110 34)
+		(end 2 2)
+		(comment "rect around the title block")
+	)
+	(rect
+		(name "")
+		(start 0 0 ltcorner)
+		(end 0 0)
+		(repeat 2)
+		(incrx 2)
+		(incry 2)
+	)
+	(line
+		(name "")
+		(start 50 2 ltcorner)
+		(end 50 0 ltcorner)
+		(repeat 30)
+		(incrx 50)
+	)
+	(tbtext "1"
+		(name "")
+		(pos 25 1 ltcorner)
+		(font
+			(size 1.3 1.3)
+		)
+		(repeat 100)
+		(incrx 50)
+	)
+	(line
+		(name "")
+		(start 50 2 lbcorner)
+		(end 50 0 lbcorner)
+		(repeat 30)
+		(incrx 50)
+	)
+	(tbtext "1"
+		(name "")
+		(pos 25 1 lbcorner)
+		(font
+			(size 1.3 1.3)
+		)
+		(repeat 100)
+		(incrx 50)
+	)
+	(line
+		(name "")
+		(start 0 50 ltcorner)
+		(end 2 50 ltcorner)
+		(repeat 30)
+		(incry 50)
+	)
+	(tbtext "A"
+		(name "")
+		(pos 1 25 ltcorner)
+		(font
+			(size 1.3 1.3)
+		)
+		(justify center)
+		(repeat 100)
+		(incry 50)
+	)
+	(line
+		(name "")
+		(start 0 50 rtcorner)
+		(end 2 50 rtcorner)
+		(repeat 30)
+		(incry 50)
+	)
+	(tbtext "A"
+		(name "")
+		(pos 1 25 rtcorner)
+		(font
+			(size 1.3 1.3)
+		)
+		(justify center)
+		(repeat 100)
+		(incry 50)
+	)
+	(tbtext "Date: ${ISSUE_DATE}"
+		(name "")
+		(pos 87 6.9)
+	)
+	(line
+		(name "")
+		(start 117.62 5.5002)
+		(end 9.62 5.5002)
+	)
+	(tbtext "${KICAD_VERSION}"
+		(name "")
+		(pos 109 4.1)
+		(comment "Kicad version")
+	)
+	(line
+		(name "")
+		(start 110 8.5)
+		(end 2 8.5)
+	)
+	(tbtext "Rev: ${REVISION}"
+		(name "")
+		(pos 24 6.9)
+		(font bold)
+	)
+	(tbtext "Size: ${PAPER}"
+		(name "")
+		(pos 109 6.9)
+		(comment "Paper format name")
+	)
+	(tbtext "Id: ${#}/${##}"
+		(name "")
+		(pos 24 4.1)
+		(comment "Sheet id")
+	)
+	(line
+		(name "")
+		(start 110 12.5)
+		(end 2 12.5)
+	)
+	(tbtext "Title: ${TITLE}"
+		(name "")
+		(pos 109 10.7)
+		(font
+			(size 2 2) bold italic)
+	)
+	(tbtext "File: ${FILENAME}"
+		(name "")
+		(pos 109 14.3)
+	)
+	(line
+		(name "")
+		(start 110 18.5)
+		(end 2 18.5)
+	)
+	(tbtext "Sheet: ${SHEETPATH}"
+		(name "")
+		(pos 109 17)
+	)
+	(tbtext "${COMPANY}"
+		(name "")
+		(pos 109 20)
+		(font bold)
+		(comment "Company name")
+	)
+	(tbtext "${COMMENT1}"
+		(name "")
+		(pos 109 23)
+		(comment "Comment 0")
+	)
+	(tbtext "${COMMENT2}"
+		(name "")
+		(pos 109 26)
+		(comment "Comment 1")
+	)
+	(tbtext "${COMMENT3}"
+		(name "")
+		(pos 109 29)
+		(comment "Comment 2")
+	)
+	(tbtext "${COMMENT4}"
+		(name "")
+		(pos 109 32)
+		(comment "Comment 3")
+	)
+	(line
+		(name "")
+		(start 90 8.5)
+		(end 90 5.5)
+	)
+	(line
+		(name "")
+		(start 26 8.5)
+		(end 26 2)
+	)
+	(rect
+		(name "")
+		(start 326.169 200.6422)
+		(end 356.649 236.2022)
+	)
+	(tbtext "Battery\n14-16V\n"
+		(name "")
+		(pos 343.949 220.9622)
+		(font
+			(size 2.54 2.54) bold)
+		(justify center)
+	)
+	(rect
+		(name "")
+		(start 277.909 200.6422)
+		(end 308.389 236.2022)
+	)
+	(tbtext "Voltage\nRegulators\nSwich, Fuse\nand Monitor\n"
+		(name "")
+		(pos 293.149 220.9622)
+		(font
+			(size 2.54 2.54) bold)
+		(justify center)
+	)
+	(line
+		(name "")
+		(start 326.169 220.9622)
+		(end 308.389 220.9622)
+		(linewidth 1.27)
+	)
+	(rect
+		(name "")
+		(start 201.709 200.6422)
+		(end 232.189 236.2022)
+	)
+	(tbtext "Raspberry Pi4\n"
+		(name "")
+		(pos 216.949 218.4222)
+		(font
+			(size 2.54 2.54) bold)
+		(justify center)
+	)
+	(rect
+		(name "")
+		(start 125.509 200.6422)
+		(end 155.989 236.2022)
+	)
+	(tbtext "USB hub\npowered\n"
+		(name "")
+		(pos 140.749 218.422)
+		(font
+			(size 2.54 2.54) bold)
+		(justify center)
+	)
+	(rect
+		(name "")
+		(start 49.309 210.8022)
+		(end 79.789 236.2022)
+	)
+	(tbtext "Lidar\n360 deg\n"
+		(name "")
+		(pos 64.549 223.5022)
+		(font
+			(size 2.54 2.54) bold)
+		(justify center)
+	)
+	(rect
+		(name "")
+		(start 49.309 177.7822)
+		(end 79.789 200.6422)
+	)
+	(tbtext "Camera\n"
+		(name "")
+		(pos 64.549 190.4822)
+		(font
+			(size 2.54 2.54) bold)
+		(justify center)
+	)
+	(rect
+		(name "")
+		(start 49.309 147.3022)
+		(end 79.789 170.1622)
+	)
+	(tbtext "Blue Tooth\nReceiver\n"
+		(name "")
+		(pos 64.549 160.002)
+		(font
+			(size 2.54 2.54) bold)
+		(justify center)
+	)
+	(rect
+		(name "")
+		(start 107.729 147.3022)
+		(end 155.989 185.4022)
+	)
+	(tbtext "Front Sensors\nController\n"
+		(name "")
+		(pos 135.669 167.6222)
+		(font
+			(size 2.54 2.54) bold)
+		(justify center)
+	)
+	(rect
+		(name "")
+		(start 186.469 149.8422)
+		(end 232.189 185.4022)
+	)
+	(tbtext "Wheels\nController\n"
+		(name "")
+		(pos 216.949 167.622)
+		(font
+			(size 2.54 2.54) bold)
+		(justify center)
+	)
+	(line
+		(name "")
+		(start 277.909 228.5822)
+		(end 232.189 228.5822)
+		(linewidth 1.27)
+	)
+	(line
+		(name "")
+		(start 277.909 208.262)
+		(end 262.669 208.262)
+		(linewidth 1.27)
+	)
+	(line
+		(name "")
+		(start 262.669 208.262)
+		(end 262.669 157.462)
+		(linewidth 1.27)
+	)
+	(line
+		(name "")
+		(start 262.669 157.462)
+		(end 232.189 157.462)
+		(linewidth 1.27)
+	)
+	(line
+		(name "")
+		(start 262.669 195.562)
+		(end 166.149 195.562)
+		(linewidth 1.27)
+	)
+	(line
+		(name "")
+		(start 166.149 195.562)
+		(end 166.149 157.462)
+		(linewidth 1.27)
+	)
+	(line
+		(name "")
+		(start 166.149 157.462)
+		(end 155.989 157.462)
+		(linewidth 1.27)
+	)
+	(line
+		(name "")
+		(start 166.149 195.562)
+		(end 166.149 205.722)
+		(linewidth 1.27)
+	)
+	(line
+		(name "")
+		(start 166.149 205.722)
+		(end 155.989 205.722)
+		(linewidth 1.27)
+	)
+	(line
+		(name "")
+		(start 277.909 218.422)
+		(end 257.589 218.422)
+		(linewidth 1.27)
+	)
+	(line
+		(name "")
+		(start 257.589 218.422)
+		(end 257.589 170.162)
+		(linewidth 1.27)
+	)
+	(line
+		(name "")
+		(start 257.589 170.162)
+		(end 232.189 170.162)
+		(linewidth 1.27)
+	)
+	(line
+		(name "")
+		(start 201.709 228.582)
+		(end 155.989 228.582)
+		(linewidth 1.27)
+	)
+	(line
+		(name "")
+		(start 201.709 208.262)
+		(end 194.089 208.262)
+		(linewidth 1.27)
+	)
+	(line
+		(name "")
+		(start 194.089 208.262)
+		(end 194.089 190.482)
+		(linewidth 1.27)
+	)
+	(line
+		(name "")
+		(start 194.089 190.482)
+		(end 239.809 190.482)
+		(linewidth 1.27)
+	)
+	(line
+		(name "")
+		(start 239.809 190.482)
+		(end 239.809 177.782)
+		(linewidth 1.27)
+	)
+	(line
+		(name "")
+		(start 239.809 177.782)
+		(end 232.189 177.782)
+		(linewidth 1.27)
+	)
+	(line
+		(name "")
+		(start 201.709 218.422)
+		(end 181.389 218.422)
+		(linewidth 1.27)
+	)
+	(line
+		(name "")
+		(start 181.389 218.422)
+		(end 181.389 177.782)
+		(linewidth 1.27)
+	)
+	(line
+		(name "")
+		(start 181.389 177.782)
+		(end 155.989 177.782)
+		(linewidth 1.27)
+	)
+	(line
+		(name "")
+		(start 125.509 228.582)
+		(end 79.789 228.582)
+		(linewidth 1.27)
+	)
+	(line
+		(name "")
+		(start 125.509 205.722)
+		(end 100.109 205.722)
+		(linewidth 1.27)
+	)
+	(line
+		(name "")
+		(start 100.109 205.7222)
+		(end 100.109 160.0022)
+		(linewidth 1.27)
+	)
+	(line
+		(name "")
+		(start 100.109 160.0022)
+		(end 79.789 160.0022)
+		(linewidth 1.27)
+	)
+	(line
+		(name "")
+		(start 125.509 213.342)
+		(end 95.029 213.342)
+		(linewidth 1.27)
+	)
+	(line
+		(name "")
+		(start 95.029 213.3422)
+		(end 95.029 187.9422)
+		(linewidth 1.27)
+	)
+	(line
+		(name "")
+		(start 95.029 187.9422)
+		(end 79.789 187.9422)
+		(linewidth 1.27)
+	)
+	(rect
+		(name "")
+		(start 201.709 246.3622)
+		(end 232.189 266.6822)
+	)
+	(tbtext "Laser\nPointer"
+		(name "")
+		(pos 216.949 256.522)
+		(font
+			(size 2.54 2.54) bold)
+		(justify center)
+	)
+	(line
+		(name "")
+		(start 242.349 228.582)
+		(end 242.349 256.522)
+		(linewidth 1.27)
+		(comment "5V")
+	)
+	(line
+		(name "")
+		(start 242.349 256.522)
+		(end 232.189 256.522)
+		(linewidth 1.27)
+	)
+	(tbtext "5V"
+		(name "")
+		(pos 272.829 233.662)
+		(font
+			(size 2.54 2.54) bold)
+	)
+	(tbtext "5V"
+		(name "")
+		(pos 272.829 210.8022)
+		(font
+			(size 2.54 2.54) bold)
+	)
+	(tbtext "12V"
+		(name "")
+		(pos 272.829 220.962)
+		(font
+			(size 2.54 2.54) bold)
+	)
+	(tbtext "USB"
+		(name "")
+		(pos 196.629 231.122)
+		(font
+			(size 2.54 2.54) bold)
+	)
+	(tbtext "USB"
+		(name "")
+		(pos 196.629 220.9622)
+		(font
+			(size 2.54 2.54) bold)
+	)
+	(tbtext "USB"
+		(name "")
+		(pos 196.629 210.8022)
+		(font
+			(size 2.54 2.54) bold)
+	)
+	(tbtext "USB"
+		(name "")
+		(pos 120.429 231.1222)
+		(font
+			(size 2.54 2.54) bold)
+	)
+	(tbtext "USB"
+		(name "")
+		(pos 120.429 215.8822)
+		(font
+			(size 2.54 2.54) bold)
+	)
+	(tbtext "USB"
+		(name "")
+		(pos 120.429 208.2622)
+		(font
+			(size 2.54 2.54) bold)
+	)
+	(tbtext "5V"
+		(name "")
+		(pos 239.809 160.0022)
+		(font
+			(size 2.54 2.54) bold)
+	)
+	(tbtext "5V"
+		(name "")
+		(pos 163.609 160.0022)
+		(font
+			(size 2.54 2.54) bold)
+	)
+	(tbtext "5V"
+		(name "")
+		(pos 163.609 208.2622)
+		(font
+			(size 2.54 2.54) bold)
+	)
+	(tbtext "5V"
+		(name "")
+		(pos 239.809 259.0622)
+		(font
+			(size 2.54 2.54) bold)
+	)
+	(tbtext "5V"
+		(name "")
+		(pos 239.809 231.1222)
+		(font
+			(size 2.54 2.54) bold)
+	)
+	(tbtext "12V"
+		(name "")
+		(pos 242.349 172.7022)
+		(font
+			(size 2.54 2.54) bold)
+	)
+	(rect
+		(name "")
+		(start 282.989 134.6022)
+		(end 313.469 154.9222)
+	)
+	(rect
+		(name "")
+		(start 282.989 109.2022)
+		(end 313.469 129.5222)
+	)
+	(tbtext "Right Motor\nand Encoder"
+		(name "")
+		(pos 298.229 119.362)
+		(font
+			(size 2.54 2.54) bold)
+		(justify center)
+	)
+	(line
+		(name "")
+		(start 282.989 144.762)
+		(end 224.569 144.762)
+		(linewidth 1.27)
+	)
+	(line
+		(name "")
+		(start 224.569 144.762)
+		(end 224.569 149.842)
+		(linewidth 1.27)
+	)
+	(line
+		(name "")
+		(start 282.989 119.3622)
+		(end 216.949 119.3622)
+		(linewidth 1.27)
+	)
+	(line
+		(name "")
+		(start 216.949 119.3622)
+		(end 216.949 149.8422)
+		(linewidth 1.27)
+	)
+	(rect
+		(name "")
+		(start 49.309 114.2822)
+		(end 79.789 134.6022)
+	)
+	(tbtext "Left TOF8x16\n90 deg \nSensor"
+		(name "")
+		(pos 64.549 121.9022)
+		(font
+			(size 2.54 2.54) bold)
+		(justify center)
+	)
+	(rect
+		(name "")
+		(start 282.989 134.6022)
+		(end 313.469 154.9222)
+	)
+	(tbtext "Left Motor\nand Encoder"
+		(name "")
+		(pos 298.229 144.762)
+		(font
+			(size 2.54 2.54) bold)
+		(justify center)
+	)
+	(rect
+		(name "")
+		(start 49.309 88.8822)
+		(end 79.789 109.2022)
+	)
+	(tbtext "Right TOF8x16\n90 deg \nSensor"
+		(name "")
+		(pos 64.549 99.0422)
+		(font
+			(size 2.54 2.54) bold)
+		(justify center)
+	)
+	(rect
+		(name "")
+		(start 282.989 81.2622)
+		(end 313.469 101.5822)
+	)
+	(rect
+		(name "")
+		(start 282.989 55.8622)
+		(end 313.469 76.1822)
+	)
+	(rect
+		(name "")
+		(start 282.989 81.2622)
+		(end 313.469 101.5822)
+	)
+	(tbtext "Left Claw\nServo"
+		(name "")
+		(pos 298.229 91.422)
+		(font
+			(size 2.54 2.54) bold)
+		(justify center)
+	)
+	(tbtext "Right Claw\nServo"
+		(name "")
+		(pos 298.229 66.022)
+		(font
+			(size 2.54 2.54) bold)
+		(justify center)
+	)
+	(rect
+		(name "")
+		(start 282.989 30.4622)
+		(end 313.469 50.7822)
+	)
+	(rect
+		(name "")
+		(start 282.989 5.0622)
+		(end 313.469 25.3822)
+	)
+	(rect
+		(name "")
+		(start 282.989 30.4622)
+		(end 313.469 50.7822)
+	)
+	(tbtext "Left Claw\nLimit SW"
+		(name "")
+		(pos 298.229 40.622)
+		(font
+			(size 2.54 2.54) bold)
+		(justify center)
+	)
+	(tbtext "Right Claw\nLimit SW"
+		(name "")
+		(pos 298.229 15.222)
+		(font
+			(size 2.54 2.54) bold)
+		(justify center)
+	)
+	(rect
+		(name "")
+		(start 49.309 43.1622)
+		(end 79.789 63.4822)
+	)
+	(line
+		(name "")
+		(start 282.989 91.4222)
+		(end 206.789 91.4222)
+		(linewidth 1.27)
+	)
+	(line
+		(name "")
+		(start 282.989 66.0222)
+		(end 201.709 66.0222)
+		(linewidth 1.27)
+	)
+	(line
+		(name "")
+		(start 282.989 40.6222)
+		(end 196.629 40.6222)
+		(linewidth 1.27)
+	)
+	(line
+		(name "")
+		(start 282.989 15.2222)
+		(end 191.549 15.2222)
+		(linewidth 1.27)
+	)
+	(line
+		(name "")
+		(start 206.789 91.4222)
+		(end 206.789 149.8422)
+		(linewidth 1.27)
+	)
+	(line
+		(name "")
+		(start 201.709 66.0222)
+		(end 201.709 149.8422)
+		(linewidth 1.27)
+	)
+	(line
+		(name "")
+		(start 196.629 40.6222)
+		(end 196.629 149.8422)
+		(linewidth 1.27)
+	)
+	(line
+		(name "")
+		(start 191.549 15.2222)
+		(end 191.549 149.8422)
+		(linewidth 1.27)
+	)
+	(tbtext "Center TOF1x\n18 deg \nSensor"
+		(name "")
+		(pos 64.549 53.3222)
+		(font
+			(size 2.54 2.54) bold)
+		(justify center)
+	)
+	(tbtext "IMU \nSensor"
+		(name "")
+		(pos 112.809 53.322)
+		(font
+			(size 2.54 2.54) bold)
+		(justify center)
+	)
+	(rect
+		(name "")
+		(start 97.569 43.1622)
+		(end 128.049 63.4822)
+	)
+	(tbtext "Battery \nSensor"
+		(name "")
+		(pos 153.449 53.322)
+		(font
+			(size 2.54 2.54) bold)
+		(justify center)
+	)
+	(rect
+		(name "")
+		(start 138.209 43.1622)
+		(end 168.689 63.4822)
+	)
+	(line
+		(name "")
+		(start 140.749 147.3022)
+		(end 140.749 96.5022)
+		(linewidth 1.27)
+	)
+	(line
+		(name "")
+		(start 153.449 147.3022)
+		(end 153.449 73.6422)
+		(linewidth 1.27)
+	)
+	(line
+		(name "")
+		(start 140.749 96.5022)
+		(end 79.789 96.5022)
+		(linewidth 1.27)
+	)
+	(line
+		(name "")
+		(start 117.889 121.9022)
+		(end 79.789 121.9022)
+		(linewidth 1.27)
+	)
+	(line
+		(name "")
+		(start 153.449 73.6422)
+		(end 64.549 73.6422)
+		(linewidth 1.27)
+	)
+	(line
+		(name "")
+		(start 153.449 73.6422)
+		(end 153.449 63.4822)
+		(linewidth 1.27)
+	)
+	(line
+		(name "")
+		(start 112.809 73.6422)
+		(end 112.809 63.4822)
+		(linewidth 1.27)
+	)
+	(line
+		(name "")
+		(start 64.549 73.6422)
+		(end 64.549 63.4822)
+		(linewidth 1.27)
+	)
+	(tbtext "I2C1"
+		(name "")
+		(pos 155.989 137.1422)
+		(rotate 90)
+		(font
+			(size 2.54 2.54) bold)
+	)
+	(line
+		(name "")
+		(start 135.669 147.3022)
+		(end 135.669 101.5822)
+		(linewidth 1.27)
+	)
+	(line
+		(name "")
+		(start 117.889 147.3022)
+		(end 117.889 121.9022)
+		(linewidth 1.27)
+	)
+	(line
+		(name "")
+		(start 112.809 147.3022)
+		(end 112.809 126.9822)
+		(linewidth 1.27)
+	)
+	(line
+		(name "")
+		(start 135.669 101.5822)
+		(end 79.789 101.5822)
+		(linewidth 1.27)
+	)
+	(line
+		(name "")
+		(start 112.809 126.9822)
+		(end 79.789 126.9822)
+		(linewidth 1.27)
+	)
+	(tbtext "I2C0-L"
+		(name "")
+		(pos 143.289 132.0622)
+		(rotate 90)
+		(font
+			(size 2.54 2.54) bold)
+	)
+	(tbtext "I2C0-R"
+		(name "")
+		(pos 120.429 132.062)
+		(rotate 90)
+		(font
+			(size 2.54 2.54) bold)
+	)
+	(tbtext "GPIO"
+		(name "")
+		(pos 110.269 137.1422)
+		(rotate 90)
+		(font
+			(size 2.54 2.54) bold)
+	)
+	(tbtext "GPIO"
+		(name "")
+		(pos 133.129 137.1422)
+		(rotate 90)
+		(font
+			(size 2.54 2.54) bold)
+	)
+)
