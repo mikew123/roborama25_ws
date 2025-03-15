@@ -17,30 +17,8 @@ from tf2_ros.static_transform_broadcaster import StaticTransformBroadcaster
 from tf2_ros import TransformBroadcaster
 from geometry_msgs.msg import TransformStamped, Transform
 
-# def quaternion_from_euler(ai, aj, ak):
-#     ai /= 2.0
-#     aj /= 2.0
-#     ak /= 2.0
-#     ci = math.cos(ai)
-#     si = math.sin(ai)
-#     cj = math.cos(aj)
-#     sj = math.sin(aj)
-#     ck = math.cos(ak)
-#     sk = math.sin(ak)
-#     cc = ci*ck
-#     cs = ci*sk
-#     sc = si*ck
-#     ss = si*sk
-
-#     q = np.empty((4, ))
-#     q[0] = cj*sc - sj*cs
-#     q[1] = cj*ss + sj*cc
-#     q[2] = cj*cs - sj*sc
-#     q[3] = cj*cc + sj*ss
-
-#     return q
-
-def quaternion_from_euler(roll, pitch, yaw):
+# create quanterion and inserts into transform (if r_rot is sent) also returns
+def quaternion_from_euler(roll:float, pitch:float, yaw:float, t_rot:Transform.rotation=0):
     cy = math.cos(yaw * 0.5)
     sy = math.sin(yaw * 0.5)
     cp = math.cos(pitch * 0.5)
@@ -54,6 +32,12 @@ def quaternion_from_euler(roll, pitch, yaw):
     q[2] = sy * cp * sr + cy * sp * cr #y
     q[3] = sy * cp * cr - cy * sp * sr #z
 
+    if t_rot != 0:
+        t_rot.x = q[1]
+        t_rot.y = q[2]
+        t_rot.z = q[3]
+        t_rot.w = q[0]
+    
     return q   
 
 class Roborama25SensorSerialNode(Node):
@@ -110,22 +94,22 @@ class Roborama25SensorSerialNode(Node):
         
         self.get_logger().info(f"SensorSerialNode Started")
         
-    def make_map_static_transform(self):
-        t = TransformStamped()
+    # def make_map_static_transform(self):
+    #     t = TransformStamped()
 
-        t.header.stamp = self.get_clock().now().to_msg()
-        t.header.frame_id = "earth"
-        t.child_frame_id = "map"
+    #     t.header.stamp = self.get_clock().now().to_msg()
+    #     t.header.frame_id = "earth"
+    #     t.child_frame_id = "map"
 
-        t.transform.translation.x = 0.0
-        t.transform.translation.y = 0.0
-        t.transform.translation.z = 0.0
-        t.transform.rotation.x = 0.0
-        t.transform.rotation.y = 0.0
-        t.transform.rotation.z = 0.0
-        t.transform.rotation.w = 1.0
+    #     t.transform.translation.x = 0.0
+    #     t.transform.translation.y = 0.0
+    #     t.transform.translation.z = 0.0
+    #     t.transform.rotation.x = 0.0
+    #     t.transform.rotation.y = 0.0
+    #     t.transform.rotation.z = 0.0
+    #     t.transform.rotation.w = 1.0
 
-        self.map_tf_static_broadcaster.sendTransform(t)
+    #     self.map_tf_static_broadcaster.sendTransform(t)
         
     def zeroTransform(self, transform: Transform) :
         transform.translation.x = 0.0
@@ -160,8 +144,9 @@ class Roborama25SensorSerialNode(Node):
         self.zeroTransform(t.transform)
         t.header.frame_id = 'base_link'
         t.child_frame_id = 'lidar_link'
-        #rotate 180 deg, raise 100mm
+        # rotate 180 deg, raise 100mm
         t.transform.translation.z = 0.1
+        # Simple numbers, calling the q function not needed
         t.transform.rotation.z = 1.0
         t.transform.rotation.w = 0.0
         self.lidar_link_tf_broadcaster.sendTransform(t)
@@ -180,11 +165,7 @@ class Roborama25SensorSerialNode(Node):
         t.transform.translation.x = 0.170
         t.transform.translation.y = 0.070
         yaw = +((45.0/2)+3.5)
-        q = quaternion_from_euler(roll=0, pitch=0, yaw=math.pi*yaw/180)
-        t.transform.rotation.x = q[1]
-        t.transform.rotation.y = q[2]
-        t.transform.rotation.z = q[3]
-        t.transform.rotation.w = q[0]        
+        quaternion_from_euler(roll=0, pitch=0, yaw=math.pi*yaw/180, t_rot=t.transform.rotation)
         self.tofL5L_link_tf_broadcaster.sendTransform(t)
         
         self.zeroTransform(t.transform)
@@ -194,11 +175,7 @@ class Roborama25SensorSerialNode(Node):
         t.transform.translation.x = 0.170
         t.transform.translation.y = -0.070
         yaw = -((45.0/2)+3.5)
-        q = quaternion_from_euler(roll=0, pitch=0, yaw=math.pi*yaw/180)
-        t.transform.rotation.x = q[1]
-        t.transform.rotation.y = q[2]
-        t.transform.rotation.z = q[3]
-        t.transform.rotation.w = q[0]        
+        quaternion_from_euler(roll=0, pitch=0, yaw=math.pi*yaw/180, t_rot=t.transform.rotation)
         self.tofL5R_link_tf_broadcaster.sendTransform(t)
 
     # check serial port at timerRateHz and parse out messages to publish
