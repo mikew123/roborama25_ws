@@ -155,8 +155,6 @@ bool OperateClaws(int clawDesiredPct, int clawPeriodMs) {
   // Operate claw until time finished or closing with can secured 
   if (now >= clawNextTime) {
 
-    // Slow down claw closing when it gets close
-    if(closing && clawCurrentPct>=80) dt = dt/100;
 
     // Limit claw range 0 to 100 percent
     if (clawDesiredPct<0) clawDesiredPct=0;
@@ -168,7 +166,15 @@ bool OperateClaws(int clawDesiredPct, int clawPeriodMs) {
         // instant claw positioning
         clawCurrentPct = float(clawDesiredPct);
       } else {
-        clawCurrentPct += clawChangePct / (float(clawPeriodMs)/dt);
+        // Slow down claw closing when it gets close
+        if(closing && clawCurrentPct>=80) {
+          clawCurrentPct += clawChangePct / (float(clawPeriodMs)/(dt/10));
+          clawStopTime += 9*dt/10;        
+        }
+        else {
+          clawCurrentPct += clawChangePct / (float(clawPeriodMs)/dt);
+        }
+
       }
     }
 
@@ -210,6 +216,11 @@ bool OperateClaws(int clawDesiredPct, int clawPeriodMs) {
       clawNextTime = 0;
       operating = false;
     }
+Serial.print("P="); Serial.print(clawCurrentPct);
+Serial.print(" C="); Serial.print(closing);
+Serial.print(" D="); Serial.print(dt);
+Serial.print(" L="); Serial.print(limSwL);
+Serial.print(" R="); Serial.println(limSwR);
   } 
   else if (now >= clawStopTime) {
     clawStopTime = 0;
@@ -218,11 +229,6 @@ bool OperateClaws(int clawDesiredPct, int clawPeriodMs) {
   }
 
 // DEBUG
-// Serial.print("P="); Serial.print(clawCurrentPct);
-// Serial.print(" C="); Serial.print(closing);
-// Serial.print(" D="); Serial.print(dt);
-// Serial.print(" L="); Serial.print(limSwL);
-// Serial.print(" R="); Serial.println(limSwR);
 
   // Serial.print(operating); Serial.print(" ");
   // Serial.print(now);Serial.print(" ");
