@@ -16,4 +16,11 @@ Bottom of robot:<br>
 ![Block diagram](support/RoboRama25_Block_Diagram.jpg) <br>
 
 ## Schematics:
+Power Supply board:<br>
+![Power Supply board](support/RoboRama25_Power_Board.jpg) <br>
+
+Front Sensors Controller board:<br>
 ![Front Sensor Controller](support/RoboRama25_Front_Sensor_Controller_Schematic.jpg) <br>
+
+Wheels Controller board:<br>
+![Wheels Controller board](support/RoboRama25_Wheels_Controller.jpg) <br>
