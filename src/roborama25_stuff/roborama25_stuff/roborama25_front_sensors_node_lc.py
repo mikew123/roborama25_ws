@@ -60,25 +60,7 @@ class Roborama25FrontSensorsNodeLC(LifecycleNode):
     def __init__(self):
         super().__init__('roborama25_front_sensors_node_lc')
 
-        self.sensor_serial_port = serial.Serial(self.serial_port, 2000000)
-        # configure interface
-        self.sensor_serial_port.write(f"MODE ROS2\n".encode()) # extra write for startup
-        self.sensor_serial_port.write(f"MODE ROS2\n".encode())
-        self.sensor_serial_port.write(f"REFL {self.reflVal}\n".encode())
-        self.sensor_serial_port.write(f"SIGM {self.sigmVal}\n".encode())
 
-
-        self.tofL5L_pcd_publisher = self.create_publisher(PointCloud2, 'tofL5L_pcd', 10)
-        self.tofL5R_pcd_publisher = self.create_publisher(PointCloud2, 'tofL5R_pcd', 10)
-        self.tofL4_rng_publisher = self.create_publisher(Range, 'tofL4_rng', 10)
-        self.tofL5_msg_publisher = self.create_publisher(String, 'tofL5_msg', 10)
-        self.tofL4_msg_publisher = self.create_publisher(String, 'tofL4_msg', 10)
-        self.IMU_msg_publisher = self.create_publisher(Imu, 'IMU', 10)
-        self.CAL_msg_publisher = self.create_publisher(String, 'IMUCAL_msg', 10)
-        self.battery_status_msg_publisher = self.create_publisher(BatteryState, 'battery_status', 10)
-        self.temperature_msg_publisher = self.create_publisher(Temperature, 'temperature', 10)
-
-        self.timer = self.create_timer((1.0/self.timerRateHz), self.timer_callback)
 
         #create TF static earth->map frame
         #self.map_tf_static_broadcaster = StaticTransformBroadcaster(self)
@@ -95,7 +77,6 @@ class Roborama25FrontSensorsNodeLC(LifecycleNode):
         self.tofL4_link_tf_broadcaster = TransformBroadcaster(self)
         self.tofL5L_link_tf_broadcaster = TransformBroadcaster(self)
         self.tofL5R_link_tf_broadcaster = TransformBroadcaster(self)
-        self.timer = self.create_timer(1/10.0, self.broadcast_timer_callback)
         
         
         self.get_logger().info(f"Roborama25FrontSensorsNodeLC Started")
@@ -104,60 +85,95 @@ class Roborama25FrontSensorsNodeLC(LifecycleNode):
     def on_configure(self, previous_state: LifecycleState):
         self.get_logger().info("IN on_configure")
         
-        # self.current_position_ = self.initial_position_
+        self.sensor_serial_port = serial.Serial(None, 2000000)
+
+        self.serial_timer = self.create_timer((1.0/self.timerRateHz), self.serial_timer_callback)
+        self.serial_timer.cancel()
         
-        # self.server_ = ActionServer(self,
-        #     MoveMe, self.action_, 
-        #     goal_callback=self.goal_callback,
-        #     cancel_callback=self.cancel_callback,
-        #     execute_callback=self.execute_callback,
-        #     callback_group=ReentrantCallbackGroup())
-            
-        # self.server_is_active_ = False
+        self.broadcast_timer = self.create_timer(1/10.0, self.broadcast_timer_callback)
+        self.broadcast_timer.cancel()
         
+        self.tofL4_rng_publisher = self.create_lifecycle_publisher(Range, 'tofL4_rng', 10)
+        self.tofL5L_pcd_publisher = self.create_lifecycle_publisher(PointCloud2, 'tofL5L_pcd', 10)
+        self.tofL5R_pcd_publisher = self.create_lifecycle_publisher(PointCloud2, 'tofL5R_pcd', 10)
+        self.IMU_msg_publisher = self.create_lifecycle_publisher(Imu, 'IMU', 10)
+        self.battery_status_msg_publisher = self.create_lifecycle_publisher(BatteryState, 'battery_status', 10)
+        self.temperature_msg_publisher = self.create_lifecycle_publisher(Temperature, 'temperature', 10)
+        
+        #DEBUG publishers
+        self.tofL5_msg_publisher = self.create_lifecycle_publisher(String, 'tofL5_msg', 10)
+        self.tofL4_msg_publisher = self.create_lifecycle_publisher(String, 'tofL4_msg', 10)
+        self.CAL_msg_publisher = self.create_lifecycle_publisher(String, 'IMUCAL_msg', 10)
+
         return TransitionCallbackReturn.SUCCESS
+
+    # Clean up stuff for cleanup, shutdown, error
+    def cleanup_lc(self) :        
+        self.destroy_lifecycle_publisher(self.tofL4_rng_publisher)
+        self.destroy_lifecycle_publisher(self.tofL5L_pcd_publisher)
+        self.destroy_lifecycle_publisher(self.tofL5R_pcd_publisher)
+        self.destroy_lifecycle_publisher(self.IMU_msg_publisher)
+        self.destroy_lifecycle_publisher(self.battery_status_msg_publisher)
+        self.destroy_lifecycle_publisher(self.temperature_msg_publisher)
+        
+        self.destroy_lifecycle_publisher(self.tofL5_msg_publisher)
+        self.destroy_lifecycle_publisher(self.tofL4_msg_publisher)
+        self.destroy_lifecycle_publisher(self.CAL_msg_publisher)
+        
+    def cleanup(self) :                
+        self.destroy_timer(self.broadcast_timer)
+        self.destroy_timer(self.serial_timer)
+        self.sensor_serial_port=None
 
     # Destroy ROS2 communications, disconnect from HW
     def on_cleanup(self, previous_state: LifecycleState):
         self.get_logger().info("IN on_cleanup")
+        self.cleanup_lc()
         self.cleanup()
         return TransitionCallbackReturn.SUCCESS
-
-    def cleanup(self) :
-        # self.server_is_active_ = False
-        # self.server_.destroy()
-        a=0
 
     # Activate/Enable HW
     def on_activate(self, previous_state: LifecycleState):
         self.get_logger().info("IN on_activate")
-        # self.server_is_active_ = True
+        self.broadcast_timer.reset()
+        self.serial_timer.reset()
+        self.sensor_serial_port.port = self.serial_port
+        self.sensor_serial_port.open() #= serial.Serial(self.serial_port, 2000000)
+        # configure interface
+        self.sensor_serial_port.write(f"MODE ROS2\n".encode()) # extra write for startup
+        self.sensor_serial_port.write(f"MODE ROS2\n".encode())
+        self.sensor_serial_port.write(f"REFL {self.reflVal}\n".encode())
+        self.sensor_serial_port.write(f"SIGM {self.sigmVal}\n".encode())
+        self.sensor_serial_port.flush()
         return super().on_activate(previous_state)
 
+    # Deactivate stuff used in shutdown, error
+    def deactivate(self):
+        self.broadcast_timer.cancel()
+        self.serial_timer.cancel()
+        self.sensor_serial_port.close()
+        
     # Deactivate/Disable HW
     def on_deactivate(self, previous_state: LifecycleState):
         self.get_logger().info("IN on_deactivate")
-        # self.server_is_active_ = False
-        
-        # with self.goal_lock_ :
-        #     if (self.goal_handle_ is not None) and (self.goal_handle_.is_active) :
-        #         self.get_logger().info("Abort active goal, then deactivate lifecycle")
-        #         self.goal_handle_.abort()
-        #         return TransitionCallbackReturn.ABORTED
-            
+        self.deactivate()
         return super().on_deactivate(previous_state)
     
     # Cleanup everything
+    def shutdown(self, previous_state: LifecycleState):
+        if(previous_state.label != "unconfigured") :
+            self.deactivate()        
+            self.cleanup()
+        
     def on_shutdown(self, previous_state: LifecycleState):
-        self.get_logger().info("IN on_shutdown")
-        self.cleanup()
-    #    self.destroy_lifecycle_publisher(self.number_publisher_)
+        self.get_logger().info(f"IN on_shutdown from {previous_state=}")
+        self.shutdown(previous_state)
         return TransitionCallbackReturn.SUCCESS
     
     # Process errors, deactivate + cleanup
     def on_error(self, previous_state: LifecycleState):
-        self.get_logger().info("IN on_error")
-        self.cleanup()
+        self.get_logger().info(f"IN on_error from {previous_state=}")
+        self.shutdown(previous_state)
         # do some checks, if ok, then return SUCCESS, if not FAILURE
         return TransitionCallbackReturn.FAILURE
         
@@ -246,7 +262,7 @@ class Roborama25FrontSensorsNodeLC(LifecycleNode):
         self.tofL5R_link_tf_broadcaster.sendTransform(t)
 
     # check serial port at timerRateHz and parse out messages to publish
-    def timer_callback(self):
+    def serial_timer_callback(self):
         # Check if a line has been received on the serial port
         if self.sensor_serial_port.in_waiting > 0:
             received_data = self.sensor_serial_port.readline().decode().strip()
