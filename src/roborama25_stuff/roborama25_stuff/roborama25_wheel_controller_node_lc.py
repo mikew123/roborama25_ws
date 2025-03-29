@@ -87,30 +87,7 @@ class Roborama25WheelControllerNodeLC(LifecycleNode):
         # no lifecycle support - it simply is not broadcast when callbacks are blocked when not in active state
         self.tf_broadcaster = TransformBroadcaster(self)
 
-
         self.get_logger().info(f"class Roborama25WheelControllerNodeLC Started: Odometry rate = {self.odometryRateHz} Hz")
-
-    # could not get lifecycle state easily - just used a bool variable
-    # def call_get_state_server(self) :
-    #     request = GetState.Request()
-
-    #     self.get_state_client = self.create_client(GetState, "/front_sensors_node_lc/get_state")
-    #     while not self.get_state_client.wait_for_service(1.0) :
-    #         self.get_logger().info("Wait for  /front_sensors_node_lc/get_state")
-
-    #     client = self.create_client(AddTwoInts, "add_two_ints")
-    #     while not client.wait_for_service(1.0) :
-    #         self.get_logger().info("Wait for add_two_ints server ")
-
-    #     future = client.call_async(request)
-    #     future.add_done_callback(partial(self.callback_call_add_two_ints, a=a, b=b))
-        
-    # def callback_call_add_two_ints(self, future, a, b) :
-    #     try:
-    #         response = future.result()
-    #         self.get_logger().info(f"{a} + {b} = {response.sum}")
-    #     except Exception as e :
-    #         self.get_logger().error(f"Service call add_two_ints Failed {e=}")
             
 
     # Create ROS2 communications, connect to HW
@@ -122,7 +99,7 @@ class Roborama25WheelControllerNodeLC(LifecycleNode):
         self.serial_timer = self.create_timer((1.0/self.serialTimerRateHz), self.serial_timer_callback)
         self.serial_timer.cancel()
         
-        # There is no lifecycle subscription
+        # There is no lifecycle support for subscription
         self.cmd_vel_subscription = self.create_subscription(Twist, '/cmd_vel', self.cmd_vel_callback, 10)
         self.encoders_msg_subscription = self.create_subscription(String, 'encoders_msg', self.encoders_msg_callback, 10)
         self.joy_subscription = self.create_subscription(Joy, '/joy', self.joy_callback, 10)
@@ -132,7 +109,6 @@ class Roborama25WheelControllerNodeLC(LifecycleNode):
         self.odometry_publisher = self.create_lifecycle_publisher(Odometry, 'wheel_odom', 10)
         self.wheel_debug_msg_publisher = self.create_lifecycle_publisher(String, 'wheel_debug_msg', 10)
 
-        
         return TransitionCallbackReturn.SUCCESS
 
     ############# Start Lifecycle stuff #############
