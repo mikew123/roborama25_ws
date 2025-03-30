@@ -51,7 +51,7 @@ class Roborama25LifecycleNodeManager(Node):
     def poll_wait_state(self, state: str) :
         front_sensors_state=""
         wheels_controller_state=""
-        while (front_sensors_state != state) and (wheels_controller_state != state) :
+        while not((front_sensors_state == state) and (wheels_controller_state == state)) :
             time.sleep(0.1)
             self.get_logger().info(f"{front_sensors_state=} {wheels_controller_state=}")
             front_sensors_state = self.get_state(self.front_sensors_get_state_client)
