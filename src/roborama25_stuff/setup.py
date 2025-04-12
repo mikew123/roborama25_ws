@@ -25,14 +25,17 @@ setup(
     entry_points={
         'console_scripts': [
             #'robo24_can_xy_node = roborama25_stuff.robo24_can_xy_node:main',
-            'roborama25_sensor_serial_node = roborama25_stuff.roborama25_sensor_serial_node:main',
+            #'roborama25_sensor_serial_node = roborama25_stuff.roborama25_sensor_serial_node:main',
+            'roborama25_front_sensors_node_lc = roborama25_stuff.roborama25_front_sensors_node_lc:main',
             #'openmv_serial_node = roborama25_stuff.openmv_serial_node:main',
-            "roborama25_wheel_controller_node = roborama25_stuff.roborama25_wheel_controller_node:main",
+            #"roborama25_wheel_controller_node = roborama25_stuff.roborama25_wheel_controller_node:main",
+            "roborama25_wheel_controller_node_lc = roborama25_stuff.roborama25_wheel_controller_node_lc:main",
             "roborama25_teleop_node = roborama25_stuff.roborama25_teleop_node:main",
             #"robo24_diynav_node = roborama25_stuff.robo24_diynav_node:main",
             #"robo24_diyslam_node = roborama25_stuff.robo24_diyslam_node:main",
             #"robo24_imu_serial_node = roborama25_stuff.robo24_imu_serial_node:main",
             #"robo24_watch_serial_node = roborama25_stuff.robo24_watch_serial_node:main",
+            'roborama25_lifecycle_node_manager = roborama25_stuff.roborama25_lifecycle_node_manager:main',
         ],
     },
 )
