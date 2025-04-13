@@ -67,9 +67,12 @@ class Roborama25FrontSensorsNodeLC(LifecycleNode):
         #self.make_map_static_transform()
         
         #Create TF links earth->map->odom->base_link->lidar_link
-        #                                    ->tofL4_link
-        #                                    ->tofL5L_link
-        #                                    ->tofL5R_link
+        #                                    ->tofL4_link (front tof range sensor)
+        #                                    ->tofL5L_link (left tof array sensor)
+        #                                    ->tofL5R_link (right tof array sensor)
+        #                                    ->tofRL_link (rear left tof range sensor)
+        #                                    ->tofRC_link (rear center tof range sensor)
+        #                                    ->tofRR_link (rear right tof range sensor)
         self.map_tf_broadcaster = TransformBroadcaster(self)
         self.odom_tf_broadcaster = TransformBroadcaster(self)
         self.base_link_tf_broadcaster = TransformBroadcaster(self)
@@ -77,6 +80,9 @@ class Roborama25FrontSensorsNodeLC(LifecycleNode):
         self.tofL4_link_tf_broadcaster = TransformBroadcaster(self)
         self.tofL5L_link_tf_broadcaster = TransformBroadcaster(self)
         self.tofL5R_link_tf_broadcaster = TransformBroadcaster(self)
+        self.tofRL_link_tf_broadcaster = TransformBroadcaster(self)
+        self.tofRC_link_tf_broadcaster = TransformBroadcaster(self)
+        self.tofRR_link_tf_broadcaster = TransformBroadcaster(self)
         
         
         self.get_logger().info(f"Roborama25FrontSensorsNodeLC Started")
@@ -93,6 +99,9 @@ class Roborama25FrontSensorsNodeLC(LifecycleNode):
         self.broadcast_timer = self.create_timer(1/10.0, self.broadcast_timer_callback)
         self.broadcast_timer.cancel()
         
+        self.tofRL_rng_publisher = self.create_lifecycle_publisher(Range, 'tofRL_rng', 10)
+        self.tofRC_rng_publisher = self.create_lifecycle_publisher(Range, 'tofRC_rng', 10)
+        self.tofRR_rng_publisher = self.create_lifecycle_publisher(Range, 'tofRR_rng', 10)
         self.tofL4_rng_publisher = self.create_lifecycle_publisher(Range, 'tofL4_rng', 10)
         self.tofL5L_pcd_publisher = self.create_lifecycle_publisher(PointCloud2, 'tofL5L_pcd', 10)
         self.tofL5R_pcd_publisher = self.create_lifecycle_publisher(PointCloud2, 'tofL5R_pcd', 10)
@@ -103,12 +112,16 @@ class Roborama25FrontSensorsNodeLC(LifecycleNode):
         #DEBUG publishers
         self.tofL5_msg_publisher = self.create_lifecycle_publisher(String, 'tofL5_msg', 10)
         self.tofL4_msg_publisher = self.create_lifecycle_publisher(String, 'tofL4_msg', 10)
+        self.tofOPT_msg_publisher = self.create_lifecycle_publisher(String, 'tofOPT_msg', 10)
         self.CAL_msg_publisher = self.create_lifecycle_publisher(String, 'IMUCAL_msg', 10)
 
         return TransitionCallbackReturn.SUCCESS
 
     # Clean up stuff for cleanup, shutdown, error
     def cleanup_lc(self) :        
+        self.destroy_lifecycle_publisher(self.tofRL_rng_publisher)
+        self.destroy_lifecycle_publisher(self.tofRC_rng_publisher)
+        self.destroy_lifecycle_publisher(self.tofRR_rng_publisher)
         self.destroy_lifecycle_publisher(self.tofL4_rng_publisher)
         self.destroy_lifecycle_publisher(self.tofL5L_pcd_publisher)
         self.destroy_lifecycle_publisher(self.tofL5R_pcd_publisher)
@@ -118,6 +131,7 @@ class Roborama25FrontSensorsNodeLC(LifecycleNode):
         
         self.destroy_lifecycle_publisher(self.tofL5_msg_publisher)
         self.destroy_lifecycle_publisher(self.tofL4_msg_publisher)
+        self.destroy_lifecycle_publisher(self.tofOPT_msg_publisher)
         self.destroy_lifecycle_publisher(self.CAL_msg_publisher)
         
     def cleanup(self) :                
@@ -144,6 +158,7 @@ class Roborama25FrontSensorsNodeLC(LifecycleNode):
         self.sensor_serial_port.write(f"MODE ROS2\n".encode())
         self.sensor_serial_port.write(f"REFL {self.reflVal}\n".encode())
         self.sensor_serial_port.write(f"SIGM {self.sigmVal}\n".encode())
+        #self.sensor_serial_port.write(f"OPHZ 16\n".encode()) #rear sensor data rate
         self.sensor_serial_port.flush()
         return super().on_activate(previous_state)
 
@@ -240,6 +255,33 @@ class Roborama25FrontSensorsNodeLC(LifecycleNode):
         # TOF range detector is 100mm in front of center
         t.transform.translation.x = 0.1
         self.tofL4_link_tf_broadcaster.sendTransform(t)
+
+        self.zeroTransform(t.transform)
+        t.header.frame_id = 'base_link'
+        t.child_frame_id = 'tofRL_link'
+        # TOF range detector is 100mm in front of center
+        t.transform.translation.x = -0.045
+        yaw = +(180-(50/2)-(60/2))
+        quaternion_from_euler(roll=0, pitch=0, yaw=math.pi*yaw/180, t_rot=t.transform.rotation)
+        self.tofRL_link_tf_broadcaster.sendTransform(t)
+
+        self.zeroTransform(t.transform)
+        t.header.frame_id = 'base_link'
+        t.child_frame_id = 'tofRC_link'
+        # TOF range detector is 100mm in front of center
+        t.transform.translation.x = -0.045
+        yaw = 180
+        quaternion_from_euler(roll=0, pitch=0, yaw=math.pi*yaw/180, t_rot=t.transform.rotation)
+        self.tofRC_link_tf_broadcaster.sendTransform(t)
+
+        self.zeroTransform(t.transform)
+        t.header.frame_id = 'base_link'
+        t.child_frame_id = 'tofRR_link'
+        # TOF range detector is 100mm in front of center
+        t.transform.translation.x = -0.045
+        yaw = -(180-(50/2)-(60/2))
+        quaternion_from_euler(roll=0, pitch=0, yaw=math.pi*yaw/180, t_rot=t.transform.rotation)
+        self.tofRR_link_tf_broadcaster.sendTransform(t)
         
         self.zeroTransform(t.transform)
         t.header.frame_id = 'base_link'
@@ -273,6 +315,8 @@ class Roborama25FrontSensorsNodeLC(LifecycleNode):
                 self.L5_processing(strArray)
             elif strArray[0]=="L4" :
                 self.L4_processing(strArray)
+            elif strArray[0]=="OPT" :
+                self.OPT_processing(strArray)
             elif strArray[0]=="IMU" :
                 self.IMU_processing(strArray)
             elif strArray[0]=="CAL" :
@@ -356,7 +400,7 @@ class Roborama25FrontSensorsNodeLC(LifecycleNode):
                 emsg.data += strArray[i]+" "
             self.tofL4_msg_publisher.publish(emsg)
         
-            # Create a single point point cloud 
+            # Create a single point range message 
             s = int(strArray[1]) #status
             d = int(strArray[2]) #distance mm
            
@@ -366,6 +410,52 @@ class Roborama25FrontSensorsNodeLC(LifecycleNode):
             rng = self.range_msg(d,fov,"tofL4_link")
             self.tofL4_rng_publisher.publish(rng)
             
+            
+    def OPT_processing(self, strArray):
+        num_data = 6
+        min_amp = 100
+        max_dist = 500
+        invalid_dist = -1.0
+        if strArray[0]=="OPT" and len(strArray)==1+num_data :
+            # Publish the received serial line as a String message
+            emsg = String()
+            for i in range(1, num_data+1):
+                emsg.data += strArray[i]+" "
+            self.tofOPT_msg_publisher.publish(emsg)
+        
+            # Create 3 range messages 
+            # Rear Right sensor
+            a = int(strArray[1]) #amplitude
+            d = int(strArray[2]) #distance mm
+            if a>=min_amp and d<=max_dist:
+                d = d/1000.0
+            else :
+                d =  invalid_dist
+            fov = 2*math.pi*50.0/360
+            rng = self.range_msg(d,fov,"tofRR_link")
+            self.tofRR_rng_publisher.publish(rng)
+
+            # Rear Center sensor
+            a = int(strArray[3]) #amplitude
+            d = int(strArray[4]) #distance mm
+            if a>=min_amp and d<=max_dist:
+                d = d/1000.0
+            else :
+                d =  invalid_dist
+            fov = 2*math.pi*50.0/360
+            rng = self.range_msg(d,fov,"tofRC_link")
+            self.tofRC_rng_publisher.publish(rng)
+
+            # Rear Left sensor
+            a = int(strArray[5]) #amplitude
+            d = int(strArray[6]) #distance mm
+            if a>=min_amp and d<=max_dist:
+                d = d/1000.0
+            else :
+                d =  invalid_dist
+            fov = 2*math.pi*50.0/360
+            rng = self.range_msg(d,fov,"tofRL_link")
+            self.tofRL_rng_publisher.publish(rng)
         
     def IMU_processing(self, strArray):
         num_data = 11
