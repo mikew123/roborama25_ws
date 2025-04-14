@@ -34,9 +34,9 @@ class Roborama25WheelControllerNodeLC(LifecycleNode):
 
     lifecycle_state_active = False
     
-    # Enable TF odom->base_link
+    # Enable TF odom->base_footprint
     #tf_enable = False # false when ekf is used
-    tf_enable = False
+    tf_enable = True
 
     # values sent to wheel Pico over serial interface
     odometryRateHz = 30; # Rate that the wheel and odom encoders send data on the serial port
@@ -364,7 +364,7 @@ class Roborama25WheelControllerNodeLC(LifecycleNode):
         # TODO: Should sys time or vel be tweaked to match time from encoders to reduce error? 
         omsg.header.stamp = self.get_clock().now().to_msg()
         omsg.header.frame_id = 'odom'
-        omsg.child_frame_id = 'base_link'
+        omsg.child_frame_id = 'base_footprint'
     
         # Position of child_frame_id relative to header.frame_id 
         omsg.pose.pose.position.x = xy[0] #X
@@ -490,7 +490,7 @@ class Roborama25WheelControllerNodeLC(LifecycleNode):
         tfs = TransformStamped()
         tfs.header.stamp = self.get_clock().now().to_msg()
         tfs.header.frame_id = "odom"
-        tfs._child_frame_id = "base_link"
+        tfs._child_frame_id = "base_footprint"
         tfs.transform.translation.x = x
         tfs.transform.translation.y = y
         tfs.transform.translation.z = 0.0 #theta # for debug should be 0.0  
