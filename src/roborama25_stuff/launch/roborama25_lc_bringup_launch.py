@@ -40,7 +40,10 @@ def generate_launch_description():
     #     'efk_config.yaml'
     #     )
  
- 
+    # Get the text of the robot description URDF - robot_stat_publisher does not open a file
+    with open('urdfs/roborama25.urdf','r') as infp:
+    	robot_desc = infp.read()
+
     return launch.LaunchDescription([
 
         ##### copied from RPLIDAR C1 example
@@ -93,12 +96,22 @@ def generate_launch_description():
             output='screen'),
         
 
+        launch_ros.actions.Node(
+            package='roborama25_stuff',
+            executable='roborama25_teleop_node',
+            name='teleop'
+        ),
+
         ##### MY ROBOT
-        # launch_ros.actions.Node(
-        #     package='roborama25_stuff',
-        #     executable='robo24_can_xy_node',
-        #     name='robo24_can_xy'
-        # ),
+
+        launch_ros.actions.Node(
+            package='robot_state_publisher',
+            executable='robot_state_publisher',
+            name='robot_state_publisher',
+            parameters=[{
+                'robot_description':robot_desc,
+                }],
+        ),
 
         launch_ros.actions.LifecycleNode(
             package='roborama25_stuff',
@@ -129,11 +142,11 @@ def generate_launch_description():
         #     name='openmv_serial'
         # ),
 
-        launch_ros.actions.Node(
-            package='roborama25_stuff',
-            executable='roborama25_teleop_node',
-            name='teleop'
-        ),
+        # launch_ros.actions.Node(
+        #     package='roborama25_stuff',
+        #     executable='robo24_can_xy_node',
+        #     name='robo24_can_xy'
+        # ),
 
         # launch_ros.actions.Node(
         #     package='roborama25_stuff',

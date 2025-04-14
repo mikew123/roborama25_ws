@@ -136,13 +136,14 @@
     </visual>
   </link>
 
-  <joint name="scan_joint" type="fixed">
+  <!-- RPLidar C1 direction must be 180 deg to scan correctly -->
+  <joint name="lidar_joint" type="fixed">
     <parent link="base_link"/>
-    <child link="base_scan"/>
-    <origin xyz="0 0 0.115" rpy="0 0 0"/>
+    <child link="lidar_link"/>
+    <origin xyz="0 0 0.115" rpy="0 0 3.1416"/>
   </joint>
 
-  <link name="base_scan">
+  <link name="lidar_link">
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
@@ -152,29 +153,14 @@
     </visual>
   </link>
 
-  <joint name="scan_jointl" type="fixed">
+  <!-- 90 deg tof arrays are mounted at an angle -->
+  <joint name="tofL5L_joint" type="fixed">
     <parent link="base_link"/>
-    <child link="base_scanl"/>
-    <origin xyz="0.140 0.060 0.030" rpy="0 0 -0.08"/>
+    <child link="tofL5L_link"/>
+    <origin xyz="0.140 0.060 0.030" rpy="0 0 0.41"/>
   </joint>
 
-  <link name="base_scanl">
-    <visual>
-      <origin xyz="0 0 0" rpy="0 0 -0.08"/>
-      <geometry>
-        <cylinder length="0.030" radius="0.020"/>
-      </geometry>
-      <material name="red"/>
-    </visual>
-  </link>
-
-  <joint name="scan_jointr" type="fixed">
-    <parent link="base_link"/>
-    <child link="base_scanr"/>
-    <origin xyz="0.140 -0.060 0.030" rpy="0 0 0.08"/>
-  </joint>
-
-  <link name="base_scanr">
+  <link name="tofL5L_link">
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
@@ -184,13 +170,29 @@
     </visual>
   </link>
 
-  <joint name="range_jointf" type="fixed">
+  <joint name="tofL5R_joint" type="fixed">
     <parent link="base_link"/>
-    <child link="base_rangef"/>
+    <child link="tofL5R_link"/>
+    <origin xyz="0.140 -0.060 0.030" rpy="0 0 -0.41"/>
+  </joint>
+
+  <link name="tofL5R_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <cylinder length="0.030" radius="0.020"/>
+      </geometry>
+      <material name="red"/>
+    </visual>
+  </link>
+
+  <joint name="tofL4_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="tofL4_link"/>
     <origin xyz="0.100 0 0.030" rpy="0 0 0"/>
   </joint>
 
-  <link name="base_rangef">
+  <link name="tofL4_link">
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
@@ -200,13 +202,13 @@
     </visual>
   </link>
 
-  <joint name="range_jointrc" type="fixed">
+  <joint name="tofRC_joint" type="fixed">
     <parent link="base_link"/>
-    <child link="base_rangerc"/>
+    <child link="tofRC_link"/>
     <origin xyz="-0.040 0 0.085" rpy="0 0 3.1416"/>
   </joint>
 
-  <link name="base_rangerc">
+  <link name="tofRC_link">
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
         <geometry>
@@ -217,13 +219,13 @@
   </link>
 
 
-  <joint name="range_jointrl" type="fixed">
+  <joint name="tofRL_joint" type="fixed">
     <parent link="base_link"/>
-    <child link="base_rangerl"/>
+    <child link="tofRL_link"/>
     <origin xyz="-0.040 0 0.085" rpy="0 0 2.3"/>
   </joint>
 
-  <link name="base_rangerl">
+  <link name="tofRL_link">
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
         <geometry>
@@ -233,13 +235,13 @@
     </visual>
   </link>
 
-  <joint name="range_jointrr" type="fixed">
+  <joint name="tofRR_joint" type="fixed">
     <parent link="base_link"/>
-    <child link="base_rangerr"/>
+    <child link="tofRR_link"/>
     <origin xyz="-0.040 0 0.085" rpy="0 0 -2.3"/>
   </joint>
 
-  <link name="base_rangerr">
+  <link name="tofRR_link">
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
         <geometry>
