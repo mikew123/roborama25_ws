@@ -218,7 +218,8 @@ class Roborama25WheelControllerNodeLC(LifecycleNode):
         # A simple differential drive model
         # TODO wheel_base should come from a parameter
         
-        angular_scale = 2*self.pi # Increase angular velocity to rotate once per second?
+        # angular_scale = 2*self.pi # Increase angular velocity to rotate once per second?
+        angular_scale = 1 # 2pi was not correct for nav2
         
         right_wheel_velocity = linear_velocity + (angular_velocity*angular_scale * self.wheelDistance / 2)
         left_wheel_velocity = linear_velocity - (angular_velocity*angular_scale * self.wheelDistance / 2)
