@@ -121,13 +121,6 @@ def generate_launch_description():
                 }],
         ),
 
-        launch_ros.actions.Node(
-            package='roborama25_stuff',
-            executable='roborama25_controller_node',
-            name='controller_node',
-            namespace="",
-        ),
-
         launch_ros.actions.LifecycleNode(
             package='roborama25_stuff',
             executable='roborama25_front_sensors_node_lc',
@@ -141,6 +134,13 @@ def generate_launch_description():
             name='wheel_controller_node_lc',
             namespace="",
         ),
+
+        launch_ros.actions.LifecycleNode(
+            package='roborama25_stuff',
+            executable='roborama25_controller_node_lc',
+            name='controller_node_lc',
+            namespace="",
+        ),
         
         launch_ros.actions.Node(
             package="roborama25_stuff",
@@ -148,6 +148,7 @@ def generate_launch_description():
             parameters=[
                 {"front_sensors_node_name": "front_sensors_node_lc"},
                 {"wheel_controller_node_name": "wheel_controller_node_lc"},
+                {"controller_node_name": "controller_node_lc"},
             ]
         ),
 
