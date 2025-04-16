@@ -121,6 +121,13 @@ def generate_launch_description():
                 }],
         ),
 
+        launch_ros.actions.Node(
+            package='roborama25_stuff',
+            executable='roborama25_controller_node',
+            name='controller_node',
+            namespace="",
+        ),
+
         launch_ros.actions.LifecycleNode(
             package='roborama25_stuff',
             executable='roborama25_front_sensors_node_lc',

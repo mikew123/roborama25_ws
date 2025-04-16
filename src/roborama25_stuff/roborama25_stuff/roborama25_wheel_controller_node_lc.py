@@ -54,22 +54,21 @@ class Roborama25WheelControllerNodeLC(LifecycleNode):
     #TODO: remove odom pod stuff
     wheelEncoders = True
 
-    wheelDiameter = 0.080
+    wheelDiameter = 0.084
     wheelEncoderCounts = 48*20.408666666
-#    wheelDistance = 0.3175 # cal quicktrip with laser
-    wheelDistance = 0.3180 # cal quicktrip using dprg distances
+    wheelDistance = 0.280
 
-    odomDiameter = 0.048 * 65651/65910 # adjust for 5M-5cm travel, re-glued
-    odomEncoderCounts = 2000.0 #per rotation
-    #odomDistance = 0.224 #around center
-    odomDistance = 0.224 * (pi/(3.024297+0.0075))#Calibrated using wheel odom
+    # odomDiameter = 0.048 * 65651/65910 # adjust for 5M-5cm travel, re-glued
+    # odomEncoderCounts = 2000.0 #per rotation
+    # #odomDistance = 0.224 #around center
+    # odomDistance = 0.224 * (pi/(3.024297+0.0075))#Calibrated using wheel odom
 
     odMesssageCount = 0
 
     od_last = np.empty(5, dtype=int)
     xy_last = np.empty(3, dtype=float)
 
-    xyo_last = np.empty(3, dtype=float)
+    # xyo_last = np.empty(3, dtype=float)
 
     spin_last = 0
     fwdRev_last = 0
@@ -259,7 +258,7 @@ class Roborama25WheelControllerNodeLC(LifecycleNode):
             self.xy_last = [0.0, 0.0, 0.0]
             self.odMesssageCount = 1
 
-            self.xyo_last = [0.0, 0.0, 0.0]
+            # self.xyo_last = [0.0, 0.0, 0.0]
 
             return
         
@@ -296,39 +295,39 @@ class Roborama25WheelControllerNodeLC(LifecycleNode):
             #-------------------------------------------------------------------------
 
 #        else :
-            xyo = np.empty(3, dtype=float) #x,y,theta
-            #using odom_encoders
-            #using wheel encoders
-            dEncX:int = od[3] - self.od_last[3]
-            dEncY:int = od[4] - self.od_last[4]
+        #     xyo = np.empty(3, dtype=float) #x,y,theta
+        #     #using odom_encoders
+        #     #using wheel encoders
+        #     dEncX:int = od[3] - self.od_last[3]
+        #     dEncY:int = od[4] - self.od_last[4]
 
-            odomWheelCircum  = (self.pi*self.odomDiameter)
-            odomCircleCircum = (self.pi*self.odomDistance)
-            dT:float = 2*self.pi*(((dEncY/self.odomEncoderCounts)*odomWheelCircum)/odomCircleCircum)
-            xyo[2] = self.xyo_last[2] - dT
-            #wrap Theta to range of +-pi
-            if xyo[2] > self.pi:
-                xyo[2] = xyo[2] - (2*self.pi)
-            if xyo[2] < -self.pi:
-                xyo[2] = xyo[2] + (2*self.pi)
-            To = xyo[2] # current rotation
+        #     odomWheelCircum  = (self.pi*self.odomDiameter)
+        #     odomCircleCircum = (self.pi*self.odomDistance)
+        #     dT:float = 2*self.pi*(((dEncY/self.odomEncoderCounts)*odomWheelCircum)/odomCircleCircum)
+        #     xyo[2] = self.xyo_last[2] - dT
+        #     #wrap Theta to range of +-pi
+        #     if xyo[2] > self.pi:
+        #         xyo[2] = xyo[2] - (2*self.pi)
+        #     if xyo[2] < -self.pi:
+        #         xyo[2] = xyo[2] + (2*self.pi)
+        #     To = xyo[2] # current rotation
 
-            dXenc:float = (dEncX/self.odomEncoderCounts) * odomWheelCircum
-            #X offset error caused by rotation
-            #dXoff:float = self.odomDistance/2.0 * (1 - math.cos(dT))
-            #dX:float = dXenc - dXoff
-            #dY:float = dX * math.tan(dT)
-            dXo:float = dXenc * math.cos(To)
-            dYo:float = dXenc * -math.sin(To)
-
-
-            xyo[0] = self.xyo_last[0] + dXo
-            xyo[1] = self.xyo_last[1] + dYo
+        #     dXenc:float = (dEncX/self.odomEncoderCounts) * odomWheelCircum
+        #     #X offset error caused by rotation
+        #     #dXoff:float = self.odomDistance/2.0 * (1 - math.cos(dT))
+        #     #dX:float = dXenc - dXoff
+        #     #dY:float = dX * math.tan(dT)
+        #     dXo:float = dXenc * math.cos(To)
+        #     dYo:float = dXenc * -math.sin(To)
 
 
-        wdmsg = String()
-        wdmsg.data = f"\n{xy  = }\n{xyo = }\n{xy - xyo = }"
-        self.wheel_debug_msg_publisher.publish(wdmsg)
+        #     xyo[0] = self.xyo_last[0] + dXo
+        #     xyo[1] = self.xyo_last[1] + dYo
+
+
+        # wdmsg = String()
+        # wdmsg.data = f"\n{xy  = }\n{xyo = }\n{xy - xyo = }"
+        # self.wheel_debug_msg_publisher.publish(wdmsg)
 
         if self.tf_enable == True :
             self.broadcast_tf(xy[0], xy[1], -xy[2]) # x,y,theta
@@ -404,7 +403,7 @@ class Roborama25WheelControllerNodeLC(LifecycleNode):
             self.xy_last = xy
             self.odMesssageCount += 1
 
-            self.xyo_last = xyo
+            # self.xyo_last = xyo
 
 
     #set diagnal of 6x6 covariance matrix 
