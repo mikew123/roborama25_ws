@@ -152,14 +152,6 @@ def generate_launch_description():
             ]
         ),
 
-        # Navigation 2 bringup launch
-        # ros2 launch nav2_bringup bringup_launch.py params_file:=param/roborama25_params.yaml map:=maps/6can_course_home_map.yaml
-#    broadcaster_listener_nodes = IncludeLaunchDescription(
-#       PythonLaunchDescriptionSource([os.path.join(
-#          get_package_share_directory('launch_tutorial'), 'launch'),
-#          '/broadcaster_listener.launch.py']),
-#       launch_arguments={'target_frame': 'carrot1'}.items(),
-#       )
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource([
                 os.path.join(get_package_share_directory('nav2_bringup'), 'launch'),

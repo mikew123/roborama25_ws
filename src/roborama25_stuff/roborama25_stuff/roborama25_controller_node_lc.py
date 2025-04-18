@@ -1,4 +1,8 @@
 import rclpy
+import math
+import tf_transformations
+import threading
+
 from rclpy.node import Node
 
 from nav_msgs.msg import OccupancyGrid
@@ -8,6 +12,14 @@ from rclpy.executors import MultiThreadedExecutor
 from rclpy.callback_groups import ReentrantCallbackGroup
 from rclpy.lifecycle import LifecycleNode
 from rclpy.lifecycle.node import LifecycleState, TransitionCallbackReturn
+
+
+from nav2_simple_commander.robot_navigator import BasicNavigator, TaskResult
+from geometry_msgs.msg import Pose, PoseStamped, PoseWithCovarianceStamped
+# from tf2_ros import LookupException, ConnectivityException, ExtrapolationException
+# from tf2_ros import Duration
+# from tf2_ros.buffer import Buffer
+# from tf2_ros.transform_listener import TransformListener
 
 class Roborama25ControllerNodeLc(LifecycleNode):
     """
@@ -80,7 +92,6 @@ class Roborama25ControllerNodeLc(LifecycleNode):
     def on_configure(self, previous_state: LifecycleState):
         self.get_logger().info(f"IN on_configure")
         
-
         # publish the map 1/sec
         self.map_timer = self.create_timer(1.0, self.on_map_timer)
         self.map_timer.cancel()
@@ -94,6 +105,9 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         )
         self.map_msg_publisher = self.create_lifecycle_publisher(OccupancyGrid, 'map', qos_profile=qos_profile)
 
+        self.nav = BasicNavigator()
+        self.nav2Run_thread = threading.Thread(target=self.nav2_run)
+
         return TransitionCallbackReturn.SUCCESS
 
     # Clean up stuff for cleanup, shutdown, error
@@ -103,7 +117,8 @@ class Roborama25ControllerNodeLc(LifecycleNode):
                  
     def cleanup(self) :                
         self.destroy_timer(self.map_timer)
-
+        # self.nav.destroy()
+        
     # Destroy ROS2 communications, disconnect from HW
     def on_cleanup(self, previous_state: LifecycleState):
         self.get_logger().info("IN on_cleanup")
@@ -113,10 +128,11 @@ class Roborama25ControllerNodeLc(LifecycleNode):
 
     # Activate/Enable HW
     def on_activate(self, previous_state: LifecycleState):
+        self.lifecycle_state_active = True
         self.get_logger().info("IN on_activate")
         self.map_timer.reset()
+        self.nav2Run_thread.start()
         
-        self.lifecycle_state_active = True
         return super().on_activate(previous_state)
 
         
@@ -124,6 +140,7 @@ class Roborama25ControllerNodeLc(LifecycleNode):
     def deactivate(self):
         self.lifecycle_state_active = False
         self.map_timer.cancel()
+        self.nav2Run_thread.join()
         
     # Deactivate/Disable HW
     def on_deactivate(self, previous_state: LifecycleState):
@@ -151,6 +168,128 @@ class Roborama25ControllerNodeLc(LifecycleNode):
 
     ############ End Lifecycle stuff ###########
 
+    ############ Nav2 run stuff #############
+    def nav2_run(self) :
+        # tf_buffer = Buffer()
+        # tf_listener = TransformListener(self.tf_buffer, self)
+
+        self.setInitialPose(0,0,0, 0)    
+        
+        # print(f"{getCurrentPose(nav, tf_buffer)=}")
+        
+        for i in range(10):
+            status = self.gotoPose(2.5,0,0, 60)
+            print(f"{status}")
+            status = self.rotate(math.pi,10)
+            print(f"{status}")    
+            status = self.gotoPose(0,0,math.pi, 60)
+            print(f"{status}")
+            status = self.rotate(math.pi,10)
+            print(f"{status}")    
+        
+        
+    def createPose(self,x,y,a) -> PoseStamped:
+        pose = PoseStamped()
+        pose.header.frame_id = 'map'
+        pose.header.stamp = self.nav.get_clock().now().to_msg()
+        pose.pose.position.x = float(x)
+        pose.pose.position.y = float(y)
+        pose.pose.position.z = 0.0
+        (pose.pose.orientation.x,
+        pose.pose.orientation.y,
+        pose.pose.orientation.z,
+        pose.pose.orientation.w) = tf_transformations.quaternion_from_euler(0.0,0.0,float(a))
+        # print(pose)
+        return pose
+
+    def waitTaskComplete(self,t) :
+        if self.lifecycle_state_active==False : 
+            self.nav.cancelTask()
+        else :        
+            while not self.nav.isTaskComplete():
+                feedback = self.nav.getFeedback()
+                # print(f"{feedback=}")
+                if t>0 :
+                    if feedback.navigation_time.sec > t :
+                            self.nav.cancelTask()
+
+        feedback = self.nav.getFeedback()
+        result = self.nav.getResult()
+        # print(f"{feedback=} {result=}")
+        
+        if result == TaskResult.SUCCEEDED:
+            print('Goal succeeded!')
+        elif result == TaskResult.CANCELED:
+            print('Goal was canceled!')
+        elif result == TaskResult.FAILED:
+            print('Goal failed!')
+        else :
+            print(f"nav.getResult() {result=}")
+
+        return (result, feedback)
+
+    def setInitialPose(self,x,y,a,t) :
+        if self.lifecycle_state_active==False : return
+        
+        self.nav.setInitialPose(self.createPose(x,y,a))
+
+        self.nav.waitUntilNav2Active()
+        
+    def gotoPose(self,x,y,a,t) :
+        if self.lifecycle_state_active==False : return
+        
+        self.nav.goToPose(self.createPose(x,y,a))
+        (result, feedback) = self.waitTaskComplete(t)
+        x = feedback.current_pose.pose.position.x
+        y = feedback.current_pose.pose.position.y
+        (xx,yy,a) = tf_transformations.euler_from_quaternion(
+            [feedback.current_pose.pose.orientation.x,
+            feedback.current_pose.pose.orientation.y,
+            feedback.current_pose.pose.orientation.z,
+            feedback.current_pose.pose.orientation.w])
+        t = feedback.navigation_time.sec
+        
+        return (result, (x,y,a,t))
+
+    def rotate(self,a,t):
+        if self.lifecycle_state_active==False : return
+        
+        self.nav.spin(float(a),t)
+        (result, feedback) = self.waitTaskComplete(0)
+        a = feedback.angular_distance_traveled
+        return (result,a,t)
+        
+    # def getCurrentPose(nav, tf_buffer):
+    #     # get map->base_foot transform
+    #     try:
+    #         tf = tf_buffer.lookup_transform (
+    #             'map',
+    #             'base_footprint',
+    #             nav.get_clock().now().to_msg(),
+    #             timeout=rclpy.duration.Duration(seconds=0.0)
+    #             )
+    #         tf_OK = True
+
+    #     except (LookupException, ConnectivityException, ExtrapolationException) as ex:
+    #         print(f'Could not transform map->base_footprint: {ex}')
+    #         tf_OK = False
+
+    #     # translate wall points to align with map coordinates
+    #     if tf_OK :
+    #         # get x, y, theta from TF
+    #         x:float = tf.transform.translation.x
+    #         y:float = tf.transform.translation.y
+    #         q:float = tf.transform.rotation
+    #         # convert quaterion to euler
+    #         (xx,yy,a) = tf_transformations.euler_from_quaternion(q.x, q.y, q.z, q.w)
+    #     else :
+    #         x=math.nan
+    #         y=math.nan
+    #         a=math.nan
+            
+    #     return (tf_OK,x,y,a)
+
+    ############ END Nav2 run stuff #############
 
     def on_map_timer(self) :
         self.createMap()
