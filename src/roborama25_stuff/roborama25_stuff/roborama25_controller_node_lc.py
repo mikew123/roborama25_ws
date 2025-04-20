@@ -16,10 +16,10 @@ from rclpy.lifecycle.node import LifecycleState, TransitionCallbackReturn
 
 from nav2_simple_commander.robot_navigator import BasicNavigator, TaskResult
 from geometry_msgs.msg import Pose, PoseStamped, PoseWithCovarianceStamped
-# from tf2_ros import LookupException, ConnectivityException, ExtrapolationException
-# from tf2_ros import Duration
-# from tf2_ros.buffer import Buffer
-# from tf2_ros.transform_listener import TransformListener
+from tf2_ros import LookupException, ConnectivityException, ExtrapolationException
+from tf2_ros import Duration
+from tf2_ros.buffer import Buffer
+from tf2_ros.transform_listener import TransformListener
 
 class Roborama25ControllerNodeLc(LifecycleNode):
     """
@@ -83,6 +83,10 @@ class Roborama25ControllerNodeLc(LifecycleNode):
 
     def __init__(self):
         super().__init__('roborama25_controller_node_lc')
+
+        # Life cycle needed
+        self.tf_buffer = Buffer()
+        self.tf_listener = TransformListener(self.tf_buffer, self)
 
         self.get_logger().info(f"roborama25_controller_node Started {self.nav_arena=}")
 
@@ -170,22 +174,25 @@ class Roborama25ControllerNodeLc(LifecycleNode):
 
     ############ Nav2 run stuff #############
     def nav2_run(self) :
-        # tf_buffer = Buffer()
-        # tf_listener = TransformListener(self.tf_buffer, self)
+        """
+        Runs in a thread that is started when lifecycle activates
+        """    
+        initial_pose = self.createPose(0,0,0)
+        self.setInitialPose(initial_pose)    
+              
+        # DEBUG test waypoint pattern
+        for i in range(2):
+            status = self.gotoXY(2.5,0, 30)
+            self.get_logger().info(f"{status=}")
+            status = self.gotoXY(1,0.5, 30)
+            self.get_logger().info(f"{status=}")
+            status = self.gotoXY(1,-0.5, 30)
+            self.get_logger().info(f"{status=}")
+            status = self.gotoXY(0,0, 30)
+            self.get_logger().info(f"{status=}")
 
-        self.setInitialPose(0,0,0, 0)    
-        
-        # print(f"{getCurrentPose(nav, tf_buffer)=}")
-        
-        for i in range(10):
-            status = self.gotoPose(2.5,0,0, 60)
-            print(f"{status}")
-            status = self.rotate(math.pi,10)
-            print(f"{status}")    
-            status = self.gotoPose(0,0,math.pi, 60)
-            print(f"{status}")
-            status = self.rotate(math.pi,10)
-            print(f"{status}")    
+        status = self.rotate(math.pi,10)
+        self.get_logger().info(f"{status=}")    
         
         
     def createPose(self,x,y,a) -> PoseStamped:
@@ -199,7 +206,7 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         pose.pose.orientation.y,
         pose.pose.orientation.z,
         pose.pose.orientation.w) = tf_transformations.quaternion_from_euler(0.0,0.0,float(a))
-        # print(pose)
+        # self.get_logger().info(pose)
         return pose
 
     def waitTaskComplete(self,t) :
@@ -208,37 +215,39 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         else :        
             while not self.nav.isTaskComplete():
                 feedback = self.nav.getFeedback()
-                # print(f"{feedback=}")
+                # self.get_logger().info(f"{feedback=}")
                 if t>0 :
                     if feedback.navigation_time.sec > t :
                             self.nav.cancelTask()
 
         feedback = self.nav.getFeedback()
         result = self.nav.getResult()
-        # print(f"{feedback=} {result=}")
+        # self.get_logger().info(f"{feedback=} {result=}")
         
         if result == TaskResult.SUCCEEDED:
-            print('Goal succeeded!')
+            self.get_logger().info('Goal succeeded!')
         elif result == TaskResult.CANCELED:
-            print('Goal was canceled!')
+            self.get_logger().info('Goal was canceled!')
         elif result == TaskResult.FAILED:
-            print('Goal failed!')
+            self.get_logger().info('Goal failed!')
         else :
-            print(f"nav.getResult() {result=}")
+            self.get_logger().info(f"nav.getResult() {result=}")
 
         return (result, feedback)
 
-    def setInitialPose(self,x,y,a,t) :
+    def setInitialPose(self, pose) -> None:
         if self.lifecycle_state_active==False : return
         
-        self.nav.setInitialPose(self.createPose(x,y,a))
+        self.nav.setInitialPose(pose)
 
         self.nav.waitUntilNav2Active()
         
-    def gotoPose(self,x,y,a,t) :
-        if self.lifecycle_state_active==False : return
-        
-        self.nav.goToPose(self.createPose(x,y,a))
+    def gotoPose(self,goto_pose,t):
+        """
+        Go to the pose within in the time limit
+        """
+
+        self.nav.goToPose(goto_pose)
         (result, feedback) = self.waitTaskComplete(t)
         x = feedback.current_pose.pose.position.x
         y = feedback.current_pose.pose.position.y
@@ -249,45 +258,80 @@ class Roborama25ControllerNodeLc(LifecycleNode):
             feedback.current_pose.pose.orientation.w])
         t = feedback.navigation_time.sec
         
-        return (result, (x,y,a,t))
+        return (result,t)
 
-    def rotate(self,a,t):
+    def gotoXY(self,x,y,t):
+        """
+        Go to the X,Y coordinates from the current position within a lime limit
+        Rotate to pint to the X,Y position then goto the position
+        The angle of the Pose to go to is set as the angle from the 
+        current X,Y to the goto X,Y positions
+        """
         if self.lifecycle_state_active==False : return
         
+        # get current pose to determine the angle offset
+        # rotating to point to the desired is faster
+        # maybe the navigation behavior can be "fixed" 
+        (tf_OK, current_pose) = self.getCurrentPose()
+        xd = float(x) - current_pose.pose.position.x
+        yd = float(y) - current_pose.pose.position.y
+        # convert current pose euler from quaternion, discard xx and yy
+        q = current_pose.pose.orientation
+        (xx,yy,aa) = tf_transformations.euler_from_quaternion([q.x, q.y, q.z, q.w])
+        a = math.atan2(yd,xd)
+        spin = a - aa
+        
+        goto_pose = self.createPose(x,y,a)
+        self.get_logger().info(f"gotXY: {current_pose=}, goto {x=} {y=} {a=} {spin=} {aa=}")
+
+        # rotate to point to goto xy position before moving to it
+        status = self.rotate(spin,10)        
+        (result,t) = self.gotoPose(goto_pose,t)
+        
+        return (result,t)
+    
+    def rotate(self,a,t):
+        """
+        Rotate a radians within time t
+        Adjust rotation angle to a minimum angle -pi to pi
+        """
+        if self.lifecycle_state_active==False : return
+        # limit rotation angle to -pi to pi
+        while  a>math.pi : a -= 2*math.pi
+        while a<-math.pi : a += 2*math.pi
         self.nav.spin(float(a),t)
         (result, feedback) = self.waitTaskComplete(0)
-        a = feedback.angular_distance_traveled
-        return (result,a,t)
+        return (result,t)
         
-    # def getCurrentPose(nav, tf_buffer):
-    #     # get map->base_foot transform
-    #     try:
-    #         tf = tf_buffer.lookup_transform (
-    #             'map',
-    #             'base_footprint',
-    #             nav.get_clock().now().to_msg(),
-    #             timeout=rclpy.duration.Duration(seconds=0.0)
-    #             )
-    #         tf_OK = True
+    def getCurrentPose(self):
+        # get map->base_foot transform
+        try:
+            tf = self.tf_buffer.lookup_transform (
+                'map',
+                'base_footprint',
+                #self.nav.get_clock().now().to_msg(),
+                rclpy.time.Time(), # default 0
+                timeout=rclpy.duration.Duration(seconds=0.0)
+                )
+            tf_OK = True
 
-    #     except (LookupException, ConnectivityException, ExtrapolationException) as ex:
-    #         print(f'Could not transform map->base_footprint: {ex}')
-    #         tf_OK = False
+        except (LookupException, ConnectivityException, ExtrapolationException) as ex:
+            self.get_logger().info(f'Could not transform map->base_footprint: {ex}')
+            tf_OK = False
 
-    #     # translate wall points to align with map coordinates
-    #     if tf_OK :
-    #         # get x, y, theta from TF
-    #         x:float = tf.transform.translation.x
-    #         y:float = tf.transform.translation.y
-    #         q:float = tf.transform.rotation
-    #         # convert quaterion to euler
-    #         (xx,yy,a) = tf_transformations.euler_from_quaternion(q.x, q.y, q.z, q.w)
-    #     else :
-    #         x=math.nan
-    #         y=math.nan
-    #         a=math.nan
+        # translate wall points to align with map coordinates
+        if tf_OK :
+            # get x, y, theta from TF
+            x:float = tf.transform.translation.x
+            y:float = tf.transform.translation.y
+            q:float = tf.transform.rotation
+            # convert quaterion to euler, discard xx and yy
+            (xx,yy,a) = tf_transformations.euler_from_quaternion([q.x, q.y, q.z, q.w])
+            pose = self.createPose(x,y,a)
+        else :
+            pose = None
             
-    #     return (tf_OK,x,y,a)
+        return (tf_OK,pose)
 
     ############ END Nav2 run stuff #############
 
