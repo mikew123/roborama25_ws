@@ -13,13 +13,21 @@ from rclpy.callback_groups import ReentrantCallbackGroup
 from rclpy.lifecycle import LifecycleNode
 from rclpy.lifecycle.node import LifecycleState, TransitionCallbackReturn
 
+from rcl_interfaces.srv import SetParameters, GetParameters, ListParameters
+from rcl_interfaces.msg import Parameter, ParameterDescriptor, ParameterValue, ParameterType, SetParametersResult
+from rclpy.exceptions import ParameterNotDeclaredException
+
+from rclpy.callback_groups import ReentrantCallbackGroup
 
 from nav2_simple_commander.robot_navigator import BasicNavigator, TaskResult
 from geometry_msgs.msg import Pose, PoseStamped, PoseWithCovarianceStamped
+
+from geometry_msgs.msg import TransformStamped
 from tf2_ros import LookupException, ConnectivityException, ExtrapolationException
 from tf2_ros import Duration
 from tf2_ros.buffer import Buffer
 from tf2_ros.transform_listener import TransformListener
+from tf2_ros.static_transform_broadcaster import StaticTransformBroadcaster
 
 class Roborama25ControllerNodeLc(LifecycleNode):
     """
@@ -29,7 +37,7 @@ class Roborama25ControllerNodeLc(LifecycleNode):
     """
 
     lifecycle_state_active = False
-    
+    amcl_set_param_successful = False
 
     ft2m:float = 0.3048 # feet to meters
 
@@ -88,7 +96,61 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer, self)
 
+        # map->odom statif tf is used when /amcl/tf_broadcast=False
+        self.tf_static_broadcasterOdom = StaticTransformBroadcaster(self)
+
+        self.amcl_set_param_request = SetParameters.Request()
+        self.amcl_set_param_svc = self.create_client(SetParameters, '/amcl/set_parameters')
+        while not self.amcl_set_param_svc.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info('/amcl/set_parameters service not available, waiting again...')
+
         self.get_logger().info(f"roborama25_controller_node Started {self.nav_arena=}")
+
+    def make_static_tf(self, tf_static_broadcaster, 
+                       parent: str, child: str, xyt: list) -> None:
+        t = TransformStamped()
+
+        #t.header.stamp = self.get_clock().now().to_msg()
+        t.header.frame_id = parent
+        t.child_frame_id = child
+
+        t.transform.translation.x = xyt[0]
+        t.transform.translation.y = xyt[1]
+        t.transform.translation.z = 0.0
+        quat = tf_transformations.quaternion_from_euler(0.0, 0.0, xyt[2]) #x,y,theta
+        t.transform.rotation.x = quat[0]
+        t.transform.rotation.y = quat[1]
+        t.transform.rotation.z = quat[2]
+        t.transform.rotation.w = quat[3]
+
+        tf_static_broadcaster.sendTransform(t)
+        self.get_logger().info(f"make_static_tf {t=}")
+
+    # cli > ros2 param set /amcl tf_broadcast False
+    def send_amcl_set_param_request(self):
+        
+        param = Parameter(
+            name='tf_broadcast', 
+            value=ParameterValue(
+                type=ParameterType.PARAMETER_BOOL,
+                bool_value=False
+            )
+        )
+        self.amcl_set_param_request.parameters = [param]
+        
+        future = self.amcl_set_param_svc.call_async(self.amcl_set_param_request)
+        future.add_done_callback(self.callback_amcl_set_param)
+        
+    def callback_amcl_set_param(self,future) :
+        #SetParametersResult
+        result = future.result()
+        successful = result.results[0].successful
+        self.amcl_set_param_successful = successful
+        
+        self.make_static_tf(self.tf_static_broadcasterOdom, "map", "odom", [0.0,0.0,0.0])
+
+        self.get_logger().info(f"callback_amcl_set_param {future=} {result=} {successful=}")
+    
 
     ############# Start Lifecycle stuff #############
 
@@ -172,6 +234,7 @@ class Roborama25ControllerNodeLc(LifecycleNode):
 
     ############ End Lifecycle stuff ###########
 
+
     ############ Nav2 run stuff #############
     def nav2_run(self) :
         """
@@ -179,17 +242,19 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         """    
         initial_pose = self.createPose(0,0,0)
         self.setInitialPose(initial_pose)    
-              
+
+        self.send_amcl_set_param_request()
+
         # DEBUG test waypoint pattern
         for i in range(2):
             status = self.gotoXY(2.5,0, 30)
-            self.get_logger().info(f"{status=}")
+            self.get_logger().info(f"gotoXY() {status=}")
             status = self.gotoXY(1,0.5, 30)
-            self.get_logger().info(f"{status=}")
+            self.get_logger().info(f"gotoXY() {status=}")
             status = self.gotoXY(1,-0.5, 30)
-            self.get_logger().info(f"{status=}")
+            self.get_logger().info(f"gotoXY() {status=}")
             status = self.gotoXY(0,0, 30)
-            self.get_logger().info(f"{status=}")
+            self.get_logger().info(f"gotoXY() {status=}")
 
         status = self.rotate(math.pi,10)
         self.get_logger().info(f"{status=}")    
@@ -268,7 +333,6 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         current X,Y to the goto X,Y positions
         """
         if self.lifecycle_state_active==False : return
-        
         # get current pose to determine the angle offset
         # rotating to point to the desired is faster
         # maybe the navigation behavior can be "fixed" 
