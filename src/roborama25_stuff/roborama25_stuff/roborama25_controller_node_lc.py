@@ -30,12 +30,30 @@ from tf2_ros.buffer import Buffer
 from tf2_ros.transform_listener import TransformListener
 from tf2_ros.static_transform_broadcaster import StaticTransformBroadcaster
 
+from sensor_msgs.msg import Joy
+
 class Roborama25ControllerNodeLc(LifecycleNode):
     """
     Creates the 6-can arena maps for home and dprg 
     - rviz2 can display it
     - amcl uses it for localization
     """
+
+    # Game controller button interface
+    gotoWaypoints = False
+    gotoWaypoints_last = False
+
+    gotoCan = False
+    gotoCan_last = False
+
+    gotoQtWaypoints = False
+    gotoQtWaypoints_last = False
+
+    goto4CornerWaypoints = False
+    goto4CornerWaypoints_last = False
+
+    XYLatched = False
+
 
     lifecycle_state_active = False
     amcl_set_param_successful = False
@@ -97,7 +115,7 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer, self)
 
-        # map->odom statif tf is used when /amcl/tf_broadcast=False
+        # map->odom static tf is broadcast when /amcl/tf_broadcast=False
         self.tf_static_broadcasterOdom = StaticTransformBroadcaster(self)
 
         self.amcl_set_param_request = SetParameters.Request()
@@ -105,60 +123,9 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         while not self.amcl_set_param_svc.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('/amcl/set_parameters service not available, waiting again...')
 
+        self.joy_subscription = self.create_subscription(Joy, '/joy', self.joy_callback, 10)
+
         self.get_logger().info(f"roborama25_controller_node Started {self.nav_arena=}")
-
-    def make_static_tf(self, tf_static_broadcaster, 
-                       parent: str, child: str, xyt: list) -> None:
-        t = TransformStamped()
-
-        #t.header.stamp = self.get_clock().now().to_msg()
-        t.header.frame_id = parent
-        t.child_frame_id = child
-
-        t.transform.translation.x = xyt[0]
-        t.transform.translation.y = xyt[1]
-        t.transform.translation.z = 0.0
-        quat = tf_transformations.quaternion_from_euler(0.0, 0.0, xyt[2]) #x,y,theta
-        t.transform.rotation.x = quat[0]
-        t.transform.rotation.y = quat[1]
-        t.transform.rotation.z = quat[2]
-        t.transform.rotation.w = quat[3]
-
-        tf_static_broadcaster.sendTransform(t)
-        self.get_logger().info(f"make_static_tf {t=}")
-
-    # cli > ros2 param set /amcl tf_broadcast False
-    def send_amcl_set_param_request(self, name, value):
-        
-        if isinstance(value, bool) :
-            value_type = ParameterType.PARAMETER_BOOL
-        else :
-            value_type = None
-        
-        param = Parameter(
-            name=name, 
-            value=ParameterValue(
-                type=value_type,
-                bool_value=value
-            )
-        )
-
-        self.amcl_set_param_request.parameters = [param]
-        
-        future = self.amcl_set_param_svc.call_async(self.amcl_set_param_request)
-        future.add_done_callback(partial(self.callback_amcl_set_param, name=name, value=value))
-        
-    def callback_amcl_set_param(self,future, name, value) :
-        #SetParametersResult
-        result = future.result()
-        successful = result.results[0].successful
-        self.amcl_set_param_successful = successful
-
-        if name=='tf_broadcast' and value==False :
-            self.make_static_tf(self.tf_static_broadcasterOdom, "map", "odom", [0.0,0.0,0.0])
-            self.get_logger().info("make tf_static_broadcasterOdom")
-            
-        self.get_logger().info(f"callback_amcl_set_param {name=} {value=} {result=} {successful=}")
     
 
     ############# Start Lifecycle stuff #############
@@ -248,9 +215,23 @@ class Roborama25ControllerNodeLc(LifecycleNode):
     def nav2_run(self) :
         """
         Runs in a thread that is started when lifecycle activates
-        """    
+        """
         initial_pose = self.createPose(0,0,0)
         self.setInitialPose(initial_pose)    
+
+        # rviz2 grid area with origin at the center
+        self.publish_map_empty(0.05, 10, 10, 0, 0)
+        self.send_amcl_set_param_request('tf_broadcast', False)
+    
+        while True :
+            if self.gotoCan==True : #and self.gotoCan_last==False :
+                #self.gotoCan_last = True
+                self.run_6can_arena()
+        
+    def run_6can_arena(self) :    
+        self.get_logger().info(f"run_6can_arena started")
+        
+        self.createMap('arena')
 
         # DEBUG test waypoint pattern, localization ON and OFF
         for value in [False, False, True, False]:
@@ -266,9 +247,8 @@ class Roborama25ControllerNodeLc(LifecycleNode):
             self.get_logger().info(f"gotoXY() {status=}")
 
         status = self.rotate(math.pi,10)
-        self.get_logger().info(f"{status=}")    
-        
-        
+        self.get_logger().info(f"run_6can_arena final rotation {status=}")    
+         
     def createPose(self,x,y,a) -> PoseStamped:
         pose = PoseStamped()
         pose.header.frame_id = 'map'
@@ -406,21 +386,111 @@ class Roborama25ControllerNodeLc(LifecycleNode):
             
         return (tf_OK,pose)
 
+
+    # cli > ros2 param set /amcl tf_broadcast False
+    def send_amcl_set_param_request(self, name, value):
+        
+        if isinstance(value, bool) :
+            value_type = ParameterType.PARAMETER_BOOL
+        else :
+            value_type = None
+        
+        param = Parameter(
+            name=name, 
+            value=ParameterValue(
+                type=value_type,
+                bool_value=value
+            )
+        )
+
+        self.amcl_set_param_request.parameters = [param]
+        
+        future = self.amcl_set_param_svc.call_async(self.amcl_set_param_request)
+        future.add_done_callback(partial(self.callback_amcl_set_param, name=name, value=value))
+        
+    def callback_amcl_set_param(self,future, name, value) :
+        #SetParametersResult
+        result = future.result()
+        successful = result.results[0].successful
+        self.amcl_set_param_successful = successful
+
+        if name=='tf_broadcast' and value==False :
+            self.make_static_tf(self.tf_static_broadcasterOdom, "map", "odom", [0.0,0.0,0.0])
+            self.get_logger().info("make tf_static_broadcasterOdom")
+            
+        self.get_logger().info(f"callback_amcl_set_param {name=} {value=} {result=} {successful=}")
+
     ############ END Nav2 run stuff #############
 
+    def make_static_tf(self, tf_static_broadcaster, 
+                       parent: str, child: str, xyt: list) -> None:
+        t = TransformStamped()
+
+        #t.header.stamp = self.get_clock().now().to_msg()
+        t.header.frame_id = parent
+        t.child_frame_id = child
+
+        t.transform.translation.x = xyt[0]
+        t.transform.translation.y = xyt[1]
+        t.transform.translation.z = 0.0
+        quat = tf_transformations.quaternion_from_euler(0.0, 0.0, xyt[2]) #x,y,theta
+        t.transform.rotation.x = quat[0]
+        t.transform.rotation.y = quat[1]
+        t.transform.rotation.z = quat[2]
+        t.transform.rotation.w = quat[3]
+
+        tf_static_broadcaster.sendTransform(t)
+        self.get_logger().info(f"make_static_tf {t=}")
+
     def on_map_timer(self) :
-        self.createMap()
-
-    def createMap(self) -> None:
+        #self.createMap()
+        pass
+    
+    def createMap(self, map_sel) -> None:
         msg = OccupancyGrid()
-
 
         # leave header time 0
         msg.header.frame_id = "map"
 
+        if map_sel == 'arena' :
+            self.create_arena_map(msg, 'arena')
+        else :
+            return
+        
+        self.map_msg_publisher.publish(msg)
+        
+    def publish_map_empty(self,resolution_m, height_m, width_m, origin_x_m, origin_y_m) :
+    
+        width  = int(width_m/resolution_m)
+        height = int(height_m/resolution_m)
+
+                
+        msg = OccupancyGrid()
+        
+        msg.header.frame_id = "map"
+
+        msg.info.resolution = resolution_m
+        msg.info.width  = width
+        msg.info.height = height
+
+        msg.info.origin.orientation.w = 1.0
+        msg.info.origin.orientation.x = 0.0
+        msg.info.origin.orientation.y = 0.0
+        msg.info.origin.orientation.z = 0.0
+
+        msg.info.origin.position.x = float((origin_x_m)-(height_m/2))
+        msg.info.origin.position.y = float((origin_y_m)-(width_m/2))
+        msg.info.origin.position.z = 0.0
+
+        msg.data = []
+        for i in range(0,height*width) : msg.data.append(0)
+
+        self.map_msg_publisher.publish(msg)
+
+    def create_arena_map (self,msg,arena) :
         # leave info map_load_TIME 0
         arena = self.nav_arena
-        if not arena in self.arenas : return
+        if not arena in self.arenas : return None
 
         mapResolution   = self.mapResolution
         mapWidth        = self.arenas[arena]["mapWidth"]
@@ -461,9 +531,44 @@ class Roborama25ControllerNodeLc(LifecycleNode):
             msg.data[i*mapWidth] = 100
             msg.data[i*mapWidth + can6Width-1] = 100
 
-        self.map_msg_publisher.publish(msg)
+    # game controller buttons select what to do
+    def joy_callback(self, msg: Joy) -> None:
+        
+        if self.XYLatched==False :
+            self.gotoWaypoints        = msg.buttons[3]==1 # 1 = Y button pushed
+            self.gotoCan              = msg.buttons[2]==1 # 1 = X button pushed
+            self.gotoQtWaypoints      = msg.buttons[1]==1 # 1 = B button pushed
+            self.goto4CornerWaypoints = msg.buttons[0]==1 # 1 = A button pushed
 
+            # if   msg.buttons[3] : self.nav_ctrl["mode"] = "Waypoints"
+            # elif msg.buttons[2] : self.nav_ctrl["mode"] = "6-can"
+            # elif msg.buttons[1] : self.nav_ctrl["mode"] = "Quick-trip"
+            # elif msg.buttons[0] : self.nav_ctrl["mode"] = "4-corner"
+            # else : self.nav_ctrl["mode"] = "none"
 
+        resetAxes = msg.buttons[6]==1 # 1 = select button pushed
+        latchButton = msg.buttons[5]==1 # 1 = start button pushed
+
+        if  self.XYLatched==False :
+            if (   msg.buttons[2]==1 or  msg.buttons[3]==1  \
+                or msg.buttons[0]==1 or  msg.buttons[1]==1) \
+                and latchButton==True : 
+                self.XYLatched = True
+        else :
+            if (    msg.buttons[2]==0 and msg.buttons[3]==0  \
+                and msg.buttons[0]==0 and msg.buttons[1]==0) \
+                and latchButton==True :
+                self.XYLatched = False
+
+        # if resetAxes :
+        #     self.state = 0
+        #     self.waypoint_num = 0
+        #     self.clawCmd(0, 100) #open claw
+
+        # if (   msg.buttons[2]==1 or  msg.buttons[3]==1  \
+        #     or msg.buttons[0]==1 or  msg.buttons[1]==1) :
+        #     self.get_logger().info(f"joy_callback: XYAB button pushed {msg=} {self.gotoCan=}")
+            
 
 def main(args=None):
     rclpy.init(args=args)
