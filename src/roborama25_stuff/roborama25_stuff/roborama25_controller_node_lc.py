@@ -4,6 +4,7 @@ import tf_transformations
 import threading
 
 from rclpy.node import Node
+from functools import partial
 
 from nav_msgs.msg import OccupancyGrid
 from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy, DurabilityPolicy
@@ -127,29 +128,37 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         self.get_logger().info(f"make_static_tf {t=}")
 
     # cli > ros2 param set /amcl tf_broadcast False
-    def send_amcl_set_param_request(self):
+    def send_amcl_set_param_request(self, name, value):
+        
+        if isinstance(value, bool) :
+            value_type = ParameterType.PARAMETER_BOOL
+        else :
+            value_type = None
         
         param = Parameter(
-            name='tf_broadcast', 
+            name=name, 
             value=ParameterValue(
-                type=ParameterType.PARAMETER_BOOL,
-                bool_value=False
+                type=value_type,
+                bool_value=value
             )
         )
+
         self.amcl_set_param_request.parameters = [param]
         
         future = self.amcl_set_param_svc.call_async(self.amcl_set_param_request)
-        future.add_done_callback(self.callback_amcl_set_param)
+        future.add_done_callback(partial(self.callback_amcl_set_param, name=name, value=value))
         
-    def callback_amcl_set_param(self,future) :
+    def callback_amcl_set_param(self,future, name, value) :
         #SetParametersResult
         result = future.result()
         successful = result.results[0].successful
         self.amcl_set_param_successful = successful
-        
-        self.make_static_tf(self.tf_static_broadcasterOdom, "map", "odom", [0.0,0.0,0.0])
 
-        self.get_logger().info(f"callback_amcl_set_param {future=} {result=} {successful=}")
+        if name=='tf_broadcast' and value==False :
+            self.make_static_tf(self.tf_static_broadcasterOdom, "map", "odom", [0.0,0.0,0.0])
+            self.get_logger().info("make tf_static_broadcasterOdom")
+            
+        self.get_logger().info(f"callback_amcl_set_param {name=} {value=} {result=} {successful=}")
     
 
     ############# Start Lifecycle stuff #############
@@ -243,10 +252,10 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         initial_pose = self.createPose(0,0,0)
         self.setInitialPose(initial_pose)    
 
-        self.send_amcl_set_param_request()
-
-        # DEBUG test waypoint pattern
-        for i in range(2):
+        # DEBUG test waypoint pattern, localization ON and OFF
+        for value in [False, False, True, False]:
+            self.send_amcl_set_param_request('tf_broadcast', value)
+                
             status = self.gotoXY(2.5,0, 30)
             self.get_logger().info(f"gotoXY() {status=}")
             status = self.gotoXY(1,0.5, 30)
