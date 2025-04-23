@@ -1,7 +1,6 @@
 import rclpy
 import math
 import tf_transformations
-import threading
 
 from rclpy.node import Node
 from functools import partial
@@ -10,7 +9,7 @@ from nav_msgs.msg import OccupancyGrid
 from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy, DurabilityPolicy
 
 from rclpy.executors import MultiThreadedExecutor
-from rclpy.callback_groups import ReentrantCallbackGroup
+from rclpy.callback_groups import ReentrantCallbackGroup, MutuallyExclusiveCallbackGroup
 from rclpy.lifecycle import LifecycleNode
 from rclpy.lifecycle.node import LifecycleState, TransitionCallbackReturn
 
@@ -107,9 +106,14 @@ class Roborama25ControllerNodeLc(LifecycleNode):
     nav_arena:str = "home"
 
     # diyslamEnabled = True
-
+    
+    nav2_run_first_exec = True
+    
     def __init__(self):
         super().__init__('roborama25_controller_node_lc')
+
+        self.cb_group_re = ReentrantCallbackGroup()
+        self.cb_group_mx = MutuallyExclusiveCallbackGroup()
 
         # Life cycle needed
         self.tf_buffer = Buffer()
@@ -135,7 +139,8 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         self.get_logger().info(f"IN on_configure")
         
         # publish the map 1/sec
-        self.map_timer = self.create_timer(1.0, self.on_map_timer)
+        # self.map_timer = self.create_timer(1.0, self.on_map_timer)
+        self.map_timer = self.create_timer(0.1, self.nav2_run, callback_group=self.cb_group_mx)
         self.map_timer.cancel()
         
         # the nav2 map saver qos needs to be transient local
@@ -148,7 +153,6 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         self.map_msg_publisher = self.create_lifecycle_publisher(OccupancyGrid, 'map', qos_profile=qos_profile)
 
         self.nav = BasicNavigator()
-        self.nav2Run_thread = threading.Thread(target=self.nav2_run)
 
         return TransitionCallbackReturn.SUCCESS
 
@@ -173,7 +177,6 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         self.lifecycle_state_active = True
         self.get_logger().info("IN on_activate")
         self.map_timer.reset()
-        self.nav2Run_thread.start()
         
         return super().on_activate(previous_state)
 
@@ -182,7 +185,7 @@ class Roborama25ControllerNodeLc(LifecycleNode):
     def deactivate(self):
         self.lifecycle_state_active = False
         self.map_timer.cancel()
-        self.nav2Run_thread.join()
+        
         
     # Deactivate/Disable HW
     def on_deactivate(self, previous_state: LifecycleState):
@@ -212,29 +215,47 @@ class Roborama25ControllerNodeLc(LifecycleNode):
 
 
     ############ Nav2 run stuff #############
+    
     def nav2_run(self) :
         """
-        Runs in a thread that is started when lifecycle activates
+        Called in a timer 
         """
-        initial_pose = self.createPose(0,0,0)
-        self.setInitialPose(initial_pose)    
+        if self.nav2_run_first_exec == True :
+            initial_pose = self.createPose(0,0,0)
+            self.setInitialPose(initial_pose)    
 
-        # rviz2 grid area with origin at the center
-        self.publish_map_empty(0.05, 10, 10, 0, 0)
-        self.send_amcl_set_param_request('tf_broadcast', False)
-    
-        while True :
-            if self.gotoCan==True : #and self.gotoCan_last==False :
-                #self.gotoCan_last = True
-                self.run_6can_arena()
+            # rviz2 grid area with origin at the center
+            self.publish_map_empty(0.05, 10, 10, 0, 0)
+            self.send_amcl_set_param_request('tf_broadcast', False)
+            self.nav2_run_first_exec = False
+            
+        if self.gotoCan==True and self.gotoCan_last==False :
+            self.run_6can_arena()
+            
+        elif self.gotoQtWaypoints==True and self.gotoQtWaypoints_last==False :
+            pass
+        elif self.goto4CornerWaypoints==True and self.goto4CornerWaypoints_last==False :
+            pass
+        elif self.gotoWaypoints==True and self.gotoWaypoints_last==False :
+            pass
+        
+        self.gotoWaypoints = self.gotoWaypoints_last
+        self.goto4CornerWaypoints = self.goto4CornerWaypoints_last
+        self.gotoQtWaypoints = self.gotoQtWaypoints_last
+        self.gotoCan_last = self.gotoCan
+        #self.theadWait.wait(0.1)
+        #time.sleep(0.1)    
+
         
     def run_6can_arena(self) :    
         self.get_logger().info(f"run_6can_arena started")
         
         self.createMap('arena')
+        # initial_pose = self.createPose(0,0,0)
+        # self.setInitialPose(initial_pose)    
 
         # DEBUG test waypoint pattern, localization ON and OFF
-        for value in [False, False, True, False]:
+        for value in [True, False]:
             self.send_amcl_set_param_request('tf_broadcast', value)
                 
             status = self.gotoXY(2.5,0, 30)
@@ -270,10 +291,13 @@ class Roborama25ControllerNodeLc(LifecycleNode):
             while not self.nav.isTaskComplete():
                 feedback = self.nav.getFeedback()
                 # self.get_logger().info(f"{feedback=}")
-                if t>0 :
+                # spin does not provide time in feedback
+                try :
                     if feedback.navigation_time.sec > t :
                             self.nav.cancelTask()
-
+                except :
+                    pass
+                
         feedback = self.nav.getFeedback()
         result = self.nav.getResult()
         # self.get_logger().info(f"{feedback=} {result=}")
