@@ -109,6 +109,8 @@ class Roborama25ControllerNodeLc(LifecycleNode):
     
     nav2_run_first_exec = True
     
+    feetToMeter = 0.3048
+
     def __init__(self):
         super().__init__('roborama25_controller_node_lc')
 
@@ -224,35 +226,86 @@ class Roborama25ControllerNodeLc(LifecycleNode):
             initial_pose = self.createPose(0,0,0)
             self.setInitialPose(initial_pose)    
 
-            # rviz2 grid area with origin at the center
-            self.publish_map_empty(0.05, 10, 10, 0, 0)
+            # rviz2 grid area 10x10 with origin 0,0 at the center
+            self.publishEmptyMap(0.05, 10, 10, -5, -5)
             self.send_amcl_set_param_request('tf_broadcast', False)
             self.nav2_run_first_exec = False
             
+        # Start a course when gamepad button is pushed
         if self.gotoCan==True and self.gotoCan_last==False :
-            self.run_6can_arena()
-            
+            self.run6Can() # Button X
         elif self.gotoQtWaypoints==True and self.gotoQtWaypoints_last==False :
-            pass
+            self.runQTrip() # Button B
         elif self.goto4CornerWaypoints==True and self.goto4CornerWaypoints_last==False :
-            pass
+            self.run4Corner() # Button A
         elif self.gotoWaypoints==True and self.gotoWaypoints_last==False :
-            pass
+            self.runWPoints() # Button Y
         
-        self.gotoWaypoints = self.gotoWaypoints_last
-        self.goto4CornerWaypoints = self.goto4CornerWaypoints_last
-        self.gotoQtWaypoints = self.gotoQtWaypoints_last
+        self.gotoWaypoints_last = self.gotoWaypoints
+        self.goto4CornerWaypoints_last = self.goto4CornerWaypoints
+        self.gotoQtWaypoints_last = self.gotoQtWaypoints
         self.gotoCan_last = self.gotoCan
-        #self.theadWait.wait(0.1)
-        #time.sleep(0.1)    
 
-        
-    def run_6can_arena(self) :    
+    def runWPoints(self) :
+        """
+        button Y
+        """
         self.get_logger().info(f"run_6can_arena started")
         
-        self.createMap('arena')
-        # initial_pose = self.createPose(0,0,0)
-        # self.setInitialPose(initial_pose)    
+        self.createWPMap()
+        self.send_amcl_set_param_request('tf_broadcast', False)
+
+        # Drive waypoint pattern, localization ON and OFF
+        for value in [True, False]:
+            self.send_amcl_set_param_request('tf_broadcast', value)
+            
+            for wp in [(2.5,0), (1,0.5), (1,-0.5), (0,0)] :
+                status = self.gotoXY(wp[0],wp[1], 30)
+
+        status = self.rotate(math.pi,10)
+        self.get_logger().info(f"runWPoints final rotation {status=}")    
+        
+    def run4Corner(self) :
+        """
+        button A
+        """
+        self.get_logger().info(f"run_6can_arena started")
+        
+        self.create4CMap()
+        self.send_amcl_set_param_request('tf_broadcast', False)
+
+        # Drive to 4 corners of a square area                
+        status = self.gotoXY(1,0, 30)
+        status = self.gotoXY(1,-1, 30)
+        status = self.gotoXY(0,-1, 30)
+        status = self.gotoXY(0,0, 30)
+
+        status = self.rotate(-math.pi/2,10)
+        self.get_logger().info(f"run4Corner final rotation {status=}")    
+    
+    def runQTrip(self) :
+        """
+        button B
+        """
+        self.get_logger().info(f"runQT started")
+        
+        self.createQTMap()
+        self.send_amcl_set_param_request('tf_broadcast', False)
+                
+        # status = self.gotoXY(8*self.feetToMeter,0, 30)
+        status = self.gotoXY(2,0, 30)
+        status = self.gotoXY(0,0, 30)
+        
+        status = self.rotate(math.pi,10)
+        self.get_logger().info(f"runQTrip final rotation {status=}")    
+        
+    def run6Can(self) :    
+        """
+        button X
+        """
+        self.get_logger().info(f"run_6can_arena started")
+        
+        self.create6CMap()
 
         # DEBUG test waypoint pattern, localization ON and OFF
         for value in [True, False]:
@@ -268,7 +321,7 @@ class Roborama25ControllerNodeLc(LifecycleNode):
             self.get_logger().info(f"gotoXY() {status=}")
 
         status = self.rotate(math.pi,10)
-        self.get_logger().info(f"run_6can_arena final rotation {status=}")    
+        self.get_logger().info(f"run6Can final rotation {status=}")    
          
     def createPose(self,x,y,a) -> PoseStamped:
         pose = PoseStamped()
@@ -469,21 +522,8 @@ class Roborama25ControllerNodeLc(LifecycleNode):
     def on_map_timer(self) :
         #self.createMap()
         pass
-    
-    def createMap(self, map_sel) -> None:
-        msg = OccupancyGrid()
-
-        # leave header time 0
-        msg.header.frame_id = "map"
-
-        if map_sel == 'arena' :
-            self.create_arena_map(msg, 'arena')
-        else :
-            return
-        
-        self.map_msg_publisher.publish(msg)
-        
-    def publish_map_empty(self,resolution_m, height_m, width_m, origin_x_m, origin_y_m) :
+            
+    def publishEmptyMap(self,resolution_m, height_m, width_m, origin_x_m, origin_y_m) :
     
         width  = int(width_m/resolution_m)
         height = int(height_m/resolution_m)
@@ -502,8 +542,8 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         msg.info.origin.orientation.y = 0.0
         msg.info.origin.orientation.z = 0.0
 
-        msg.info.origin.position.x = float((origin_x_m)-(height_m/2))
-        msg.info.origin.position.y = float((origin_y_m)-(width_m/2))
+        msg.info.origin.position.x = float(origin_x_m)
+        msg.info.origin.position.y = float(origin_y_m)
         msg.info.origin.position.z = 0.0
 
         msg.data = []
@@ -511,10 +551,31 @@ class Roborama25ControllerNodeLc(LifecycleNode):
 
         self.map_msg_publisher.publish(msg)
 
-    def create_arena_map (self,msg,arena) :
-        # leave info map_load_TIME 0
+    def createWPMap(self) :        
+        resolution = 0.05
+        self.publishEmptyMap(resolution, 10, 10, -5, -5)
+
+    def create4CMap(self) :        
+        resolution = 0.05
+        self.publishEmptyMap(resolution, 10, 10, -5, -5)
+
+    def createQTMap(self) :        
+        resolution = 0.05
+        height = 4*self.feetToMeter
+        width = 9*self.feetToMeter
+        origin_x = 0
+        origin_y = float(-height/2)
+        # self.publishEmptyMap(resolution, height, width, origin_x, origin_y)
+        self.publishEmptyMap(resolution, 10, 10, -5, -5)
+
+    def create6CMap(self) -> None:
+        msg = OccupancyGrid()
+
+        # leave header time 0
+        msg.header.frame_id = "map"
+        
         arena = self.nav_arena
-        if not arena in self.arenas : return None
+        if not arena in self.arenas : return
 
         mapResolution   = self.mapResolution
         mapWidth        = self.arenas[arena]["mapWidth"]
@@ -554,10 +615,13 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         for i in range(can6Height-g, can6Height) :
             msg.data[i*mapWidth] = 100
             msg.data[i*mapWidth + can6Width-1] = 100
-
-    # game controller buttons select what to do
-    def joy_callback(self, msg: Joy) -> None:
         
+        self.map_msg_publisher.publish(msg)
+
+    def joy_callback(self, msg: Joy) -> None:
+        """
+        game controller buttons select what to do
+        """
         if self.XYLatched==False :
             self.gotoWaypoints        = msg.buttons[3]==1 # 1 = Y button pushed
             self.gotoCan              = msg.buttons[2]==1 # 1 = X button pushed
