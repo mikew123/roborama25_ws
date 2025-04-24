@@ -288,8 +288,8 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         self.send_amcl_set_param_request('tf_broadcast', False)
                 
         # status = self.gotoXY(8*self.feetToMeter,0, 30)
-        status = self.gotoXY(2,0, 30)
-        status = self.gotoXY(0,0, 30)
+        status = self.gotoXY(2.180,0, 30)
+        status = self.gotoXY(-0.180,0, 30)
         
         status = self.rotateToAngle(0,10)
         self.get_logger().info(f"runQTrip: final rotation {status=}")    
@@ -592,7 +592,7 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         self.publishEmptyMap(resolution, 10, 10, -5, -5)
 
     def createQTMap(self) :        
-        resolution = 0.05
+        resolution = 0.02
         height = 4*self.feetToMeter
         width = 9*self.feetToMeter
         origin_x = 0

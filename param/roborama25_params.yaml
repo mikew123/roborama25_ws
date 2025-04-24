@@ -126,29 +126,29 @@ controller_server:
     FollowPath:
       plugin: "dwb_core::DWBLocalPlanner"
       debug_trajectory_details: True
-      min_vel_x: 0.0
+      min_vel_x: 0.1
       min_vel_y: 0.0
-      max_vel_x: 0.22
+      max_vel_x: 0.25
       max_vel_y: 0.0
-      max_vel_theta: 0.25
-      min_speed_xy: 0.0
-      max_speed_xy: 0.22
-      min_speed_theta: 0.0
+      max_vel_theta: 0.5
+      min_speed_xy: 0.1
+      max_speed_xy: 0.25
+      min_speed_theta: 0.1
       # Add high threshold velocity for turtlebot 3 issue.
       # https://github.com/ROBOTIS-GIT/turtlebot3_simulations/issues/75
-      acc_lim_x: 2.5
+      acc_lim_x: 0.5 #2.5
       acc_lim_y: 0.0
-      acc_lim_theta: 3.2
-      decel_lim_x: -2.5
+      acc_lim_theta: 3.0 #3.2
+      decel_lim_x: -0.5 #-2.5
       decel_lim_y: 0.0
-      decel_lim_theta: -3.2
+      decel_lim_theta: -3.0 #-3.2
       vx_samples: 20
       vy_samples: 0
       vtheta_samples: 40
       sim_time: 2.0
       linear_granularity: 0.01 #0.05
       angular_granularity: 0.01 #0.025
-      transform_tolerance: 0.2
+      transform_tolerance: 0.1 #0.2
       xy_goal_tolerance: 0.01 #0.05
       trans_stopped_velocity: 0.25
       short_circuit_trajectory_evaluation: True
@@ -180,13 +180,13 @@ local_costmap:
       rolling_window: true
       width: 2 #3
       height: 2 #3
-      resolution: 0.01 #0.05
+      resolution: 0.02 #0.05
       robot_radius: 0.18
       plugins: ["obstacle_layer", "voxel_layer", "inflation_layer"]
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
-        inflation_radius: 0.2
-        cost_scaling_factor: 3.0
+        inflation_radius: 0.25 #0.2
+        cost_scaling_factor: 20.0 #3.0
       obstacle_layer:
         plugin: "nav2_costmap_2d::ObstacleLayer"
         enabled: True
@@ -298,6 +298,7 @@ global_costmap:
       obstacle_layer:
         plugin: "nav2_costmap_2d::ObstacleLayer"
         enabled: True
+        observation_persistence: 1.0
         observation_sources: tofL5L_pcd tofL5R_pcd scanrl scanrc scanrr
         tofL5L_pcd:
           topic: /tofL5L_pcd
@@ -384,8 +385,8 @@ global_costmap:
         map_subscribe_transient_local: True
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
-        cost_scaling_factor: 3.0
-        inflation_radius: 0.18
+        cost_scaling_factor: 20.0 #3.0
+        inflation_radius: 0.25 #0.18
       always_send_full_costmap: True
   global_costmap_client:
     ros__parameters:
