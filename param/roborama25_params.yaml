@@ -178,9 +178,9 @@ local_costmap:
       robot_base_frame: base_link
       use_sim_time: False
       rolling_window: true
-      width: 3
-      height: 3
-      resolution: 0.05
+      width: 2 #3
+      height: 2 #3
+      resolution: 0.01 #0.05
       robot_radius: 0.18
       plugins: ["obstacle_layer", "voxel_layer", "inflation_layer"]
       inflation_layer:
@@ -190,6 +190,7 @@ local_costmap:
       obstacle_layer:
         plugin: "nav2_costmap_2d::ObstacleLayer"
         enabled: True
+        observation_persistence: 1.0
         observation_sources: tofL5L_pcd tofL5R_pcd scanrl scanrc scanrr
         scanl:
         tofL5L_pcd:
@@ -291,7 +292,7 @@ global_costmap:
       robot_base_frame: base_link
       use_sim_time: False
       robot_radius: 0.18
-      resolution: 0.05
+      resolution: 0.01 #0.05
       track_unknown_space: true
       plugins: ["static_layer", "obstacle_layer", "voxel_layer", "inflation_layer"]
       obstacle_layer:
