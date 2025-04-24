@@ -296,7 +296,8 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         status = self.gotoXY(2,0, 30)
         status = self.gotoXY(0,0, 30)
         
-        status = self.rotate(math.pi,10)
+#        status = self.rotate(math.pi,10)
+        status = self.rotateToAngle(0,10)
         self.get_logger().info(f"runQTrip final rotation {status=}")    
         
     def run6Can(self) :    
@@ -405,17 +406,19 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         (tf_OK, current_pose) = self.getCurrentPose()
         xd = float(x) - current_pose.pose.position.x
         yd = float(y) - current_pose.pose.position.y
-        # convert current pose euler from quaternion, discard xx and yy
-        q = current_pose.pose.orientation
-        (xx,yy,aa) = tf_transformations.euler_from_quaternion([q.x, q.y, q.z, q.w])
         a = math.atan2(yd,xd)
-        spin = a - aa
+
+        # convert current pose euler from quaternion, discard xx and yy
+        # q = current_pose.pose.orientation
+        # (xx,yy,aa) = tf_transformations.euler_from_quaternion([q.x, q.y, q.z, q.w])
+        #spin = a - aa
         
         goto_pose = self.createPose(x,y,a)
-        self.get_logger().info(f"gotXY: {current_pose=}, goto {x=} {y=} {a=} {spin=} {aa=}")
+        self.get_logger().info(f"gotXY: {current_pose=}, goto {x=} {y=} {a=}")
 
         # rotate to point to goto xy position before moving to it
-        status = self.rotate(spin,10)        
+        # status = self.rotate(spin,10)
+        status = self.rotateToAngle(a,10)
         (result,t) = self.gotoPose(goto_pose,t)
         
         return (result,t)
@@ -431,6 +434,29 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         while a<-math.pi : a += 2*math.pi
         self.nav.spin(float(a),t)
         (result, feedback) = self.waitTaskComplete(0)
+        return (result,t)
+    
+    def rotateToAngle(self,a,t) :
+        """
+        Rotate to the given absolute angle awithin time t    
+        """
+        if self.lifecycle_state_active==False : return
+        # get current pose to determine the angle offset
+        # rotating to point to the desired is faster
+        # maybe the navigation behavior can be "fixed" 
+        (tf_OK, current_pose) = self.getCurrentPose()
+        if tf_OK==False:
+            self.get_logger().warn(f"rotateToAngle: Failed to get current pose")
+            return (tf_OK, None)
+        # convert current pose euler from quaternion, discard xx and yy
+        q = current_pose.pose.orientation
+        (xx,yy,aa) = tf_transformations.euler_from_quaternion([q.x, q.y, q.z, q.w])
+        spin = float(a) - aa
+        # spin = aa - float(a)
+        self.get_logger().info(f"rotateToAngle: {a=} {aa=} {spin=}")
+       # self.nav.spin(spin,t)
+        # (result, feedback) = self.waitTaskComplete(0)
+        (result, feedback) = self.rotate(spin,t)
         return (result,t)
         
     def getCurrentPose(self):
