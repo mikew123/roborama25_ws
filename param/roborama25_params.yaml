@@ -1,6 +1,6 @@
 amcl:
   ros__parameters:
-    # tf_broadcast: False
+    tf_broadcast: True
     # first_map_only: False
     use_sim_time: False
     alpha1: 0.2
@@ -31,7 +31,7 @@ amcl:
     robot_model_type: "nav2_amcl::DifferentialMotionModel"
     save_pose_rate: 0.5
     sigma_hit: 0.2
-    tf_broadcast: true
+    # tf_broadcast: true
     transform_tolerance: 1.0
     update_min_a: 0.2
     update_min_d: 0.25
@@ -146,10 +146,10 @@ controller_server:
       vy_samples: 0
       vtheta_samples: 40
       sim_time: 2.0
-      linear_granularity: 0.05
-      angular_granularity: 0.025
+      linear_granularity: 0.01 #0.05
+      angular_granularity: 0.01 #0.025
       transform_tolerance: 0.2
-      xy_goal_tolerance: 0.05
+      xy_goal_tolerance: 0.01 #0.05
       trans_stopped_velocity: 0.25
       short_circuit_trajectory_evaluation: True
       stateful: True

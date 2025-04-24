@@ -250,44 +250,39 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         """
         button Y
         """
-        self.get_logger().info(f"run_6can_arena started")
+        self.get_logger().info(f"runWPoints: started (button Y)")
         
         self.createWPMap()
         self.send_amcl_set_param_request('tf_broadcast', False)
 
-        # Drive waypoint pattern, localization ON and OFF
-        for value in [True, False]:
-            self.send_amcl_set_param_request('tf_broadcast', value)
-            
-            for wp in [(2.5,0), (1,0.5), (1,-0.5), (0,0)] :
-                status = self.gotoXY(wp[0],wp[1], 30)
+        # Drive waypoint pattern
+        for wp in [(2.5,0), (1,0.5), (1,-0.5), (0,0)] :
+            status = self.gotoXY(wp[0],wp[1], 30)
 
-        status = self.rotate(math.pi,10)
-        self.get_logger().info(f"runWPoints final rotation {status=}")    
+        status = self.rotateToAngle(0,10)
+        self.get_logger().info(f"runWPoints: final rotation {status=}")    
         
     def run4Corner(self) :
         """
         button A
         """
-        self.get_logger().info(f"run_6can_arena started")
+        self.get_logger().info(f"run4Corner: started (button A)")
         
         self.create4CMap()
         self.send_amcl_set_param_request('tf_broadcast', False)
 
         # Drive to 4 corners of a square area                
-        status = self.gotoXY(1,0, 30)
-        status = self.gotoXY(1,-1, 30)
-        status = self.gotoXY(0,-1, 30)
-        status = self.gotoXY(0,0, 30)
+        for wp in [(1,0), (1,-1), (0,-1), (0,0)] :
+            status = self.gotoXY(wp[0],wp[1], 30)
 
-        status = self.rotate(-math.pi/2,10)
-        self.get_logger().info(f"run4Corner final rotation {status=}")    
+        status = self.rotateToAngle(0,10)
+        self.get_logger().info(f"run4Corner: final rotation {status=}")    
     
     def runQTrip(self) :
         """
         button B
         """
-        self.get_logger().info(f"runQT started")
+        self.get_logger().info(f"runQTrip: started (button B)")
         
         self.createQTMap()
         self.send_amcl_set_param_request('tf_broadcast', False)
@@ -296,15 +291,14 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         status = self.gotoXY(2,0, 30)
         status = self.gotoXY(0,0, 30)
         
-#        status = self.rotate(math.pi,10)
         status = self.rotateToAngle(0,10)
-        self.get_logger().info(f"runQTrip final rotation {status=}")    
+        self.get_logger().info(f"runQTrip: final rotation {status=}")    
         
     def run6Can(self) :    
         """
         button X
         """
-        self.get_logger().info(f"run_6can_arena started")
+        self.get_logger().info(f"run6Can: started (button X)")
         
         self.create6CMap()
 
@@ -321,8 +315,8 @@ class Roborama25ControllerNodeLc(LifecycleNode):
             status = self.gotoXY(0,0, 30)
             self.get_logger().info(f"gotoXY() {status=}")
 
-        status = self.rotate(math.pi,10)
-        self.get_logger().info(f"run6Can final rotation {status=}")    
+        status = self.rotateToAngle(0,10)
+        self.get_logger().info(f"run6Can: final rotation {status=}")    
          
     def createPose(self,x,y,a) -> PoseStamped:
         pose = PoseStamped()
@@ -406,18 +400,13 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         (tf_OK, current_pose) = self.getCurrentPose()
         xd = float(x) - current_pose.pose.position.x
         yd = float(y) - current_pose.pose.position.y
+        # Calc angle to target XY coordinate
         a = math.atan2(yd,xd)
 
-        # convert current pose euler from quaternion, discard xx and yy
-        # q = current_pose.pose.orientation
-        # (xx,yy,aa) = tf_transformations.euler_from_quaternion([q.x, q.y, q.z, q.w])
-        #spin = a - aa
-        
         goto_pose = self.createPose(x,y,a)
-        self.get_logger().info(f"gotXY: {current_pose=}, goto {x=} {y=} {a=}")
+        self.get_logger().info(f"gotoXY: {current_pose=}, goto {x=} {y=} {a=}")
 
         # rotate to point to goto xy position before moving to it
-        # status = self.rotate(spin,10)
         status = self.rotateToAngle(a,10)
         (result,t) = self.gotoPose(goto_pose,t)
         
@@ -441,23 +430,40 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         Rotate to the given absolute angle awithin time t    
         """
         if self.lifecycle_state_active==False : return
-        # get current pose to determine the angle offset
-        # rotating to point to the desired is faster
-        # maybe the navigation behavior can be "fixed" 
-        (tf_OK, current_pose) = self.getCurrentPose()
-        if tf_OK==False:
-            self.get_logger().warn(f"rotateToAngle: Failed to get current pose")
-            return (tf_OK, None)
-        # convert current pose euler from quaternion, discard xx and yy
-        q = current_pose.pose.orientation
-        (xx,yy,aa) = tf_transformations.euler_from_quaternion([q.x, q.y, q.z, q.w])
-        spin = float(a) - aa
-        # spin = aa - float(a)
-        self.get_logger().info(f"rotateToAngle: {a=} {aa=} {spin=}")
-       # self.nav.spin(spin,t)
-        # (result, feedback) = self.waitTaskComplete(0)
-        (result, feedback) = self.rotate(spin,t)
-        return (result,t)
+        
+        # continue to rotate toward desired angle until time out
+        # Get the current time
+        start_time = self.get_clock().now()
+        elapsed_time = 0.0
+        result = False
+        spinThresh = 0.01 # about 3 degrees
+        
+        # Loop until the timeout is reached or the task is complete
+        while rclpy.ok() and elapsed_time <t:
+            # get current pose to determine the angle offset
+            # rotating to point to the desired is faster
+            # maybe the navigation behavior can be "fixed" 
+            (tf_OK, current_pose) = self.getCurrentPose()
+            if tf_OK==False:
+                self.get_logger().warn(f"rotateToAngle: Failed to get current pose")
+                return False
+            # convert current pose euler from quaternion, discard xx and yy
+            q = current_pose.pose.orientation
+            (xx,yy,aa) = tf_transformations.euler_from_quaternion([q.x, q.y, q.z, q.w])
+            spin = float(a) - aa
+            
+            if abs(spin) < spinThresh:
+                self.get_logger().info(f"rotateToAngle: spin threshold reached {spin:.3f} < {spinThresh:.3f}, breaking loop")
+                break
+            
+            (result, feedback) = self.rotate(spin,t)
+            
+            current_time = self.get_clock().now()
+            elapsed_time = (current_time - start_time).nanoseconds / 1e9  # Convert nanoseconds to seconds
+
+            self.get_logger().info(f"rotateToAngle: rotate {result=} {a=} {aa=} {spin=} {elapsed_time=}")
+            
+        return result
         
     def getCurrentPose(self):
         # get map->base_foot transform
