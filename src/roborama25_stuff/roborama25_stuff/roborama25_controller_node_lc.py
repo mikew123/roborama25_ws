@@ -155,7 +155,13 @@ class Roborama25ControllerNodeLc(LifecycleNode):
     # Create ROS2 communications, connect to HW
     def on_configure(self, previous_state: LifecycleState):
         self.get_logger().info(f"IN on_configure")
+
+        self.nav = BasicNavigator()
         
+        self.get_logger().info(f"on_configure: waitUntilNav2Active before starting configuration")
+        self.nav.waitUntilNav2Active()
+        self.get_logger().info(f"on_configure: waitUntilNav2Active done")   
+
         # publish the map 1/sec
         # self.map_timer = self.create_timer(1.0, self.on_map_timer)
         self.map_timer = self.create_timer(0.1, self.nav2_run, callback_group=self.cb_group_mx)
@@ -169,8 +175,6 @@ class Roborama25ControllerNodeLc(LifecycleNode):
             depth=1
         )
         self.map_msg_publisher = self.create_lifecycle_publisher(OccupancyGrid, 'map', qos_profile=qos_profile)
-
-        self.nav = BasicNavigator()
 
         return TransitionCallbackReturn.SUCCESS
 
@@ -393,10 +397,8 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         if self.lifecycle_state_active==False : return
         
         self.nav.setInitialPose(pose)
-
-        self.nav.waitUntilNav2Active()
-        
-    def gotoPose(self,goto_pose,t):
+       
+    def gotoPose(self, goto_pose, t) -> tuple:
         """
         Go to the pose within in the time limit
         """
