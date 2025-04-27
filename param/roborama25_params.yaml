@@ -191,7 +191,7 @@ local_costmap:
         plugin: "nav2_costmap_2d::ObstacleLayer"
         enabled: True
         observation_persistence: 1.0
-        observation_sources: tofL5L_pcd tofL5R_pcd scanrl scanrc scanrr
+        observation_sources: tofL5L_pcd tofL5R_pcd TofRL_scan TofRC_scan TofRR_scan
         scanl:
         tofL5L_pcd:
           topic: /tofL5L_pcd
@@ -213,35 +213,35 @@ local_costmap:
           raytrace_min_range: 0.0
           obstacle_max_range: 2.5
           obstacle_min_range: 0.0
-        scanrl:
-          topic: /scanrl
+        TofRL_scan:
+          topic: /TofRL_scan
           max_obstacle_height: 2.0
           clearing: True
           marking: True
           data_type: "LaserScan"
-          raytrace_max_range: 3.0
+          raytrace_max_range: 1.0
           raytrace_min_range: 0.0
-          obstacle_max_range: 2.5
+          obstacle_max_range: 0.5
           obstacle_min_range: 0.0
-        scanrc:
-          topic: /scanrc
+        TofRC_scan:
+          topic: /TofRC_scan
           max_obstacle_height: 2.0
           clearing: True
           marking: True
           data_type: "LaserScan"
-          raytrace_max_range: 3.0
+          raytrace_max_range: 1.0
           raytrace_min_range: 0.0
-          obstacle_max_range: 2.5
+          obstacle_max_range: 0.5
           obstacle_min_range: 0.0
-        scanrr:
-          topic: /scanrr
+        TofRR_scan:
+          topic: /TofRR_scan
           max_obstacle_height: 2.0
           clearing: True
           marking: True
           data_type: "LaserScan"
-          raytrace_max_range: 3.0
+          raytrace_max_range: 1.0
           raytrace_min_range: 0.0
-          obstacle_max_range: 2.5
+          obstacle_max_range: 0.5
           obstacle_min_range: 0.0
       voxel_layer:
         plugin: "nav2_costmap_2d::VoxelLayer"
@@ -299,7 +299,7 @@ global_costmap:
         plugin: "nav2_costmap_2d::ObstacleLayer"
         enabled: True
         observation_persistence: 1.0
-        observation_sources: tofL5L_pcd tofL5R_pcd scanrl scanrc scanrr
+        observation_sources: tofL5L_pcd tofL5R_pcd TofRL_scan TofRC_scan TofRR_scan
         tofL5L_pcd:
           topic: /tofL5L_pcd
           max_obstacle_height: 2.0
@@ -320,35 +320,35 @@ global_costmap:
           raytrace_min_range: 0.0
           obstacle_max_range: 2.5
           obstacle_min_range: 0.0
-        scanrl:
-          topic: /scanrl
+        TofRL_scan:
+          topic: /TofRL_scan
           max_obstacle_height: 2.0
           clearing: True
           marking: True
           data_type: "LaserScan"
-          raytrace_max_range: 3.0
+          raytrace_max_range: 1.0
           raytrace_min_range: 0.0
-          obstacle_max_range: 2.5
+          obstacle_max_range: 0.5
           obstacle_min_range: 0.0
-        scanrc:
-          topic: /scanrc
+        TofRC_scan:
+          topic: /TofRC_scan
           max_obstacle_height: 2.0
           clearing: True
           marking: True
           data_type: "LaserScan"
-          raytrace_max_range: 3.0
+          raytrace_max_range: 1.0
           raytrace_min_range: 0.0
-          obstacle_max_range: 2.5
+          obstacle_max_range: 0.5
           obstacle_min_range: 0.0
-        scanrr:
-          topic: /scanrr
+        TofRR_scan:
+          topic: /TofRR_scan
           max_obstacle_height: 2.0
           clearing: True
           marking: True
           data_type: "LaserScan"
-          raytrace_max_range: 3.0
+          raytrace_max_range: 1.0
           raytrace_min_range: 0.0
-          obstacle_max_range: 2.5
+          obstacle_max_range: 0.5
           obstacle_min_range: 0.0
       voxel_layer:
         plugin: "nav2_costmap_2d::VoxelLayer"

@@ -59,7 +59,23 @@ class Roborama25ControllerNodeLc(LifecycleNode):
 
     ft2m:float = 0.3048 # feet to meters
 
-    mapResolution:float = 0.1 # pixels = 10 cm sq
+    robotRadius:float = 0.180 # meters
+    mapResolution:float = 0.05 # pixel size in meters
+    
+    d = 12.0
+    t = 1.25 # put in center of target zones
+    lengthQuickTrip = {
+        "home" : 2, # meters
+        "dprg" : (d+(2*1.25))*ft2m
+    }
+    
+    # needs to be updated on site for actual size 8-15 ft sq
+    d = 10.0
+    t = 1.0 # distance from actual corner of square, 3ft clear zone
+    size4corner = {
+        "home" : 1.0, # meters
+        "dprg" : (d+(2*t))*ft2m
+    }
     
     home_can6Width:int = int(((9.0+(7/12.0)) * ft2m)/mapResolution) # 6-can walls
     home_can6Height:int = int(((7.0+(10/12.0)) * ft2m)/mapResolution)
@@ -79,8 +95,8 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         "startWpX0"       : home_startWpX0
     }
 
-    dprg_can6Width:int = int((7.0 * ft2m)/mapResolution) # 6-can walls
-    dprg_can6Height:int = int((10.0 * ft2m)/mapResolution)
+    dprg_can6Width:int = int((10.0 * ft2m)/mapResolution) # 6-can walls
+    dprg_can6Height:int = int((7.0 * ft2m)/mapResolution)
     dprg_can6GoalArea:int = int((2 * ft2m)/mapResolution) # goal area outside walls
     dprg_can6GoalOpening:int = int((3 * ft2m)/mapResolution) #width of goal openin
     dprg_mapWidth:int = dprg_can6Width + dprg_can6GoalArea
@@ -271,8 +287,12 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         self.create4CMap()
         self.send_amcl_set_param_request('tf_broadcast', False)
 
-        # Drive to 4 corners of a square area                
-        for wp in [(1,0), (1,-1), (0,-1), (0,0)] :
+        # Drive to 4 corners of a square area
+        d = self.size4corner[self.nav_arena]
+        # need to account for robot radius since nav2 stops that amount
+        # because of the obstacle mapping             
+        r = self.robotRadius
+        for wp in [(d+r,0), (d,-(d+r)), (0,-(d+r)), (0,r)] :
             status = self.gotoXY(wp[0],wp[1], 30)
 
         status = self.rotateToAngle(0,10)
@@ -288,8 +308,16 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         self.send_amcl_set_param_request('tf_broadcast', False)
                 
         # status = self.gotoXY(8*self.feetToMeter,0, 30)
-        status = self.gotoXY(2.180,0, 30)
-        status = self.gotoXY(-0.180,0, 30)
+        d = self.lengthQuickTrip[self.nav_arena]
+        # need to account for robot radius since nav2 stops that amount
+        # because of the obstacle mapping             
+        r = self.robotRadius
+        
+        # self.get_logger().info(f"runQTrip: d={d} {self.nav_arena=}")
+        # return
+    
+        status = self.gotoXY(d+r,0, 30)
+        status = self.gotoXY(-r,0, 30)
         
         status = self.rotateToAngle(0,10)
         self.get_logger().info(f"runQTrip: final rotation {status=}")    
@@ -298,10 +326,10 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         """
         button X
         """
-        self.get_logger().info(f"run6Can: started (button X)")
+        self.get_logger().info(f"run6Can: started (button X) {self.nav_arena=}")
         
         self.create6CMap()
-
+    
         # DEBUG test waypoint pattern, localization ON and OFF
         for value in [True, False]:
             self.send_amcl_set_param_request('tf_broadcast', value)
@@ -668,7 +696,8 @@ class Roborama25ControllerNodeLc(LifecycleNode):
 
         resetAxes = msg.buttons[6]==1 # 1 = select button pushed
         latchButton = msg.buttons[5]==1 # 1 = start button pushed
-
+        arenaSelect = msg.axes[4] # right joystick up/dn -1.0 to 1.0
+        
         if  self.XYLatched==False :
             if (   msg.buttons[2]==1 or  msg.buttons[3]==1  \
                 or msg.buttons[0]==1 or  msg.buttons[1]==1) \
@@ -679,6 +708,13 @@ class Roborama25ControllerNodeLc(LifecycleNode):
                 and msg.buttons[0]==0 and msg.buttons[1]==0) \
                 and latchButton==True :
                 self.XYLatched = False
+
+        if arenaSelect >  0.5 : 
+            self.nav_arena = "dprg"
+            # self.get_logger().info(f"joy_callback: {arenaSelect=} {self.nav_arena=}")
+        if arenaSelect < -0.5 : 
+            self.nav_arena = "home"
+            # self.get_logger().info(f"joy_callback: {arenaSelect=} {self.nav_arena=}")
 
         # if resetAxes :
         #     self.state = 0
