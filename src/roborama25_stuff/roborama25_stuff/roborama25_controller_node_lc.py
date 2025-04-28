@@ -59,7 +59,23 @@ class Roborama25ControllerNodeLc(LifecycleNode):
 
     ft2m:float = 0.3048 # feet to meters
 
-    mapResolution:float = 0.1 # pixels = 10 cm sq
+    robotRadius:float = 0.180 # meters
+    mapResolution:float = 0.05 # pixel size in meters
+    
+    d = 12.0
+    t = 1.25 # put in center of target zones
+    lengthQuickTrip = {
+        "home" : 2, # meters
+        "dprg" : (d+(2*1.25))*ft2m
+    }
+    
+    # needs to be updated on site for actual size 8-15 ft sq
+    d = 10.0
+    t = 1.0 # distance from actual corner of square, 3ft clear zone
+    size4corner = {
+        "home" : 1.0, # meters
+        "dprg" : (d+(2*t))*ft2m
+    }
     
     home_can6Width:int = int(((9.0+(7/12.0)) * ft2m)/mapResolution) # 6-can walls
     home_can6Height:int = int(((7.0+(10/12.0)) * ft2m)/mapResolution)
@@ -79,8 +95,8 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         "startWpX0"       : home_startWpX0
     }
 
-    dprg_can6Width:int = int((7.0 * ft2m)/mapResolution) # 6-can walls
-    dprg_can6Height:int = int((10.0 * ft2m)/mapResolution)
+    dprg_can6Width:int = int((10.0 * ft2m)/mapResolution) # 6-can walls
+    dprg_can6Height:int = int((7.0 * ft2m)/mapResolution)
     dprg_can6GoalArea:int = int((2 * ft2m)/mapResolution) # goal area outside walls
     dprg_can6GoalOpening:int = int((3 * ft2m)/mapResolution) #width of goal openin
     dprg_mapWidth:int = dprg_can6Width + dprg_can6GoalArea
@@ -139,7 +155,13 @@ class Roborama25ControllerNodeLc(LifecycleNode):
     # Create ROS2 communications, connect to HW
     def on_configure(self, previous_state: LifecycleState):
         self.get_logger().info(f"IN on_configure")
+
+        self.nav = BasicNavigator()
         
+        self.get_logger().info(f"on_configure: waitUntilNav2Active before starting configuration")
+        self.nav.waitUntilNav2Active()
+        self.get_logger().info(f"on_configure: waitUntilNav2Active done")   
+
         # publish the map 1/sec
         # self.map_timer = self.create_timer(1.0, self.on_map_timer)
         self.map_timer = self.create_timer(0.1, self.nav2_run, callback_group=self.cb_group_mx)
@@ -153,8 +175,6 @@ class Roborama25ControllerNodeLc(LifecycleNode):
             depth=1
         )
         self.map_msg_publisher = self.create_lifecycle_publisher(OccupancyGrid, 'map', qos_profile=qos_profile)
-
-        self.nav = BasicNavigator()
 
         return TransitionCallbackReturn.SUCCESS
 
@@ -250,64 +270,70 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         """
         button Y
         """
-        self.get_logger().info(f"run_6can_arena started")
+        self.get_logger().info(f"runWPoints: started (button Y)")
         
         self.createWPMap()
         self.send_amcl_set_param_request('tf_broadcast', False)
 
-        # Drive waypoint pattern, localization ON and OFF
-        for value in [True, False]:
-            self.send_amcl_set_param_request('tf_broadcast', value)
-            
-            for wp in [(2.5,0), (1,0.5), (1,-0.5), (0,0)] :
-                status = self.gotoXY(wp[0],wp[1], 30)
+        # Drive waypoint pattern
+        for wp in [(2.5,0), (1,0.5), (1,-0.5), (0,0)] :
+            status = self.gotoXY(wp[0],wp[1], 30)
 
-        status = self.rotate(math.pi,10)
-        self.get_logger().info(f"runWPoints final rotation {status=}")    
+        status = self.rotateToAngle(0,10)
+        self.get_logger().info(f"runWPoints: final rotation {status=}")    
         
     def run4Corner(self) :
         """
         button A
         """
-        self.get_logger().info(f"run_6can_arena started")
+        self.get_logger().info(f"run4Corner: started (button A)")
         
         self.create4CMap()
         self.send_amcl_set_param_request('tf_broadcast', False)
 
-        # Drive to 4 corners of a square area                
-        status = self.gotoXY(1,0, 30)
-        status = self.gotoXY(1,-1, 30)
-        status = self.gotoXY(0,-1, 30)
-        status = self.gotoXY(0,0, 30)
+        # Drive to 4 corners of a square area
+        d = self.size4corner[self.nav_arena]
+        # need to account for robot radius since nav2 stops that amount
+        # because of the obstacle mapping             
+        r = self.robotRadius
+        for wp in [(d+r,0), (d,-(d+r)), (0,-(d+r)), (0,r)] :
+            status = self.gotoXY(wp[0],wp[1], 30)
 
-        status = self.rotate(-math.pi/2,10)
-        self.get_logger().info(f"run4Corner final rotation {status=}")    
+        status = self.rotateToAngle(0,10)
+        self.get_logger().info(f"run4Corner: final rotation {status=}")    
     
     def runQTrip(self) :
         """
         button B
         """
-        self.get_logger().info(f"runQT started")
+        self.get_logger().info(f"runQTrip: started (button B)")
         
         self.createQTMap()
         self.send_amcl_set_param_request('tf_broadcast', False)
                 
         # status = self.gotoXY(8*self.feetToMeter,0, 30)
-        status = self.gotoXY(2,0, 30)
-        status = self.gotoXY(0,0, 30)
+        d = self.lengthQuickTrip[self.nav_arena]
+        # need to account for robot radius since nav2 stops that amount
+        # because of the obstacle mapping             
+        r = self.robotRadius
         
-#        status = self.rotate(math.pi,10)
+        # self.get_logger().info(f"runQTrip: d={d} {self.nav_arena=}")
+        # return
+    
+        status = self.gotoXY(d+r,0, 30)
+        status = self.gotoXY(-r,0, 30)
+        
         status = self.rotateToAngle(0,10)
-        self.get_logger().info(f"runQTrip final rotation {status=}")    
+        self.get_logger().info(f"runQTrip: final rotation {status=}")    
         
     def run6Can(self) :    
         """
         button X
         """
-        self.get_logger().info(f"run_6can_arena started")
+        self.get_logger().info(f"run6Can: started (button X) {self.nav_arena=}")
         
         self.create6CMap()
-
+    
         # DEBUG test waypoint pattern, localization ON and OFF
         for value in [True, False]:
             self.send_amcl_set_param_request('tf_broadcast', value)
@@ -321,8 +347,8 @@ class Roborama25ControllerNodeLc(LifecycleNode):
             status = self.gotoXY(0,0, 30)
             self.get_logger().info(f"gotoXY() {status=}")
 
-        status = self.rotate(math.pi,10)
-        self.get_logger().info(f"run6Can final rotation {status=}")    
+        status = self.rotateToAngle(0,10)
+        self.get_logger().info(f"run6Can: final rotation {status=}")    
          
     def createPose(self,x,y,a) -> PoseStamped:
         pose = PoseStamped()
@@ -371,10 +397,8 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         if self.lifecycle_state_active==False : return
         
         self.nav.setInitialPose(pose)
-
-        self.nav.waitUntilNav2Active()
-        
-    def gotoPose(self,goto_pose,t):
+       
+    def gotoPose(self, goto_pose, t) -> tuple:
         """
         Go to the pose within in the time limit
         """
@@ -406,18 +430,13 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         (tf_OK, current_pose) = self.getCurrentPose()
         xd = float(x) - current_pose.pose.position.x
         yd = float(y) - current_pose.pose.position.y
+        # Calc angle to target XY coordinate
         a = math.atan2(yd,xd)
 
-        # convert current pose euler from quaternion, discard xx and yy
-        # q = current_pose.pose.orientation
-        # (xx,yy,aa) = tf_transformations.euler_from_quaternion([q.x, q.y, q.z, q.w])
-        #spin = a - aa
-        
         goto_pose = self.createPose(x,y,a)
-        self.get_logger().info(f"gotXY: {current_pose=}, goto {x=} {y=} {a=}")
+        self.get_logger().info(f"gotoXY: {current_pose=}, goto {x=} {y=} {a=}")
 
         # rotate to point to goto xy position before moving to it
-        # status = self.rotate(spin,10)
         status = self.rotateToAngle(a,10)
         (result,t) = self.gotoPose(goto_pose,t)
         
@@ -441,23 +460,40 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         Rotate to the given absolute angle awithin time t    
         """
         if self.lifecycle_state_active==False : return
-        # get current pose to determine the angle offset
-        # rotating to point to the desired is faster
-        # maybe the navigation behavior can be "fixed" 
-        (tf_OK, current_pose) = self.getCurrentPose()
-        if tf_OK==False:
-            self.get_logger().warn(f"rotateToAngle: Failed to get current pose")
-            return (tf_OK, None)
-        # convert current pose euler from quaternion, discard xx and yy
-        q = current_pose.pose.orientation
-        (xx,yy,aa) = tf_transformations.euler_from_quaternion([q.x, q.y, q.z, q.w])
-        spin = float(a) - aa
-        # spin = aa - float(a)
-        self.get_logger().info(f"rotateToAngle: {a=} {aa=} {spin=}")
-       # self.nav.spin(spin,t)
-        # (result, feedback) = self.waitTaskComplete(0)
-        (result, feedback) = self.rotate(spin,t)
-        return (result,t)
+        
+        # continue to rotate toward desired angle until time out
+        # Get the current time
+        start_time = self.get_clock().now()
+        elapsed_time = 0.0
+        result = False
+        spinThresh = 0.01 # about 3 degrees
+        
+        # Loop until the timeout is reached or the task is complete
+        while rclpy.ok() and elapsed_time <t:
+            # get current pose to determine the angle offset
+            # rotating to point to the desired is faster
+            # maybe the navigation behavior can be "fixed" 
+            (tf_OK, current_pose) = self.getCurrentPose()
+            if tf_OK==False:
+                self.get_logger().warn(f"rotateToAngle: Failed to get current pose")
+                return False
+            # convert current pose euler from quaternion, discard xx and yy
+            q = current_pose.pose.orientation
+            (xx,yy,aa) = tf_transformations.euler_from_quaternion([q.x, q.y, q.z, q.w])
+            spin = float(a) - aa
+            
+            if abs(spin) < spinThresh:
+                self.get_logger().info(f"rotateToAngle: spin threshold reached {spin:.3f} < {spinThresh:.3f}, breaking loop")
+                break
+            
+            (result, feedback) = self.rotate(spin,t)
+            
+            current_time = self.get_clock().now()
+            elapsed_time = (current_time - start_time).nanoseconds / 1e9  # Convert nanoseconds to seconds
+
+            self.get_logger().info(f"rotateToAngle: rotate {result=} {a=} {aa=} {spin=} {elapsed_time=}")
+            
+        return result
         
     def getCurrentPose(self):
         # get map->base_foot transform
@@ -586,7 +622,7 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         self.publishEmptyMap(resolution, 10, 10, -5, -5)
 
     def createQTMap(self) :        
-        resolution = 0.05
+        resolution = 0.02
         height = 4*self.feetToMeter
         width = 9*self.feetToMeter
         origin_x = 0
@@ -662,7 +698,8 @@ class Roborama25ControllerNodeLc(LifecycleNode):
 
         resetAxes = msg.buttons[6]==1 # 1 = select button pushed
         latchButton = msg.buttons[5]==1 # 1 = start button pushed
-
+        arenaSelect = msg.axes[4] # right joystick up/dn -1.0 to 1.0
+        
         if  self.XYLatched==False :
             if (   msg.buttons[2]==1 or  msg.buttons[3]==1  \
                 or msg.buttons[0]==1 or  msg.buttons[1]==1) \
@@ -673,6 +710,13 @@ class Roborama25ControllerNodeLc(LifecycleNode):
                 and msg.buttons[0]==0 and msg.buttons[1]==0) \
                 and latchButton==True :
                 self.XYLatched = False
+
+        if arenaSelect >  0.5 : 
+            self.nav_arena = "dprg"
+            # self.get_logger().info(f"joy_callback: {arenaSelect=} {self.nav_arena=}")
+        if arenaSelect < -0.5 : 
+            self.nav_arena = "home"
+            # self.get_logger().info(f"joy_callback: {arenaSelect=} {self.nav_arena=}")
 
         # if resetAxes :
         #     self.state = 0
