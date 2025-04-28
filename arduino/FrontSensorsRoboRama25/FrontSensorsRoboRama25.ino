@@ -293,7 +293,7 @@ uint16_t sigma[4][64];
 uint8_t reflect[4][64];
 bool dataRdy[4] = {false,false,false,false};
 uint8_t reflVal = 25;
-uint16_t sigmVal = 10;
+uint16_t sigmVal = 5;
 
 enum {
   serialMode_ROS2,
@@ -408,7 +408,8 @@ void getL5SensorsData(void) {
           g = sigma[n][xy];
           r = reflect[n][xy];
           s = status[n][xy];
-          if (s==5) d3 = distance_mm[n][xy];
+          bool s_ok = (s==5) && (r>reflVal) && (g<sigmVal);
+          if(s_ok) d3 = distance_mm[n][xy];
           else d3=-1;
           xy=xy+8; // row 4
           g = sigma[n][xy];
