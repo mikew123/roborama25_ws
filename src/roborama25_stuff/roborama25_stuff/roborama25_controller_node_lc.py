@@ -1,6 +1,7 @@
 import rclpy
 import math
 import tf_transformations
+import signal
 
 from rclpy.node import Node
 from functools import partial
@@ -270,7 +271,7 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         """
         button Y
         """
-        self.get_logger().info(f"runWPoints: started (button Y)")
+        self.get_logger().info(f"runWPoints: {self.nav_arena=} started (button Y)")
         
         self.createWPMap()
         self.send_amcl_set_param_request('tf_broadcast', False)
@@ -286,7 +287,7 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         """
         button A
         """
-        self.get_logger().info(f"run4Corner: started (button A)")
+        self.get_logger().info(f"run4Corner: {self.nav_arena=} started (button A)")
         
         self.create4CMap()
         self.send_amcl_set_param_request('tf_broadcast', False)
@@ -306,7 +307,7 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         """
         button B
         """
-        self.get_logger().info(f"runQTrip: started (button B)")
+        self.get_logger().info(f"runQTrip: {self.nav_arena=} started (button B)")
         
         self.createQTMap()
         self.send_amcl_set_param_request('tf_broadcast', False)
@@ -330,7 +331,7 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         """
         button X
         """
-        self.get_logger().info(f"run6Can: started (button X) {self.nav_arena=}")
+        self.get_logger().info(f"run6Can: {self.nav_arena=} started (button X) ")
         
         self.create6CMap()
     
@@ -712,11 +713,13 @@ class Roborama25ControllerNodeLc(LifecycleNode):
                 self.XYLatched = False
 
         if arenaSelect >  0.5 : 
-            self.nav_arena = "dprg"
-            # self.get_logger().info(f"joy_callback: {arenaSelect=} {self.nav_arena=}")
+            if self.nav_arena != "dprg" :
+                self.nav_arena = "dprg"
+                self.get_logger().info(f"joy_callback: {arenaSelect=} {self.nav_arena=}")
         if arenaSelect < -0.5 : 
-            self.nav_arena = "home"
-            # self.get_logger().info(f"joy_callback: {arenaSelect=} {self.nav_arena=}")
+            if self.nav_arena != "home" :
+                self.nav_arena = "home"
+                self.get_logger().info(f"joy_callback: {arenaSelect=} {self.nav_arena=}")
 
         # if resetAxes :
         #     self.state = 0

@@ -52,8 +52,8 @@ class Roborama25FrontSensorsNodeLC(LifecycleNode):
 
     timerRateHz = 30.0; # Rate to check serial port for messages
 
-    reflVal:int = 25 # TOF8x8 reflectance default = 25
-    sigmVal:int = 40 # TOF8x8 sigma value default = 10
+    reflVal:int = 50 # TOF8x8 reflectance default = 25 (> is good)
+    sigmVal:int = 6 # TOF8x8 sigma value default = 10 (< is good)
 
     #serial_port = "/dev/ttyACM2"
     serial_port:str = "/dev/serial/by-id/usb-Waveshare_RP2040_Zero_E6625C05E790A423-if00"
@@ -148,8 +148,8 @@ class Roborama25FrontSensorsNodeLC(LifecycleNode):
         self.sensor_serial_port.write(f"MODE ROS2\n".encode()) 
         self.sensor_serial_port.write(f"MODE ROS2\n".encode()) # extra write for startup
         # I need to change arduino code to respond to the L5 sensor filters
-        # self.sensor_serial_port.write(f"REFL {self.reflVal}\n".encode())
-        # self.sensor_serial_port.write(f"SIGM {self.sigmVal}\n".encode())
+        self.sensor_serial_port.write(f"REFL {self.reflVal}\n".encode())
+        self.sensor_serial_port.write(f"SIGM {self.sigmVal}\n".encode())
         #self.sensor_serial_port.write(f"OPHZ 16\n".encode()) #rear sensor data rate
         self.sensor_serial_port.flush()
         self.lifecycle_state_active = True
@@ -336,6 +336,7 @@ class Roborama25FrontSensorsNodeLC(LifecycleNode):
 
             # Rear Center sensor
             a = int(strArray[3]) #amplitude
+            
             d = int(strArray[4]) #distance mm
             if a>=min_amp and d<=max_dist:
                 dC = d/1000.0
