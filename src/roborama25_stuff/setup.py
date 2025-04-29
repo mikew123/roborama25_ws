@@ -24,10 +24,10 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            #'robo24_can_xy_node = roborama25_stuff.robo24_can_xy_node:main',
+            'roborama25_can_xy_node = roborama25_stuff.roborama25_can_xy_node:main',
             #'roborama25_sensor_serial_node = roborama25_stuff.roborama25_sensor_serial_node:main',
             'roborama25_front_sensors_node_lc = roborama25_stuff.roborama25_front_sensors_node_lc:main',
-            #'openmv_serial_node = roborama25_stuff.openmv_serial_node:main',
+            'openmv_serial_node = roborama25_stuff.openmv_serial_node:main',
             #"roborama25_wheel_controller_node = roborama25_stuff.roborama25_wheel_controller_node:main",
             "roborama25_wheel_controller_node_lc = roborama25_stuff.roborama25_wheel_controller_node_lc:main",
             "roborama25_teleop_node = roborama25_stuff.roborama25_teleop_node:main",

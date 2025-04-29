@@ -136,17 +136,17 @@ def generate_launch_description():
             ]
         ),
 
-        # launch_ros.actions.Node(
-        #     package='roborama25_stuff',
-        #     executable='openmv_serial_node',
-        #     name='openmv_serial'
-        # ),
+        launch_ros.actions.Node(
+            package='roborama25_stuff',
+            executable='openmv_serial_node',
+            name='openmv_serial'
+        ),
 
-        # launch_ros.actions.Node(
-        #     package='roborama25_stuff',
-        #     executable='robo24_can_xy_node',
-        #     name='robo24_can_xy'
-        # ),
+        launch_ros.actions.Node(
+            package='roborama25_stuff',
+            executable='robo24_can_xy_node',
+            name='roborama25_can_xy'
+        ),
 
         # launch_ros.actions.Node(
         #     package='roborama25_stuff',
