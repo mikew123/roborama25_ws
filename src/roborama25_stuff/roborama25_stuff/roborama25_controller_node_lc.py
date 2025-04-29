@@ -276,12 +276,21 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         self.createWPMap()
         self.send_amcl_set_param_request('tf_broadcast', False)
 
-        # Drive waypoint pattern
-        for wp in [(2.5,0), (1,0.5), (1,-0.5), (0,0)] :
-            status = self.gotoXY(wp[0],wp[1], 30)
+        #DEBUG: testing can detect and goto
+        tfOK = False
+        can_pose = None
+        while not tfOK :
+            (tfOK, can_pose) = self.getCanpose()
+            
+        if tfOK :
+            self.gotoCanTF(30)
+            
+        # # Drive waypoint 
+        # for wp in [(2.5,0), (1,0.5), (1,-0.5), (0,0)] :
+        #     status = self.gotoXY(wp[0],wp[1], 30)
 
-        status = self.rotateToAngle(0,10)
-        self.get_logger().info(f"runWPoints: final rotation {status=}")    
+        # status = self.rotateToAngle(0,10)
+        # self.get_logger().info(f"runWPoints: final rotation {status=}")    
         
     def run4Corner(self) :
         """
@@ -416,7 +425,46 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         t = feedback.navigation_time.sec
         
         return (result,t)
+    
+    def gotoCanTF(self, t) :
+        """
+        Go to the can pose
+        """
+        if self.lifecycle_state_active==False : return
+        
+        d=1
+        while d>0.25 :
+            (tf_OK, can_pose) = self.getCanpose()
+            if tf_OK==False:
+                self.get_logger().warn(f"gotoCanTF: Failed to get can pose")
+                return False
+            x = can_pose.pose.position.x
+            y = can_pose.pose.position.y
+            self.get_logger().info(f"gotoCanTF:b can TF {x=} {y=}")
+            # get current pose to determine the angle offset
+            # rotating to point to the desired is faster
+            # maybe the navigation behavior can be "fixed" 
+            (tf_OK, current_pose) = self.getCurrentPose()
+            xd = float(x) - current_pose.pose.position.x
+            yd = float(y) - current_pose.pose.position.y
+            # Calc angle to target XY coordinate
+            a = math.atan2(yd,xd)
+            d = math.sqrt(xd*xd + yd*yd)
+            
+            # adjust the distance to the can to be 0.2m (~robot radius)
+            # d = d - self.robotRadius
+            d-=0.2
+            x = current_pose.pose.position.x + d*math.cos(a)
+            y = current_pose.pose.position.y + d*math.sin(a)
+            
+            goto_pose = self.createPose(x,y,a)
+            self.get_logger().info(f"gotoXY: goto {x=} {y=} {d=} {a=}")
 
+            # rotate to point to goto xy position before moving to it
+            self.rotateToAngle(a,10)
+            self.gotoPose(goto_pose,1.0)
+        
+    
     def gotoXY(self,x,y,t):
         """
         Go to the X,Y coordinates from the current position within a lime limit
@@ -496,12 +544,12 @@ class Roborama25ControllerNodeLc(LifecycleNode):
             
         return result
         
-    def getCurrentPose(self):
-        # get map->base_foot transform
+    def getPoseFromTF(self, target_frame:str) -> tuple:
+        # get map->'target_frame' transform
         try:
             tf = self.tf_buffer.lookup_transform (
                 'map',
-                'base_footprint',
+                target_frame,
                 #self.nav.get_clock().now().to_msg(),
                 rclpy.time.Time(), # default 0
                 timeout=rclpy.duration.Duration(seconds=0.0)
@@ -509,7 +557,7 @@ class Roborama25ControllerNodeLc(LifecycleNode):
             tf_OK = True
 
         except (LookupException, ConnectivityException, ExtrapolationException) as ex:
-            self.get_logger().info(f'Could not transform map->base_footprint: {ex}')
+            self.get_logger().info(f'getPoseFromTF: Could not find transform map->{target_frame}: {ex}')
             tf_OK = False
 
         # translate wall points to align with map coordinates
@@ -525,6 +573,41 @@ class Roborama25ControllerNodeLc(LifecycleNode):
             pose = None
             
         return (tf_OK,pose)
+        
+    def getCanpose(self) -> tuple:
+        return self.getPoseFromTF('can')
+    
+    def getCurrentPose(self):
+        return self.getPoseFromTF('base_footprint')
+    
+        # # get map->base_foot transform
+        # try:
+        #     tf = self.tf_buffer.lookup_transform (
+        #         'map',
+        #         'base_footprint',
+        #         #self.nav.get_clock().now().to_msg(),
+        #         rclpy.time.Time(), # default 0
+        #         timeout=rclpy.duration.Duration(seconds=0.0)
+        #         )
+        #     tf_OK = True
+
+        # except (LookupException, ConnectivityException, ExtrapolationException) as ex:
+        #     self.get_logger().info(f'Could not transform map->base_footprint: {ex}')
+        #     tf_OK = False
+
+        # # translate wall points to align with map coordinates
+        # if tf_OK :
+        #     # get x, y, theta from TF
+        #     x:float = tf.transform.translation.x
+        #     y:float = tf.transform.translation.y
+        #     q:float = tf.transform.rotation
+        #     # convert quaterion to euler, discard xx and yy
+        #     (xx,yy,a) = tf_transformations.euler_from_quaternion([q.x, q.y, q.z, q.w])
+        #     pose = self.createPose(x,y,a)
+        # else :
+        #     pose = None
+            
+        # return (tf_OK,pose)
 
 
     # cli > ros2 param set /amcl tf_broadcast False
