@@ -155,7 +155,6 @@ bool OperateClaws(int clawDesiredPct, int clawPeriodMs) {
   // Operate claw until time finished or closing with can secured 
   if (now >= clawNextTime) {
 
-
     // Limit claw range 0 to 100 percent
     if (clawDesiredPct<0) clawDesiredPct=0;
     if (clawDesiredPct>100) clawDesiredPct=100;
@@ -166,15 +165,7 @@ bool OperateClaws(int clawDesiredPct, int clawPeriodMs) {
         // instant claw positioning
         clawCurrentPct = float(clawDesiredPct);
       } else {
-        // Slow down claw closing when it gets close
-        if(closing && clawCurrentPct>=80) {
-          clawCurrentPct += clawChangePct / (float(clawPeriodMs)/(dt/10));
-          clawStopTime += 9*dt/10;        
-        }
-        else {
           clawCurrentPct += clawChangePct / (float(clawPeriodMs)/dt);
-        }
-
       }
     }
 
@@ -195,19 +186,21 @@ bool OperateClaws(int clawDesiredPct, int clawPeriodMs) {
 //      Serial.print("Operating R "); Serial.println(closing);
     }
 
-    if(closing && limSwL && limSwR) {
-      // Back off to reduce servo chatter
-      clawCurrentPct-=4;
-      clawUsecL = clawUsecMaxL - clawUsecRangeL*clawCurrentPct/100;
-      clawUsecR = clawUsecMinR + clawUsecRangeR*clawCurrentPct/100;
-      Serial.println("Claw backing off 4%");
-      myservoL.writeMicroseconds(clawUsecL);
-      myservoR.writeMicroseconds(clawUsecR);
-      clawStopTime = 0;
-      clawNextTime = 0;
-      operating = false;
-    } 
-    else if (clawPeriodMs>0) {
+    // Left switch is broken, dont check if tripped
+    // if(closing && limSwL && limSwR) {
+    //   // Back off to reduce servo chatter
+    //   clawCurrentPct-=4;
+    //   clawUsecL = clawUsecMaxL - clawUsecRangeL*clawCurrentPct/100;
+    //   clawUsecR = clawUsecMinR + clawUsecRangeR*clawCurrentPct/100;
+    //   Serial.println("Claw backing off 4%");
+    //   myservoL.writeMicroseconds(clawUsecL);
+    //   myservoR.writeMicroseconds(clawUsecR);
+    //   clawStopTime = 0;
+    //   clawNextTime = 0;
+    //   operating = false;
+    // } 
+    // else if (clawPeriodMs>0) {
+    if (clawPeriodMs>0) {
       clawNextTime =  now + dt;
       operating = true;
     } 
