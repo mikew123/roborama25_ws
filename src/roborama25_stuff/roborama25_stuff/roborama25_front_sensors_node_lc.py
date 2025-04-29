@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # MRW 5/26/2025 modified to be life cycle, changed name to match arduino 
+# MRW 5/24/2025 create scan messages for reverse sensors when going backwards
 
 import rclpy
 import serial
@@ -13,10 +14,10 @@ from std_msgs.msg import String, Header
 from sensor_msgs.msg import BatteryState
 from sensor_msgs.msg import Temperature
 from sensor_msgs.msg import Imu
-from sensor_msgs.msg import PointCloud2, PointField, Range
-# from tf2_ros.static_transform_broadcaster import StaticTransformBroadcaster
-# from tf2_ros import TransformBroadcaster
+from sensor_msgs.msg import PointCloud2, PointField, Range, LaserScan
 from geometry_msgs.msg import TransformStamped, Transform
+
+from geometry_msgs.msg import Twist
 
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.callback_groups import ReentrantCallbackGroup
@@ -24,67 +25,46 @@ from rclpy.lifecycle import LifecycleNode
 from rclpy.lifecycle.node import LifecycleState, TransitionCallbackReturn
 
 # create quanterion and inserts into transform (if r_rot is sent) also returns
-def quaternion_from_euler(roll:float, pitch:float, yaw:float, t_rot:Transform.rotation=0):
-    cy = math.cos(yaw * 0.5)
-    sy = math.sin(yaw * 0.5)
-    cp = math.cos(pitch * 0.5)
-    sp = math.sin(pitch * 0.5)
-    cr = math.cos(roll * 0.5)
-    sr = math.sin(roll * 0.5)
+# def quaternion_from_euler(roll:float, pitch:float, yaw:float, t_rot:Transform.rotation=0):
+#     cy = math.cos(yaw * 0.5)
+#     sy = math.sin(yaw * 0.5)
+#     cp = math.cos(pitch * 0.5)
+#     sp = math.sin(pitch * 0.5)
+#     cr = math.cos(roll * 0.5)
+#     sr = math.sin(roll * 0.5)
 
-    q = [0] * 4
-    q[0] = cy * cp * cr + sy * sp * sr #w
-    q[1] = cy * cp * sr - sy * sp * cr #x
-    q[2] = sy * cp * sr + cy * sp * cr #y
-    q[3] = sy * cp * cr - cy * sp * sr #z
+#     q = [0] * 4
+#     q[0] = cy * cp * cr + sy * sp * sr #w
+#     q[1] = cy * cp * sr - sy * sp * cr #x
+#     q[2] = sy * cp * sr + cy * sp * cr #y
+#     q[3] = sy * cp * cr - cy * sp * sr #z
 
-    if t_rot != 0:
-        t_rot.x = q[1]
-        t_rot.y = q[2]
-        t_rot.z = q[3]
-        t_rot.w = q[0]
+#     if t_rot != 0:
+#         t_rot.x = q[1]
+#         t_rot.y = q[2]
+#         t_rot.z = q[3]
+#         t_rot.w = q[0]
     
-    return q   
+#     return q   
 
 class Roborama25FrontSensorsNodeLC(LifecycleNode):
     # parameters?
 
     timerRateHz = 30.0; # Rate to check serial port for messages
 
-    reflVal:int = 25 # TOF8x8 reflectance default = 25
-    sigmVal:int = 40 # TOF8x8 sigma value default = 10
+    reflVal:int = 50 # TOF8x8 reflectance default = 25 (> is good)
+    sigmVal:int = 6 # TOF8x8 sigma value default = 10 (< is good)
 
     #serial_port = "/dev/ttyACM2"
     serial_port:str = "/dev/serial/by-id/usb-Waveshare_RP2040_Zero_E6625C05E790A423-if00"
 
+    lifecycle_state_active = False
+
+    movingBackward:bool = True # True if moving backwards, used for rear sensor scan messages
+    
     def __init__(self):
-        super().__init__('roborama25_front_sensors_node_lc')
+        super().__init__('roborama25_front_sensors_node_lc')        
 
-
-
-        #create TF static earth->map frame
-        #self.map_tf_static_broadcaster = StaticTransformBroadcaster(self)
-        #self.make_map_static_transform()
-        
-        #Create TF links earth->map->odom->base_link->lidar_link
-        #                                    ->tofL4_link (front tof range sensor)
-        #                                    ->tofL5L_link (left tof array sensor)
-        #                                    ->tofL5R_link (right tof array sensor)
-        #                                    ->tofRL_link (rear left tof range sensor)
-        #                                    ->tofRC_link (rear center tof range sensor)
-        #                                    ->tofRR_link (rear right tof range sensor)
-        # self.map_tf_broadcaster = TransformBroadcaster(self)
-        # self.odom_tf_broadcaster = TransformBroadcaster(self)
-        # self.base_link_tf_broadcaster = TransformBroadcaster(self)
-        # self.lidar_link_tf_broadcaster = TransformBroadcaster(self)
-        # self.tofL4_link_tf_broadcaster = TransformBroadcaster(self)
-        # self.tofL5L_link_tf_broadcaster = TransformBroadcaster(self)
-        # self.tofL5R_link_tf_broadcaster = TransformBroadcaster(self)
-        # self.tofRL_link_tf_broadcaster = TransformBroadcaster(self)
-        # self.tofRC_link_tf_broadcaster = TransformBroadcaster(self)
-        # self.tofRR_link_tf_broadcaster = TransformBroadcaster(self)
-        
-        
         self.get_logger().info(f"Roborama25FrontSensorsNodeLC Started")
 
     # Create ROS2 communications, connect to HW
@@ -99,6 +79,12 @@ class Roborama25FrontSensorsNodeLC(LifecycleNode):
         # self.broadcast_timer = self.create_timer(1/10.0, self.broadcast_timer_callback)
         # self.broadcast_timer.cancel()
         
+        # There is no lifecycle support for subscription
+        self.cmd_vel_subscription = self.create_subscription(Twist, '/cmd_vel', self.cmd_vel_callback, 10)
+
+        self.tofRL_scan_publisher = self.create_lifecycle_publisher(LaserScan, 'tofRL_scan', 10)
+        self.tofRC_scan_publisher = self.create_lifecycle_publisher(LaserScan, 'tofRC_scan', 10)
+        self.tofRR_scan_publisher = self.create_lifecycle_publisher(LaserScan, 'tofRR_scan', 10)
         self.tofRL_rng_publisher = self.create_lifecycle_publisher(Range, 'tofRL_rng', 10)
         self.tofRC_rng_publisher = self.create_lifecycle_publisher(Range, 'tofRC_rng', 10)
         self.tofRR_rng_publisher = self.create_lifecycle_publisher(Range, 'tofRR_rng', 10)
@@ -119,6 +105,9 @@ class Roborama25FrontSensorsNodeLC(LifecycleNode):
 
     # Clean up stuff for cleanup, shutdown, error
     def cleanup_lc(self) :        
+        self.destroy_lifecycle_publisher(self.tofRL_scan_publisher)
+        self.destroy_lifecycle_publisher(self.tofRC_scan_publisher)
+        self.destroy_lifecycle_publisher(self.tofRR_scan_publisher)
         self.destroy_lifecycle_publisher(self.tofRL_rng_publisher)
         self.destroy_lifecycle_publisher(self.tofRC_rng_publisher)
         self.destroy_lifecycle_publisher(self.tofRR_rng_publisher)
@@ -138,6 +127,8 @@ class Roborama25FrontSensorsNodeLC(LifecycleNode):
         # self.destroy_timer(self.broadcast_timer)
         self.destroy_timer(self.serial_timer)
         self.sensor_serial_port=None
+        # There is no lifecycle subscription
+        self.destroy_subscription(self.cmd_vel_subscription)   
 
     # Destroy ROS2 communications, disconnect from HW
     def on_cleanup(self, previous_state: LifecycleState):
@@ -154,16 +145,19 @@ class Roborama25FrontSensorsNodeLC(LifecycleNode):
         self.sensor_serial_port.port = self.serial_port
         self.sensor_serial_port.open() #= serial.Serial(self.serial_port, 2000000)
         # configure interface
+        self.sensor_serial_port.write(f"MODE ROS2\n".encode()) 
         self.sensor_serial_port.write(f"MODE ROS2\n".encode()) # extra write for startup
-        self.sensor_serial_port.write(f"MODE ROS2\n".encode())
+        # I need to change arduino code to respond to the L5 sensor filters
         self.sensor_serial_port.write(f"REFL {self.reflVal}\n".encode())
         self.sensor_serial_port.write(f"SIGM {self.sigmVal}\n".encode())
         #self.sensor_serial_port.write(f"OPHZ 16\n".encode()) #rear sensor data rate
         self.sensor_serial_port.flush()
+        self.lifecycle_state_active = True
         return super().on_activate(previous_state)
 
     # Deactivate stuff used in shutdown, error
     def deactivate(self):
+        self.lifecycle_state_active = False
         # self.broadcast_timer.cancel()
         self.serial_timer.cancel()
         self.sensor_serial_port.close()
@@ -191,117 +185,6 @@ class Roborama25FrontSensorsNodeLC(LifecycleNode):
         self.shutdown(previous_state)
         # do some checks, if ok, then return SUCCESS, if not FAILURE
         return TransitionCallbackReturn.FAILURE
-        
-    # def make_map_static_transform(self):
-    #     t = TransformStamped()
-
-    #     t.header.stamp = self.get_clock().now().to_msg()
-    #     t.header.frame_id = "earth"
-    #     t.child_frame_id = "map"
-
-    #     t.transform.translation.x = 0.0
-    #     t.transform.translation.y = 0.0
-    #     t.transform.translation.z = 0.0
-    #     t.transform.rotation.x = 0.0
-    #     t.transform.rotation.y = 0.0
-    #     t.transform.rotation.z = 0.0
-    #     t.transform.rotation.w = 1.0
-
-    #     self.map_tf_static_broadcaster.sendTransform(t)
-        
-    # def zeroTransform(self, transform: Transform) :
-    #     transform.translation.x = 0.0
-    #     transform.translation.y = 0.0
-    #     transform.translation.z = 0.0
-    #     transform.rotation.x = 0.0
-    #     transform.rotation.y = 0.0
-    #     transform.rotation.z = 0.0
-    #     transform.rotation.w = 1.0
-        
-    # def broadcast_timer_callback(self):
-    #     #Create TF links map->odom->base_link->lidar
-    #     t = TransformStamped()
-
-    #     t.header.stamp = self.get_clock().now().to_msg()
-                
-    #     self.zeroTransform(t.transform)
-    #     t.header.frame_id = 'earth'
-    #     t.child_frame_id = 'map'
-    #     self.map_tf_broadcaster.sendTransform(t)
-        
-    #     self.zeroTransform(t.transform)
-    #     t.header.frame_id = 'map'
-    #     t.child_frame_id = 'odom'
-    #     self.odom_tf_broadcaster.sendTransform(t)
-        
-    #     self.zeroTransform(t.transform)
-    #     t.header.frame_id = 'odom'
-    #     t.child_frame_id = 'base_link'
-    #     self.base_link_tf_broadcaster.sendTransform(t)
-        
-    #     self.zeroTransform(t.transform)
-    #     t.header.frame_id = 'base_link'
-    #     t.child_frame_id = 'lidar_link'
-    #     # rotate 180 deg, raise 100mm
-    #     t.transform.translation.z = 0.1
-    #     # Simple numbers, calling the q function not needed
-    #     t.transform.rotation.z = 1.0
-    #     t.transform.rotation.w = 0.0
-    #     self.lidar_link_tf_broadcaster.sendTransform(t)
-
-    #     self.zeroTransform(t.transform)
-    #     t.header.frame_id = 'base_link'
-    #     t.child_frame_id = 'tofL4_link'
-    #     # TOF range detector is 100mm in front of center
-    #     t.transform.translation.x = 0.1
-    #     self.tofL4_link_tf_broadcaster.sendTransform(t)
-
-    #     self.zeroTransform(t.transform)
-    #     t.header.frame_id = 'base_link'
-    #     t.child_frame_id = 'tofRL_link'
-    #     # TOF range detector is 100mm in front of center
-    #     t.transform.translation.x = -0.045
-    #     yaw = +(180-(50/2)-(60/2))
-    #     quaternion_from_euler(roll=0, pitch=0, yaw=math.pi*yaw/180, t_rot=t.transform.rotation)
-    #     self.tofRL_link_tf_broadcaster.sendTransform(t)
-
-    #     self.zeroTransform(t.transform)
-    #     t.header.frame_id = 'base_link'
-    #     t.child_frame_id = 'tofRC_link'
-    #     # TOF range detector is 100mm in front of center
-    #     t.transform.translation.x = -0.045
-    #     yaw = 180
-    #     quaternion_from_euler(roll=0, pitch=0, yaw=math.pi*yaw/180, t_rot=t.transform.rotation)
-    #     self.tofRC_link_tf_broadcaster.sendTransform(t)
-
-    #     self.zeroTransform(t.transform)
-    #     t.header.frame_id = 'base_link'
-    #     t.child_frame_id = 'tofRR_link'
-    #     # TOF range detector is 100mm in front of center
-    #     t.transform.translation.x = -0.045
-    #     yaw = -(180-(50/2)-(60/2))
-    #     quaternion_from_euler(roll=0, pitch=0, yaw=math.pi*yaw/180, t_rot=t.transform.rotation)
-    #     self.tofRR_link_tf_broadcaster.sendTransform(t)
-        
-    #     self.zeroTransform(t.transform)
-    #     t.header.frame_id = 'base_link'
-    #     t.child_frame_id = 'tofL5L_link'
-    #     # TOF range detector is offset x=100mm y=70mm theta=45/2
-    #     t.transform.translation.x = 0.170
-    #     t.transform.translation.y = 0.070
-    #     yaw = +((45.0/2)+3.5)
-    #     quaternion_from_euler(roll=0, pitch=0, yaw=math.pi*yaw/180, t_rot=t.transform.rotation)
-    #     self.tofL5L_link_tf_broadcaster.sendTransform(t)
-        
-    #     self.zeroTransform(t.transform)
-    #     t.header.frame_id = 'base_link'
-    #     t.child_frame_id = 'tofL5R_link'
-    #     # TOF range detector is offset x=100mm y=70mm theta=-45/2
-    #     t.transform.translation.x = 0.170
-    #     t.transform.translation.y = -0.070
-    #     yaw = -((45.0/2)+3.5)
-    #     quaternion_from_euler(roll=0, pitch=0, yaw=math.pi*yaw/180, t_rot=t.transform.rotation)
-    #     self.tofL5R_link_tf_broadcaster.sendTransform(t)
 
     # check serial port at timerRateHz and parse out messages to publish
     def serial_timer_callback(self):
@@ -325,6 +208,16 @@ class Roborama25FrontSensorsNodeLC(LifecycleNode):
                 self.BT_processing(strArray)
             else :
                 self.get_logger().error(f"Invalid serial sensor message {received_data=}")
+
+    def cmd_vel_callback(self, msg):
+        """
+        Get status of fwd/rev motion
+        """
+        if not self.lifecycle_state_active : return
+        linear_velocity = msg.linear.x
+        self.movingBackward = linear_velocity<-0.0001
+        
+        
 
     def L5_processing(self, strArray):
         num_data = 8*4
@@ -415,6 +308,9 @@ class Roborama25FrontSensorsNodeLC(LifecycleNode):
             
             
     def OPT_processing(self, strArray):
+        """
+        Process the 3 OPT3101 rear distance sensors
+        """
         num_data = 6
         min_amp = 100
         max_dist = 500
@@ -431,35 +327,46 @@ class Roborama25FrontSensorsNodeLC(LifecycleNode):
             a = int(strArray[1]) #amplitude
             d = int(strArray[2]) #distance mm
             if a>=min_amp and d<=max_dist:
-                d = d/1000.0
+                dR = d/1000.0
             else :
-                d =  invalid_dist
-            fov = 2*math.pi*50.0/360
-            rng = self.range_msg(d,fov,"tofRR_link")
+                dR =  invalid_dist
+            fovR = 2*math.pi*50.0/360
+            rng = self.range_msg(dR,fovR,"tofRR_link")
             self.tofRR_rng_publisher.publish(rng)
 
             # Rear Center sensor
             a = int(strArray[3]) #amplitude
+            
             d = int(strArray[4]) #distance mm
             if a>=min_amp and d<=max_dist:
-                d = d/1000.0
+                dC = d/1000.0
             else :
-                d =  invalid_dist
-            fov = 2*math.pi*50.0/360
-            rng = self.range_msg(d,fov,"tofRC_link")
+                dC =  invalid_dist
+            fovC = 2*math.pi*50.0/360
+            rng = self.range_msg(dC,fovC,"tofRC_link")
             self.tofRC_rng_publisher.publish(rng)
 
             # Rear Left sensor
             a = int(strArray[5]) #amplitude
             d = int(strArray[6]) #distance mm
             if a>=min_amp and d<=max_dist:
-                d = d/1000.0
+                dL = d/1000.0
             else :
-                d =  invalid_dist
-            fov = 2*math.pi*50.0/360
-            rng = self.range_msg(d,fov,"tofRL_link")
+                dL =  invalid_dist
+            fovL = 2*math.pi*50.0/360
+            rng = self.range_msg(dL,fovL,"tofRL_link")
             self.tofRL_rng_publisher.publish(rng)
         
+            # Create scan messages for front center while moving backwards
+            if self.movingBackward==True:
+                scan = self.scan_msg_from_range(dL, fovL, "tofRL_link")
+                self.tofRL_scan_publisher.publish(scan)
+                scan = self.scan_msg_from_range(dC, fovC, "tofRC_link")
+                self.tofRC_scan_publisher.publish(scan)
+                scan = self.scan_msg_from_range(dR, fovR, "tofRR_link")
+                self.tofRR_scan_publisher.publish(scan)
+                
+                
     def IMU_processing(self, strArray):
         num_data = 11
         if strArray[0]=="IMU" and len(strArray)==1+num_data :
@@ -534,6 +441,30 @@ class Roborama25FrontSensorsNodeLC(LifecycleNode):
             max_range = 4.00,
             range = range
         )        
+
+
+    def scan_msg_from_range(self, range:float=0, fov:float=0, parent_frame:str="map") -> LaserScan:
+        """
+        Create a scan message from range data with points spaced about 10 degrees apart
+        """
+        scan = LaserScan()
+        
+        scan.header = Header(
+            frame_id = parent_frame,
+            stamp = self.get_clock().now().to_msg(),
+            )
+        scan.range_min= 0.010
+        scan.range_max= 1.00
+        np = fov/(10*(math.pi/180)) # number of points
+        scan.angle_min = -fov/2
+        scan.angle_max = fov/2
+        scan.angle_increment = fov/np
+        a = scan.angle_min
+        while a < scan.angle_max:
+            scan.ranges.append(range)
+            a += scan.angle_increment
+            
+        return scan
         
     def point_cloud(self, points_xy:list[tuple[np.float32]], parent_frame:str="map") -> PointCloud2:
         """
