@@ -620,7 +620,30 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         #     pose = None
             
         # return (tf_OK,pose)
+    
 
+    # 6 can functions
+    def tofL4_rng_callback(self) :
+        """
+        Front range sensor message
+        This sensor is used for the final can approach after T5 sensors quit detecting
+        This call back also runs the 6 can state machine
+        """
+        pass
+
+    def tofL5L_pcd_callback(self) :
+        """
+        Front Left TOF sensors message
+        This sensor (with the Right sensors) is used to align the can to the center
+        """
+        pass
+
+    def tofL5R_pcd_callback(self) :
+        """
+        Front Right TOF sensors message
+        This sensor (with the Left sensors) is used to align the can to the center
+        """
+        pass
 
     # cli > ros2 param set /amcl tf_broadcast False
     def send_amcl_set_param_request(self, name, value):
