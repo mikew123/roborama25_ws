@@ -283,7 +283,13 @@ class Roborama25ControllerNodeLc(LifecycleNode):
             (tfOK, can_pose) = self.getCanpose()
             
         if tfOK :
-            self.gotoCanTF(30)
+            dist = self.gotoCanTF(30)
+        
+        if dist > 0 :
+            self.get_logger().info(f"runWPoints: Robot is close to the can at {dist=}")
+        else :
+            self.get_logger().info(f"runWPoints: Robot failed to get close to the can")
+            
             
         # # Drive waypoint 
         # for wp in [(2.5,0), (1,0.5), (1,-0.5), (0,0)] :
@@ -408,7 +414,7 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         
         self.nav.setInitialPose(pose)
        
-    def gotoPose(self, goto_pose, t) -> tuple:
+    def gotoPose(self, goto_pose, t):
         """
         Go to the pose within in the time limit
         """
@@ -424,20 +430,22 @@ class Roborama25ControllerNodeLc(LifecycleNode):
             feedback.current_pose.pose.orientation.w])
         t = feedback.navigation_time.sec
         
-        return (result,t)
+        return result
     
     def gotoCanTF(self, t) :
         """
-        Go to the can pose
+        Go to the can TF location, but stop 0.2m short
+        Rotates to point to the can before moving to it
+        gets new can position every 1 second as it approaches it
         """
-        if self.lifecycle_state_active==False : return
+        if self.lifecycle_state_active==False : return -1
         
-        d=1
+        d=100
         while d>0.25 :
             (tf_OK, can_pose) = self.getCanpose()
             if tf_OK==False:
                 self.get_logger().warn(f"gotoCanTF: Failed to get can pose")
-                return False
+                return -1
             x = can_pose.pose.position.x
             y = can_pose.pose.position.y
             self.get_logger().info(f"gotoCanTF:b can TF {x=} {y=}")
@@ -461,9 +469,13 @@ class Roborama25ControllerNodeLc(LifecycleNode):
             self.get_logger().info(f"gotoXY: goto {x=} {y=} {d=} {a=}")
 
             # rotate to point to goto xy position before moving to it
-            self.rotateToAngle(a,10)
-            self.gotoPose(goto_pose,1.0)
-        
+            status = self.rotateToAngle(a,10)
+            if status != TaskResult.FAILED :
+                status = self.gotoPose(goto_pose,1.0)
+            if status == TaskResult.FAILED :
+                d=-1
+                
+        return d
     
     def gotoXY(self,x,y,t):
         """
@@ -487,9 +499,9 @@ class Roborama25ControllerNodeLc(LifecycleNode):
 
         # rotate to point to goto xy position before moving to it
         status = self.rotateToAngle(a,10)
-        (result,t) = self.gotoPose(goto_pose,t)
+        result = self.gotoPose(goto_pose,t)
         
-        return (result,t)
+        return result
     
     def rotate(self,a,t):
         """
@@ -502,7 +514,7 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         while a<-math.pi : a += 2*math.pi
         self.nav.spin(float(a),t)
         (result, feedback) = self.waitTaskComplete(0)
-        return (result,t)
+        return result
     
     def rotateToAngle(self,a,t) :
         """
@@ -535,7 +547,7 @@ class Roborama25ControllerNodeLc(LifecycleNode):
                 self.get_logger().info(f"rotateToAngle: spin threshold reached {spin:.3f} < {spinThresh:.3f}, breaking loop")
                 break
             
-            (result, feedback) = self.rotate(spin,t)
+            result = self.rotate(spin,t)
             
             current_time = self.get_clock().now()
             elapsed_time = (current_time - start_time).nanoseconds / 1e9  # Convert nanoseconds to seconds
