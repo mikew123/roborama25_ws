@@ -31,6 +31,7 @@ from tf2_ros.transform_listener import TransformListener
 from tf2_ros.static_transform_broadcaster import StaticTransformBroadcaster
 
 from sensor_msgs.msg import Joy
+from sensor_msgs.msg import PointCloud2, Range
 
 class Roborama25ControllerNodeLc(LifecycleNode):
     """
@@ -147,6 +148,9 @@ class Roborama25ControllerNodeLc(LifecycleNode):
             self.get_logger().info('/amcl/set_parameters service not available, waiting again...')
 
         self.joy_subscription = self.create_subscription(Joy, '/joy', self.joy_callback, 10)
+        self.tofL4_rng_subscription = self.create_subscription(Range, '/tofL4_rng', self.tofL4_rng_callback, 10)
+        self.tofL5L_pcd_subscription = self.create_subscription(PointCloud2, '/tofL5L_pcd', self.tofL5L_pcd_callback, 10)
+        self.tofL5R_pcd_subscription = self.create_subscription(PointCloud2, '/tofL5R_pcd', self.tofL5R_pcd_callback, 10)
 
         self.get_logger().info(f"roborama25_controller_node Started {self.nav_arena=}")
     
@@ -623,26 +627,32 @@ class Roborama25ControllerNodeLc(LifecycleNode):
     
 
     # 6 can functions
-    def tofL4_rng_callback(self) :
+    def tofL4_rng_callback(self, msg: Range) :
         """
         Front range sensor message
         This sensor is used for the final can approach after T5 sensors quit detecting
         This call back also runs the 6 can state machine
         """
+        dist = msg.range
+        dist_min = msg.min_range
+        dist_max = msg.max_range
+
         pass
 
-    def tofL5L_pcd_callback(self) :
+    def tofL5L_pcd_callback(self, msg: PointCloud2) :
         """
         Front Left TOF sensors message
         This sensor (with the Right sensors) is used to align the can to the center
         """
+        data = msg.data
         pass
 
-    def tofL5R_pcd_callback(self) :
+    def tofL5R_pcd_callback(self, msg: PointCloud2) :
         """
         Front Right TOF sensors message
         This sensor (with the Left sensors) is used to align the can to the center
         """
+        data = msg.data
         pass
 
     # cli > ros2 param set /amcl tf_broadcast False
