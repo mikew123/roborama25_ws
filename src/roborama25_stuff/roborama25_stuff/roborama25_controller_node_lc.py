@@ -625,6 +625,17 @@ class Roborama25ControllerNodeLc(LifecycleNode):
             
         # return (tf_OK,pose)
     
+    def run_6can_states(self) :
+        """
+        Runs the upper level states for six can
+        >findCan
+        >gotoCan
+        >grabCan
+        >gotoCanDrop
+        >dropCan
+        >gotoNewLocation
+        """
+        pass
 
     # 6 can functions
     def tofL4_rng_callback(self, msg: Range) :
