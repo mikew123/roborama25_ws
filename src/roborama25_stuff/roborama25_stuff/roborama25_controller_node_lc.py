@@ -2,6 +2,8 @@ import rclpy
 import math
 import tf_transformations
 import signal
+import json
+import time
 
 from rclpy.node import Node
 from functools import partial
@@ -24,6 +26,8 @@ from nav2_simple_commander.robot_navigator import BasicNavigator, TaskResult
 from geometry_msgs.msg import Pose, PoseStamped, PoseWithCovarianceStamped
 
 from geometry_msgs.msg import TransformStamped
+from geometry_msgs.msg import Twist
+
 from tf2_ros import LookupException, ConnectivityException, ExtrapolationException
 from tf2_ros import Duration
 from tf2_ros.buffer import Buffer
@@ -32,6 +36,9 @@ from tf2_ros.static_transform_broadcaster import StaticTransformBroadcaster
 
 from sensor_msgs.msg import Joy
 from sensor_msgs.msg import PointCloud2, Range
+from sensor_msgs_py import point_cloud2
+
+from std_msgs.msg import String, Header
 
 class Roborama25ControllerNodeLc(LifecycleNode):
     """
@@ -120,6 +127,9 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         "dprg" : dprg_arena
     }
 
+    # flag to start running the 6can state machine
+    enable_6can_states = False
+
 
     nav_arena:str = "home"
 
@@ -151,6 +161,9 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         self.tofL4_rng_subscription = self.create_subscription(Range, '/tofL4_rng', self.tofL4_rng_callback, 10)
         self.tofL5L_pcd_subscription = self.create_subscription(PointCloud2, '/tofL5L_pcd', self.tofL5L_pcd_callback, 10)
         self.tofL5R_pcd_subscription = self.create_subscription(PointCloud2, '/tofL5R_pcd', self.tofL5R_pcd_callback, 10)
+        self.robot_json_publisher = self.create_publisher(String, 'robot_json',10)
+
+        self.cmd_vel_publisher = self.create_publisher(Twist, '/cmd_vel', 10)
 
         self.get_logger().info(f"roborama25_controller_node Started {self.nav_arena=}")
     
@@ -164,7 +177,7 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         self.nav = BasicNavigator()
         
         self.get_logger().info(f"on_configure: waitUntilNav2Active before starting configuration")
-        self.nav.waitUntilNav2Active()
+        #######self.nav.waitUntilNav2Active()
         self.get_logger().info(f"on_configure: waitUntilNav2Active done")   
 
         # publish the map 1/sec
@@ -248,6 +261,8 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         Called in a timer 
         """
         if self.nav2_run_first_exec == True :
+            self.get_logger().info(f"nav2_run: {self.nav2_run_first_exec=}")
+
             initial_pose = self.createPose(0,0,0)
             self.setInitialPose(initial_pose)    
 
@@ -354,21 +369,23 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         
         self.create6CMap()
     
-        # DEBUG test waypoint pattern, localization ON and OFF
-        for value in [True, False]:
-            self.send_amcl_set_param_request('tf_broadcast', value)
+        self.enable_6can_states = True
+        
+        # # DEBUG test waypoint pattern, localization ON and OFF
+        # for value in [True, False]:
+        #     self.send_amcl_set_param_request('tf_broadcast', value)
                 
-            status = self.gotoXY(2.5,0, 30)
-            self.get_logger().info(f"gotoXY() {status=}")
-            status = self.gotoXY(1,0.5, 30)
-            self.get_logger().info(f"gotoXY() {status=}")
-            status = self.gotoXY(1,-0.5, 30)
-            self.get_logger().info(f"gotoXY() {status=}")
-            status = self.gotoXY(0,0, 30)
-            self.get_logger().info(f"gotoXY() {status=}")
+        #     status = self.gotoXY(2.5,0, 30)
+        #     self.get_logger().info(f"gotoXY() {status=}")
+        #     status = self.gotoXY(1,0.5, 30)
+        #     self.get_logger().info(f"gotoXY() {status=}")
+        #     status = self.gotoXY(1,-0.5, 30)
+        #     self.get_logger().info(f"gotoXY() {status=}")
+        #     status = self.gotoXY(0,0, 30)
+        #     self.get_logger().info(f"gotoXY() {status=}")
 
-        status = self.rotateToAngle(0,10)
-        self.get_logger().info(f"run6Can: final rotation {status=}")    
+        # status = self.rotateToAngle(0,10)
+        # self.get_logger().info(f"run6Can: final rotation {status=}")    
          
     def createPose(self,x,y,a) -> PoseStamped:
         pose = PoseStamped()
@@ -596,75 +613,243 @@ class Roborama25ControllerNodeLc(LifecycleNode):
     def getCurrentPose(self):
         return self.getPoseFromTF('base_footprint')
     
-        # # get map->base_foot transform
-        # try:
-        #     tf = self.tf_buffer.lookup_transform (
-        #         'map',
-        #         'base_footprint',
-        #         #self.nav.get_clock().now().to_msg(),
-        #         rclpy.time.Time(), # default 0
-        #         timeout=rclpy.duration.Duration(seconds=0.0)
-        #         )
-        #     tf_OK = True
+################################### 6CAN stuff ##########################    
 
-        # except (LookupException, ConnectivityException, ExtrapolationException) as ex:
-        #     self.get_logger().info(f'Could not transform map->base_footprint: {ex}')
-        #     tf_OK = False
-
-        # # translate wall points to align with map coordinates
-        # if tf_OK :
-        #     # get x, y, theta from TF
-        #     x:float = tf.transform.translation.x
-        #     y:float = tf.transform.translation.y
-        #     q:float = tf.transform.rotation
-        #     # convert quaterion to euler, discard xx and yy
-        #     (xx,yy,a) = tf_transformations.euler_from_quaternion([q.x, q.y, q.z, q.w])
-        #     pose = self.createPose(x,y,a)
-        # else :
-        #     pose = None
-            
-        # return (tf_OK,pose)
+    
+    tofL4_rng = None
+    tofL5L_pcd = None
+    tofL5R_pcd = None
+    canTF_ok = False
+        
+    current_6can_state = "findCan"
+    next_6can_state =  current_6can_state
     
     def run_6can_states(self) :
         """
+        Executes every tofL4_rng_callback
         Runs the upper level states for six can
         >findCan
-        >gotoCan
+        >gotoCanLocation
+        >approachCan
         >grabCan
         >gotoCanDrop
         >dropCan
         >gotoNewLocation
         """
-        pass
+        
+        if self.lifecycle_state_active==False : return
+        
+        if self.enable_6can_states == False : return
 
-    # 6 can functions
+        
+        if self.current_6can_state != self.next_6can_state :
+            self.get_logger().info(f"run_6can_states: State changed {self.current_6can_state=} {self.next_6can_state=}")
+            
+        self.current_6can_state = self.next_6can_state
+        self.get_logger().info(f"run_6can_states: {self.current_6can_state=}")
+        match self.current_6can_state :
+            case "findCan" : 
+                next_state = self.run_findCan()
+            case "gotoCanLocation" :
+                next_state = self.run_gotoCanLocation()
+            case "approachCan" :
+                next_state = self.run_approachCan()
+            case "grabCan" :
+                next_state = self.run_grabCan()
+            case "gotoCanDrop" :
+                next_state = self.run_gotoCanDrop()
+            case "dropCan" :
+                next_state = self.run_dropCan()  
+            case "backupFromCan" :
+                next_state = self.run_backupFromCan()                  
+            case "gotoNewLocation" :
+                next_state = self.run_gotoNewLocation()
+            case _ :
+                self.get_logger().info(f"run_6can_states: Unknown state {self.current_6can_state=}")
+                self.enable_6can_states = False
+
+        self.next_6can_state = next_state
+            
+    def run_findCan(self):
+        """
+        Find a can using the camera can detection which generates a "can" TF
+        """
+        next_state = "findCan"
+        # Check if the can transform is detected, discard pose
+        (tf_OK, can_pose) = self.getCanpose()
+        
+        # may want to verify the can TF is stable
+        if tf_OK == True : 
+            next_state = "gotoCanLocation"
+
+        # need to add time outs to scan in different directions then go to a new location
+    
+        return next_state
+    
+    def run_gotoCanLocation(self) :
+        """
+        Attemp to go to the location of the can 
+        """
+        next_state = "gotoCanLocation"
+        
+        dist = self.gotoCanTF(30)
+        
+        if dist > 0 :
+            self.get_logger().info(f"run_gotoCanLocation: Robot is close to the can at {dist=}")
+            next_state = "approachCan"
+        else :
+            self.get_logger().info(f"run_gotoCanLocation: Robot failed to get close to the can")
+            next_state = "findCan"
+            
+        return next_state
+    
+    def run_approachCan(self) :
+        """
+        Approach the can using the TOF sensors
+        """
+        next_state = "approachCan"
+        msg = Twist()
+        
+        dist = self.tofL4_rng
+        if dist > 0.040 :
+            """
+            Move to approach the can
+            Rotate Left when number of L data points > R data points
+            Rotate Right when number of R data points > L data points
+            Move towards can while range > 0.035
+            """
+            msg.linear.x = 0.1
+            Lnum = 0
+            for x in self.tofL5L_pcd :
+                if x>0 and x<dist : Lnum += 1
+            Rnum = 0
+            for x in self.tofL5R_pcd :
+                if x>0 and x<dist : Rnum += 1
+            if Lnum > Rnum :
+                msg.angular.z = 0.025
+            if Rnum > Lnum :
+                msg.angular.z = -0.025
+            self.get_logger().info(f"run_approachCan: approaching the can {dist=} {Lnum=} {Rnum=} {msg=}")
+        elif dist > 0.010 : # ensure it is a valid distance, maybe > 0 ???
+            self.get_logger().info(f"run_approachCan: at the can {dist=} {msg=}")
+            next_state = "grabCan"
+            
+        self.cmd_vel_publisher.publish(msg)
+        
+        return next_state
+    
+    def run_grabCan(self) :
+        """
+        Grab the can and go to next state
+        """
+        next_state = "grabCan"
+        
+        self.clawCmd(90, 1000)
+        next_state = "gotoCanDrop"
+                               
+        return next_state
+    
+    def run_gotoCanDrop(self) :
+        """
+        Go to the drop location
+        """
+        next_state = "gotoCanDrop"
+              
+        self.gotoXY(3,0,30)
+        next_state = "dropCan"
+        
+        return next_state
+    
+    def run_dropCan(self) :
+        """
+        Open claws to drop the can
+        """
+        next_state = "dropCan"
+
+        self.clawCmd(0, 1000)
+        next_state = "backupFromCan"
+        
+        return next_state
+    
+    def run_backupFromCan(self) :  
+        """
+        Backup from the can so that it is not seen as an obstacle
+        """
+        next_state = "backupFromCan"
+        self.nav.backup(0.35, 0.1, 4)
+        self.waitTaskComplete(4)
+        
+        next_state = "gotoNewLocation"
+        
+        return next_state
+
+    def run_gotoNewLocation(self) :  
+        """
+        Placeholder for the 'run_gotoNewLocation' function.
+        """
+        next_state = "gotoNewLocation"
+              
+        self.gotoXY(2.5,0,30)
+        # TODO: ???? Rotate to point straight out ????
+        next_state = "findCan"
+        
+        return next_state
+    
+    # Sensors used to run 6 CAN
     def tofL4_rng_callback(self, msg: Range) :
         """
         Front range sensor message
         This sensor is used for the final can approach after T5 sensors quit detecting
         This call back also runs the 6 can state machine
         """
-        dist = msg.range
-        dist_min = msg.min_range
-        dist_max = msg.max_range
-
-        pass
-
+        self.tofL4_rng = msg.range
+        self.run_6can_states()
+        
     def tofL5L_pcd_callback(self, msg: PointCloud2) :
         """
         Front Left TOF sensors message
         This sensor (with the Right sensors) is used to align the can to the center
-        """
-        data = msg.data
-        pass
+        """      
+        pc2_data = point_cloud2.read_points_list(msg, field_names=["x", "y"])
+        #data = [pc2_data[13].x, pc2_data[14].x, pc2_data[15].x] 
+        data = []
+        for i in range(10,15) : data.append(pc2_data[i].x)
+        #self.get_logger().info(f"tofL5L_pcd_callback: {pc2_data=} {data=}")
+                
+        self.tofL5L_pcd = data
 
     def tofL5R_pcd_callback(self, msg: PointCloud2) :
         """
         Front Right TOF sensors message
         This sensor (with the Left sensors) is used to align the can to the center
         """
-        data = msg.data
-        pass
+        pc2_data = point_cloud2.read_points_list(msg, field_names=["x", "y"])
+        #data = [pc2_data[0].x, pc2_data[1].x, pc2_data[2].x] 
+        data = []
+        for i in range(0,5) : data.append(pc2_data[i].x)
+        #self.get_logger().info(f"tofL5R_pcd_callback: {pc2_data=} {data=}")
+        self.tofL5R_pcd = data
+
+    # send a message to claw to open/close
+    #TODO: use custom msg (2 ints) instead of string
+    def clawCmd(self, pct: int, msec: int) -> None:
+        """
+        sends (publish) a message to claw to open/close
+        pct is percent claw closed (0 = 100%o pen)
+        msec is how long the claw moves to the new position
+        """
+        cmd_json = {"claw": {"open": pct, "time": 1000}}
+        cmd_str = json.dumps(cmd_json)+"\0"
+        self.robot_json_data_publish(cmd_str)
+
+        # blocking wait for the expected claw movement time
+        # blocking is OK since the robot should be stopped
+        time.sleep(msec/1000.0)
+
+    def robot_json_data_publish(self, data:str) -> None :
+        msg = String()
+        msg.data = data
+        self.robot_json_publisher.publish(msg)
 
     # cli > ros2 param set /amcl tf_broadcast False
     def send_amcl_set_param_request(self, name, value):
