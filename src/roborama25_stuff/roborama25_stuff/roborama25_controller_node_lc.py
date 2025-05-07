@@ -86,10 +86,10 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         "dprg" : (d+(2*t))*ft2m
     }
     
-    home_can6Width:int = int(((9.0+(7/12.0)) * ft2m)/mapResolution) # 6-can walls
-    home_can6Height:int = int(((7.0+(10/12.0)) * ft2m)/mapResolution)
-    home_can6GoalArea:int = int((2 * ft2m)/mapResolution) # goal area outside walls
-    home_can6GoalOpening:int = int((3 * ft2m)/mapResolution) #width of goal openin
+    home_can6Width:int = int((9.0 * ft2m)/mapResolution) # 6-can walls
+    home_can6Height:int = int((7.0 * ft2m)/mapResolution)
+    home_can6GoalArea:int = int((2.0 * ft2m)/mapResolution) # goal area outside walls
+    home_can6GoalOpening:int = int((3.0 * ft2m)/mapResolution) #width of goal openin
     home_mapWidth:int = home_can6Width + home_can6GoalArea
     home_mapHeight:int = home_can6Height
     home_startWpX0:int = (8/12.0*ft2m) # offset from back wall, inches to meters
@@ -144,6 +144,7 @@ class Roborama25ControllerNodeLc(LifecycleNode):
 
         self.cb_group_re = ReentrantCallbackGroup()
         self.cb_group_mx = MutuallyExclusiveCallbackGroup()
+        self.cb_group_nav2_run = MutuallyExclusiveCallbackGroup()
 
         # Life cycle needed
         self.tf_buffer = Buffer()
@@ -157,13 +158,22 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         while not self.amcl_set_param_svc.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('/amcl/set_parameters service not available, waiting again...')
 
-        self.joy_subscription = self.create_subscription(Joy, '/joy', self.joy_callback, 10)
-        self.tofL4_rng_subscription = self.create_subscription(Range, '/tofL4_rng', self.tofL4_rng_callback, 10)
-        self.tofL5L_pcd_subscription = self.create_subscription(PointCloud2, '/tofL5L_pcd', self.tofL5L_pcd_callback, 10)
-        self.tofL5R_pcd_subscription = self.create_subscription(PointCloud2, '/tofL5R_pcd', self.tofL5R_pcd_callback, 10)
-        self.robot_json_publisher = self.create_publisher(String, 'robot_json',10)
+        self.local_costmap_set_param_request = SetParameters.Request()
+        self.local_costmap_set_param_svc = self.create_client(SetParameters, '/local_costmap/local_costmap/set_parameters')
+        while not self.local_costmap_set_param_svc.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info('/local_costmap/local_costmap/set_parameters service not available, waiting again...')
 
+        self.robot_json_publisher = self.create_publisher(String, '/robot_json',10)
         self.cmd_vel_publisher = self.create_publisher(Twist, '/cmd_vel', 10)
+        
+        self.joy_subscription = self.create_subscription(Joy, '/joy', self.joy_callback, 
+                                                                10, callback_group=self.cb_group_mx)
+        self.tofL4_rng_subscription = self.create_subscription(Range, '/tofL4_rng', self.tofL4_rng_callback, 
+                                                                10, callback_group=self.cb_group_nav2_run)
+        self.tofL5L_pcd_subscription = self.create_subscription(PointCloud2, '/tofL5L_pcd', self.tofL5L_pcd_callback, 
+                                                                10, callback_group=self.cb_group_re)
+        self.tofL5R_pcd_subscription = self.create_subscription(PointCloud2, '/tofL5R_pcd', self.tofL5R_pcd_callback, 
+                                                                10, callback_group=self.cb_group_re)
 
         self.get_logger().info(f"roborama25_controller_node Started {self.nav_arena=}")
     
@@ -177,7 +187,7 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         self.nav = BasicNavigator()
         
         self.get_logger().info(f"on_configure: waitUntilNav2Active before starting configuration")
-        #######self.nav.waitUntilNav2Active()
+        self.nav.waitUntilNav2Active()
         self.get_logger().info(f"on_configure: waitUntilNav2Active done")   
 
         # publish the map 1/sec
@@ -299,7 +309,7 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         tfOK = False
         can_pose = None
         while not tfOK :
-            (tfOK, can_pose) = self.getCanpose()
+            (tfOK, can_pose) = self.getCanPose()
             
         if tfOK :
             dist = self.gotoCanTF(30)
@@ -368,7 +378,9 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         self.get_logger().info(f"run6Can: {self.nav_arena=} started (button X) ")
         
         self.create6CMap()
+        self.send_amcl_set_param_request('tf_broadcast', True)
     
+        # Enables the 6 can statemachine running in tofL4 callback
         self.enable_6can_states = True
         
         # # DEBUG test waypoint pattern, localization ON and OFF
@@ -463,7 +475,7 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         
         d=100
         while d>0.25 :
-            (tf_OK, can_pose) = self.getCanpose()
+            (tf_OK, can_pose) = self.getCanPose()
             if tf_OK==False:
                 self.get_logger().warn(f"gotoCanTF: Failed to get can pose")
                 return -1
@@ -510,6 +522,8 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         # rotating to point to the desired is faster
         # maybe the navigation behavior can be "fixed" 
         (tf_OK, current_pose) = self.getCurrentPose()
+        if not tf_OK : return False
+        
         xd = float(x) - current_pose.pose.position.x
         yd = float(y) - current_pose.pose.position.y
         # Calc angle to target XY coordinate
@@ -533,8 +547,18 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         # limit rotation angle to -pi to pi
         while  a>math.pi : a -= 2*math.pi
         while a<-math.pi : a += 2*math.pi
+        
+        # # Disable AMCL localization while rotating
+        self.send_amcl_set_param_request('tf_broadcast', False)
+        self.send_local_costmap_set_param_request('obstacle_layer.enabled', False)
+        
         self.nav.spin(float(a),t)
+        #self.nav.spin(float(a),t,disable_collision_checks=True) # seems like disable not in humble
         (result, feedback) = self.waitTaskComplete(0)
+        
+        self.send_local_costmap_set_param_request('obstacle_layer.enabled', True)
+        self.send_amcl_set_param_request('tf_broadcast', True)
+
         return result
     
     def rotateToAngle(self,a,t) :
@@ -578,7 +602,10 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         return result
         
     def getPoseFromTF(self, target_frame:str) -> tuple:
-        # get map->'target_frame' transform
+        """
+        get map->'target_frame' transform
+        returns (tf_OK, pose) pose: PoseStamped
+        """
         try:
             tf = self.tf_buffer.lookup_transform (
                 'map',
@@ -607,10 +634,25 @@ class Roborama25ControllerNodeLc(LifecycleNode):
             
         return (tf_OK,pose)
         
-    def getCanpose(self) -> tuple:
+    def getCanPose(self) -> tuple:
+        """
+        get map->can transform
+        returns (tf_OK, pose) pose: PoseStamped
+        """
         return self.getPoseFromTF('can')
     
+    def getOdomPose(self) -> tuple:
+        """
+        get map->odom transform
+        returns (tf_OK, pose) pose: PoseStamped
+        """
+        return self.getPoseFromTF('odom')
+    
     def getCurrentPose(self):
+        """
+        get map->base_footprint transform
+        returns (tf_OK, pose) pose: PoseStamped
+        """
         return self.getPoseFromTF('base_footprint')
     
 ################################### 6CAN stuff ##########################    
@@ -634,6 +676,7 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         >grabCan
         >gotoCanDrop
         >dropCan
+        >backupFromCan
         >gotoNewLocation
         """
         
@@ -658,6 +701,8 @@ class Roborama25ControllerNodeLc(LifecycleNode):
                 next_state = self.run_grabCan()
             case "gotoCanDrop" :
                 next_state = self.run_gotoCanDrop()
+            case "gotoGoalOpening" :
+                next_state = self.run_gotoGoalOpening()
             case "dropCan" :
                 next_state = self.run_dropCan()  
             case "backupFromCan" :
@@ -676,7 +721,7 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         """
         next_state = "findCan"
         # Check if the can transform is detected, discard pose
-        (tf_OK, can_pose) = self.getCanpose()
+        (tf_OK, can_pose) = self.getCanPose()
         
         # may want to verify the can TF is stable
         if tf_OK == True : 
@@ -711,7 +756,28 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         msg = Twist()
         
         dist = self.tofL4_rng
-        if dist > 0.040 :
+        if dist == 0 :
+            """
+            Can is close but not detected by the narrow FOV of the front sensor
+            Use the L5 sensors to approach the can
+            """
+            Lnum = 0
+            i = 16
+            for x in self.tofL5L_pcd :
+                if x>0 and x<0.35 : Lnum += i
+                i -= 1
+            Rnum = 0
+            i = 1
+            for x in self.tofL5R_pcd :
+                if x>0 and x<0.35 : Rnum += i
+                i += 1
+            if Lnum > Rnum :        
+                msg.angular.z = 0.025   
+            if Rnum > Lnum :    
+                msg.angular.z = -0.025
+            self.get_logger().info(f"run_approachCan: rotating to detect the can {dist=} {Lnum=} {Rnum=} {msg=}")
+                
+        elif dist > 0.040 :
             """
             Move to approach the can
             Rotate Left when number of L data points > R data points
@@ -730,7 +796,11 @@ class Roborama25ControllerNodeLc(LifecycleNode):
             if Rnum > Lnum :
                 msg.angular.z = -0.025
             self.get_logger().info(f"run_approachCan: approaching the can {dist=} {Lnum=} {Rnum=} {msg=}")
+            
         elif dist > 0.010 : # ensure it is a valid distance, maybe > 0 ???
+            """
+            Close enough to the can to grab it
+            """
             self.get_logger().info(f"run_approachCan: at the can {dist=} {msg=}")
             next_state = "grabCan"
             
@@ -744,17 +814,32 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         """
         next_state = "grabCan"
         
-        self.clawCmd(90, 1000)
-        next_state = "gotoCanDrop"
+        self.clawCmd(90, 100)
+        next_state = "gotoGoalOpening"
                                
+        return next_state
+
+    def run_gotoGoalOpening(self) :
+        """
+        Go to the Goal opening location
+        """
+        next_state = "gotoGoalOpening"
+
+        self.nav.clearLocalCostmap() 
+        self.gotoXY(2.5,0,30)
+        next_state = "gotoCanDrop"
+        
         return next_state
     
     def run_gotoCanDrop(self) :
         """
-        Go to the drop location
+        Go to the drop location from the goal opening
         """
         next_state = "gotoCanDrop"
-              
+        
+        self.rotateToAngle(0, 10)
+        
+        self.send_local_costmap_set_param_request('obstacle_layer.enabled', False)
         self.gotoXY(3,0,30)
         next_state = "dropCan"
         
@@ -766,7 +851,7 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         """
         next_state = "dropCan"
 
-        self.clawCmd(0, 1000)
+        self.clawCmd(0, 100)
         next_state = "backupFromCan"
         
         return next_state
@@ -776,8 +861,15 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         Backup from the can so that it is not seen as an obstacle
         """
         next_state = "backupFromCan"
-        self.nav.backup(0.35, 0.1, 4)
-        self.waitTaskComplete(4)
+        
+        self.rotateToAngle(0, 10)
+        self.nav.clearLocalCostmap() 
+        self.send_local_costmap_set_param_request('obstacle_layer.enabled', False)
+        self.nav.backup(0.35, 0.1, 10)
+        self.waitTaskComplete(10)
+        self.rotateToAngle(math.pi, 10)
+
+        self.nav.clearLocalCostmap() 
         
         next_state = "gotoNewLocation"
         
@@ -789,7 +881,7 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         """
         next_state = "gotoNewLocation"
               
-        self.gotoXY(2.5,0,30)
+        self.gotoXY(2.0,0,30)
         # TODO: ???? Rotate to point straight out ????
         next_state = "findCan"
         
@@ -838,7 +930,7 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         pct is percent claw closed (0 = 100%o pen)
         msec is how long the claw moves to the new position
         """
-        cmd_json = {"claw": {"open": pct, "time": 1000}}
+        cmd_json = {"claw": {"open": pct, "time": msec}}
         cmd_str = json.dumps(cmd_json)+"\0"
         self.robot_json_data_publish(cmd_str)
 
@@ -851,9 +943,10 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         msg.data = data
         self.robot_json_publisher.publish(msg)
 
-    # cli > ros2 param set /amcl tf_broadcast False
     def send_amcl_set_param_request(self, name, value):
-        
+        """
+        cli > ros2 param set /amcl tf_broadcast False        
+        """
         if isinstance(value, bool) :
             value_type = ParameterType.PARAMETER_BOOL
         else :
@@ -869,42 +962,135 @@ class Roborama25ControllerNodeLc(LifecycleNode):
 
         self.amcl_set_param_request.parameters = [param]
         
+        self.get_logger().info(f"amcl_set_param: sending {name=} {value=} {param=}")
         future = self.amcl_set_param_svc.call_async(self.amcl_set_param_request)
-        future.add_done_callback(partial(self.callback_amcl_set_param, name=name, value=value))
+        # self.amcl_set_param_svc.call(self.amcl_set_param_request)
         
+        self.callback_amcl_set_param_done = False
+        
+        future.add_done_callback(partial(self.callback_amcl_set_param, name=name, value=value))
+        # self.get_logger().info(f"amcl_set_param: call returned {name=} {value=} {param=}")
+        
+        self.get_logger().info(f"amcl_set_param: waiting for callback")
+        while not self.callback_amcl_set_param_done :
+            time.sleep(0.1)
+        self.get_logger().info(f"amcl_set_param: callback wait done {name=} {value=}")
+        
+    
+        if name=='tf_broadcast' and value==False :
+            self.freeze_static_tf("map", "odom")
+            
+# #        self.get_logger().info(f"amcl_set_param: {name=} {value=} {result=} {successful=}")
+#         self.get_logger().info(f"amcl_set_param: {name=} {value=}")
+
     def callback_amcl_set_param(self,future, name, value) :
         #SetParametersResult
         result = future.result()
         successful = result.results[0].successful
         self.amcl_set_param_successful = successful
 
-        if name=='tf_broadcast' and value==False :
-            self.make_static_tf(self.tf_static_broadcasterOdom, "map", "odom", [0.0,0.0,0.0])
-            self.get_logger().info("make tf_static_broadcasterOdom")
+        # if name=='tf_broadcast' and value==False :
+        #     self.make_static_tf(self.tf_static_broadcasterOdom, "map", "odom", [0.0,0.0,0.0])
+        #     self.get_logger().info("make tf_static_broadcasterOdom")
             
-        self.get_logger().info(f"callback_amcl_set_param {name=} {value=} {result=} {successful=}")
+        self.get_logger().info(f"callback_amcl_set_param done {name=} {value=} {result=} {successful=}")
+        self.callback_amcl_set_param_done = True
+
+    def send_local_costmap_set_param_request(self, name, value):
+        """
+        cli -> ros2 param set /local_costmap/local_costmap obstacle_layer.enabled False
+        """
+        if isinstance(value, bool) :
+            value_type = ParameterType.PARAMETER_BOOL
+        else :
+            value_type = None
+        
+        param = Parameter(
+            name=name, 
+            value=ParameterValue(
+                type=value_type,
+                bool_value=value
+            )
+        )
+
+        # Doesthis need to be a global param for persistance?
+        self.local_costmap_set_param_request.parameters = [param]
+        
+        self.get_logger().info(f"amcl_set_param: sending {name=} {value=} {param=}")
+        future = self.local_costmap_set_param_svc.call_async(self.amcl_set_param_request)
+        
+        self.callback_local_costmap_set_param_done = False
+        
+        future.add_done_callback(partial(self.callback_local_costmap_set_param, name=name, value=value))
+        
+        self.get_logger().info(f"local_costmap_set_param: waiting for callback")
+        while not self.callback_local_costmap_set_param_done :
+            time.sleep(0.1)
+        self.get_logger().info(f"local_costmap_set_param: callback wait done {name=} {value=}")
+        
+
+    def callback_local_costmap_set_param(self,future, name, value) :
+        #SetParametersResult
+        result = future.result()
+        successful = result.results[0].successful
+        self.local_costmap_set_param_successful = successful
+
+        self.get_logger().info(f"callback_local_costmap_set_param done {name=} {value=} {result=} {successful=}")
+        self.callback_local_costmap_set_param_done = True
+
+
+    def freeze_static_tf (self, parent: str, child: str) -> None:
+        """
+        make a static tf using the current tf values
+        """
+        tf_OK,pose = self.getOdomPose()
+        self.get_logger().info(f"freeze_static_tf: {pose=} parent={parent} child={child}")
+        if pose != None :
+            self.make_static_tf(self.tf_static_broadcasterOdom, "map", "odom", pose)
+            self.get_logger().info("freeze_static_tf: make tf_static_broadcasterOdom")
+        
+        
+        
 
     ############ END Nav2 run stuff #############
 
     def make_static_tf(self, tf_static_broadcaster, 
-                       parent: str, child: str, xyt: list) -> None:
+                       parent: str, child: str, xyt) -> None:
+        """
+        
+        """
+        
         t = TransformStamped()
 
         #t.header.stamp = self.get_clock().now().to_msg()
         t.header.frame_id = parent
         t.child_frame_id = child
+        
+        self.get_logger().info(f"make_static_tf: {xyt=} {type(xyt)=}")
 
-        t.transform.translation.x = xyt[0]
-        t.transform.translation.y = xyt[1]
-        t.transform.translation.z = 0.0
-        quat = tf_transformations.quaternion_from_euler(0.0, 0.0, xyt[2]) #x,y,theta
-        t.transform.rotation.x = quat[0]
-        t.transform.rotation.y = quat[1]
-        t.transform.rotation.z = quat[2]
-        t.transform.rotation.w = quat[3]
-
+        if isinstance(xyt,list) or isinstance(xyt,tuple) :
+            t.transform.translation.x = float(xyt[0])
+            t.transform.translation.y = float(xyt[1])
+            t.transform.translation.z = 0.0
+            quat = tf_transformations.quaternion_from_euler(0.0, 0.0, float(xyt[2])) #x,y,theta
+            t.transform.rotation.x = quat[0]
+            t.transform.rotation.y = quat[1]
+            t.transform.rotation.z = quat[2]
+            t.transform.rotation.w = quat[3]
+        elif isinstance(xyt,PoseStamped) :
+            t.transform.translation.x = xyt.pose.position.x
+            t.transform.translation.y = xyt.pose.position.y
+            t.transform.translation.z = xyt.pose.position.z
+            t.transform.rotation.x = xyt.pose.orientation.x
+            t.transform.rotation.y = xyt.pose.orientation.y
+            t.transform.rotation.z = xyt.pose.orientation.z
+            t.transform.rotation.w = xyt.pose.orientation.w
+        else :
+            self.get_logger().info(f"make_static_tf: invalid xyt type {type(xyt)=}")
+            return
+            
         tf_static_broadcaster.sendTransform(t)
-        self.get_logger().info(f"make_static_tf {t=}")
+        self.get_logger().info(f"make_static_tf: {t=}")
 
     def on_map_timer(self) :
         #self.createMap()
