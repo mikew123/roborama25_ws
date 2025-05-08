@@ -137,6 +137,9 @@ class Roborama25ControllerNodeLc(LifecycleNode):
     
     nav2_run_first_exec = True
     
+    callback_set_param_done = False
+
+
     feetToMeter = 0.3048
 
     def __init__(self):
@@ -162,6 +165,8 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         self.local_costmap_set_param_svc = self.create_client(SetParameters, '/local_costmap/local_costmap/set_parameters')
         while not self.local_costmap_set_param_svc.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('/local_costmap/local_costmap/set_parameters service not available, waiting again...')
+
+        self.set_param_request = SetParameters.Request()
 
         self.robot_json_publisher = self.create_publisher(String, '/robot_json',10)
         self.cmd_vel_publisher = self.create_publisher(Twist, '/cmd_vel', 10)
@@ -278,7 +283,8 @@ class Roborama25ControllerNodeLc(LifecycleNode):
 
             # rviz2 grid area 10x10 with origin 0,0 at the center
             self.publishEmptyMap(0.05, 10, 10, -5, -5)
-            self.send_amcl_set_param_request('tf_broadcast', False)
+            # self.send_amcl_set_param_request('tf_broadcast', False)
+            self.send_set_param_request(self.amcl_set_param_svc, 'tf_broadcast', False)
             self.nav2_run_first_exec = False
             
         # Start a course when gamepad button is pushed
@@ -550,7 +556,10 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         
         # # Disable AMCL localization while rotating
         self.send_amcl_set_param_request('tf_broadcast', False)
+        # self.send_set_param_request(self.amcl_set_param_svc, 'tf_broadcast', False)
         self.send_local_costmap_set_param_request('obstacle_layer.enabled', False)
+        # self.send_set_param_request(self.local_costmap_set_param_svc, 'obstacle_layer.enabled', False)
+        
         
         self.nav.spin(float(a),t)
         #self.nav.spin(float(a),t,disable_collision_checks=True) # seems like disable not in humble
@@ -1038,6 +1047,48 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         self.get_logger().info(f"callback_local_costmap_set_param done {name=} {value=} {result=} {successful=}")
         self.callback_local_costmap_set_param_done = True
 
+
+    def send_set_param_request(self, svc, name, value):
+        """
+        cli -> ros2 param set /local_costmap/local_costmap obstacle_layer.enabled False
+        """
+        if isinstance(value, bool) :
+            value_type = ParameterType.PARAMETER_BOOL
+        else :
+            value_type = None
+        
+        param = Parameter(
+            name=name, 
+            value=ParameterValue(
+                type=value_type,
+                bool_value=value
+            )
+        )
+
+        # Doesthis need to be a global param for persistance?
+        self.set_param_request.parameters = [param]
+        
+        self.get_logger().info(f"send_set_param_request: sending {svc=} {name=} {value=} {param=}")
+        future = svc.call_async(self.set_param_request)
+        
+        self.callback_set_param_done = False
+        
+        future.add_done_callback(partial(self.callback_set_param, name=name, value=value))
+        
+        self.get_logger().info(f"send_set_param_request: waiting for callback")
+        while not self.callback_set_param_done :
+            time.sleep(0.1)
+        self.get_logger().info(f"send_set_param_request: callback wait done {name=} {value=}")
+        
+
+    def callback_set_param(self,future, name, value) :
+        #SetParametersResult
+        result = future.result()
+        successful = result.results[0].successful
+        self.set_param_successful = successful
+
+        self.get_logger().info(f"callback_set_param done {name=} {value=} {result=} {successful=}")
+        self.callback_set_param_done = True
 
     def freeze_static_tf (self, parent: str, child: str) -> None:
         """
