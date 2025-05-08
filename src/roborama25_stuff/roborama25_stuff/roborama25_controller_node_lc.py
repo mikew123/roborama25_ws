@@ -156,12 +156,12 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         # map->odom static tf is broadcast when /amcl/tf_broadcast=False
         self.tf_static_broadcasterOdom = StaticTransformBroadcaster(self)
 
-        self.amcl_set_param_request = SetParameters.Request()
+        # self.amcl_set_param_request = SetParameters.Request()
         self.amcl_set_param_svc = self.create_client(SetParameters, '/amcl/set_parameters')
         while not self.amcl_set_param_svc.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('/amcl/set_parameters service not available, waiting again...')
 
-        self.local_costmap_set_param_request = SetParameters.Request()
+        # self.local_costmap_set_param_request = SetParameters.Request()
         self.local_costmap_set_param_svc = self.create_client(SetParameters, '/local_costmap/local_costmap/set_parameters')
         while not self.local_costmap_set_param_svc.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('/local_costmap/local_costmap/set_parameters service not available, waiting again...')
@@ -309,7 +309,8 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         self.get_logger().info(f"runWPoints: {self.nav_arena=} started (button Y)")
         
         self.createWPMap()
-        self.send_amcl_set_param_request('tf_broadcast', False)
+        # self.send_amcl_set_param_request('tf_broadcast', False)
+        self.send_set_param_request(self.amcl_set_param_svc, 'tf_broadcast', False)
 
         #DEBUG: testing can detect and goto
         tfOK = False
@@ -340,7 +341,8 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         self.get_logger().info(f"run4Corner: {self.nav_arena=} started (button A)")
         
         self.create4CMap()
-        self.send_amcl_set_param_request('tf_broadcast', False)
+        # self.send_amcl_set_param_request('tf_broadcast', False)
+        self.send_set_param_request(self.amcl_set_param_svc, 'tf_broadcast', False)
 
         # Drive to 4 corners of a square area
         d = self.size4corner[self.nav_arena]
@@ -360,7 +362,8 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         self.get_logger().info(f"runQTrip: {self.nav_arena=} started (button B)")
         
         self.createQTMap()
-        self.send_amcl_set_param_request('tf_broadcast', False)
+        # self.send_amcl_set_param_request('tf_broadcast', False)
+        self.send_set_param_request(self.amcl_set_param_svc, 'tf_broadcast', False)
                 
         # status = self.gotoXY(8*self.feetToMeter,0, 30)
         d = self.lengthQuickTrip[self.nav_arena]
@@ -384,7 +387,8 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         self.get_logger().info(f"run6Can: {self.nav_arena=} started (button X) ")
         
         self.create6CMap()
-        self.send_amcl_set_param_request('tf_broadcast', True)
+        # self.send_amcl_set_param_request('tf_broadcast', True)
+        self.send_set_param_request(self.amcl_set_param_svc, 'tf_broadcast', True)
     
         # Enables the 6 can statemachine running in tofL4 callback
         self.enable_6can_states = True
@@ -555,18 +559,20 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         while a<-math.pi : a += 2*math.pi
         
         # # Disable AMCL localization while rotating
-        self.send_amcl_set_param_request('tf_broadcast', False)
-        # self.send_set_param_request(self.amcl_set_param_svc, 'tf_broadcast', False)
-        self.send_local_costmap_set_param_request('obstacle_layer.enabled', False)
-        # self.send_set_param_request(self.local_costmap_set_param_svc, 'obstacle_layer.enabled', False)
+        # self.send_amcl_set_param_request('tf_broadcast', False)
+        self.send_set_param_request(self.amcl_set_param_svc, 'tf_broadcast', False)
+        # self.send_local_costmap_set_param_request('obstacle_layer.enabled', False)
+        self.send_set_param_request(self.local_costmap_set_param_svc, 'obstacle_layer.enabled', False)
         
         
         self.nav.spin(float(a),t)
         #self.nav.spin(float(a),t,disable_collision_checks=True) # seems like disable not in humble
         (result, feedback) = self.waitTaskComplete(0)
         
-        self.send_local_costmap_set_param_request('obstacle_layer.enabled', True)
-        self.send_amcl_set_param_request('tf_broadcast', True)
+        # self.send_local_costmap_set_param_request('obstacle_layer.enabled', True)
+        # self.send_amcl_set_param_request('tf_broadcast', True)
+        self.send_set_param_request(self.local_costmap_set_param_svc, 'obstacle_layer.enabled', True)
+        self.send_set_param_request(self.amcl_set_param_svc, 'tf_broadcast', True)
 
         return result
     
@@ -581,7 +587,7 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         start_time = self.get_clock().now()
         elapsed_time = 0.0
         result = False
-        spinThresh = 0.01 # about 3 degrees
+        spinThresh = 0.02 #0.01 # about 3 degrees
         
         # Loop until the timeout is reached or the task is complete
         while rclpy.ok() and elapsed_time <t:
@@ -786,7 +792,7 @@ class Roborama25ControllerNodeLc(LifecycleNode):
                 msg.angular.z = -0.025
             self.get_logger().info(f"run_approachCan: rotating to detect the can {dist=} {Lnum=} {Rnum=} {msg=}")
                 
-        elif dist > 0.040 :
+        elif dist > 0.050 :
             """
             Move to approach the can
             Rotate Left when number of L data points > R data points
@@ -835,7 +841,7 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         next_state = "gotoGoalOpening"
 
         self.nav.clearLocalCostmap() 
-        self.gotoXY(2.5,0,30)
+        self.gotoXY(2.25,0,30)
         next_state = "gotoCanDrop"
         
         return next_state
@@ -848,8 +854,9 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         
         self.rotateToAngle(0, 10)
         
-        self.send_local_costmap_set_param_request('obstacle_layer.enabled', False)
-        self.gotoXY(3,0,30)
+        # self.send_local_costmap_set_param_request('obstacle_layer.enabled', False)
+        self.send_set_param_request(self.local_costmap_set_param_svc, 'obstacle_layer.enabled', False)
+        self.gotoXY(2.75,0,30)
         next_state = "dropCan"
         
         return next_state
@@ -873,7 +880,8 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         
         self.rotateToAngle(0, 10)
         self.nav.clearLocalCostmap() 
-        self.send_local_costmap_set_param_request('obstacle_layer.enabled', False)
+        # self.send_local_costmap_set_param_request('obstacle_layer.enabled', False)
+        self.send_set_param_request(self.local_costmap_set_param_svc, 'obstacle_layer.enabled', False)
         self.nav.backup(0.35, 0.1, 10)
         self.waitTaskComplete(10)
         self.rotateToAngle(math.pi, 10)
@@ -952,100 +960,100 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         msg.data = data
         self.robot_json_publisher.publish(msg)
 
-    def send_amcl_set_param_request(self, name, value):
-        """
-        cli > ros2 param set /amcl tf_broadcast False        
-        """
-        if isinstance(value, bool) :
-            value_type = ParameterType.PARAMETER_BOOL
-        else :
-            value_type = None
+#     def send_amcl_set_param_request(self, name, value):
+#         """
+#         cli > ros2 param set /amcl tf_broadcast False        
+#         """
+#         if isinstance(value, bool) :
+#             value_type = ParameterType.PARAMETER_BOOL
+#         else :
+#             value_type = None
         
-        param = Parameter(
-            name=name, 
-            value=ParameterValue(
-                type=value_type,
-                bool_value=value
-            )
-        )
+#         param = Parameter(
+#             name=name, 
+#             value=ParameterValue(
+#                 type=value_type,
+#                 bool_value=value
+#             )
+#         )
 
-        self.amcl_set_param_request.parameters = [param]
+#         self.amcl_set_param_request.parameters = [param]
         
-        self.get_logger().info(f"amcl_set_param: sending {name=} {value=} {param=}")
-        future = self.amcl_set_param_svc.call_async(self.amcl_set_param_request)
-        # self.amcl_set_param_svc.call(self.amcl_set_param_request)
+#         self.get_logger().info(f"amcl_set_param: sending {name=} {value=} {param=}")
+#         future = self.amcl_set_param_svc.call_async(self.amcl_set_param_request)
+#         # self.amcl_set_param_svc.call(self.amcl_set_param_request)
         
-        self.callback_amcl_set_param_done = False
+#         self.callback_amcl_set_param_done = False
         
-        future.add_done_callback(partial(self.callback_amcl_set_param, name=name, value=value))
-        # self.get_logger().info(f"amcl_set_param: call returned {name=} {value=} {param=}")
+#         future.add_done_callback(partial(self.callback_amcl_set_param, name=name, value=value))
+#         # self.get_logger().info(f"amcl_set_param: call returned {name=} {value=} {param=}")
         
-        self.get_logger().info(f"amcl_set_param: waiting for callback")
-        while not self.callback_amcl_set_param_done :
-            time.sleep(0.1)
-        self.get_logger().info(f"amcl_set_param: callback wait done {name=} {value=}")
+#         self.get_logger().info(f"amcl_set_param: waiting for callback")
+#         while not self.callback_amcl_set_param_done :
+#             time.sleep(0.1)
+#         self.get_logger().info(f"amcl_set_param: callback wait done {name=} {value=}")
         
     
-        if name=='tf_broadcast' and value==False :
-            self.freeze_static_tf("map", "odom")
+#         if name=='tf_broadcast' and value==False :
+#             self.freeze_static_tf("map", "odom")
             
-# #        self.get_logger().info(f"amcl_set_param: {name=} {value=} {result=} {successful=}")
-#         self.get_logger().info(f"amcl_set_param: {name=} {value=}")
+# # #        self.get_logger().info(f"amcl_set_param: {name=} {value=} {result=} {successful=}")
+# #         self.get_logger().info(f"amcl_set_param: {name=} {value=}")
 
-    def callback_amcl_set_param(self,future, name, value) :
-        #SetParametersResult
-        result = future.result()
-        successful = result.results[0].successful
-        self.amcl_set_param_successful = successful
+#     def callback_amcl_set_param(self,future, name, value) :
+#         #SetParametersResult
+#         result = future.result()
+#         successful = result.results[0].successful
+#         self.amcl_set_param_successful = successful
 
-        # if name=='tf_broadcast' and value==False :
-        #     self.make_static_tf(self.tf_static_broadcasterOdom, "map", "odom", [0.0,0.0,0.0])
-        #     self.get_logger().info("make tf_static_broadcasterOdom")
+#         # if name=='tf_broadcast' and value==False :
+#         #     self.make_static_tf(self.tf_static_broadcasterOdom, "map", "odom", [0.0,0.0,0.0])
+#         #     self.get_logger().info("make tf_static_broadcasterOdom")
             
-        self.get_logger().info(f"callback_amcl_set_param done {name=} {value=} {result=} {successful=}")
-        self.callback_amcl_set_param_done = True
+#         self.get_logger().info(f"callback_amcl_set_param done {name=} {value=} {result=} {successful=}")
+#         self.callback_amcl_set_param_done = True
 
-    def send_local_costmap_set_param_request(self, name, value):
-        """
-        cli -> ros2 param set /local_costmap/local_costmap obstacle_layer.enabled False
-        """
-        if isinstance(value, bool) :
-            value_type = ParameterType.PARAMETER_BOOL
-        else :
-            value_type = None
+#     def send_local_costmap_set_param_request(self, name, value):
+#         """
+#         cli -> ros2 param set /local_costmap/local_costmap obstacle_layer.enabled False
+#         """
+#         if isinstance(value, bool) :
+#             value_type = ParameterType.PARAMETER_BOOL
+#         else :
+#             value_type = None
         
-        param = Parameter(
-            name=name, 
-            value=ParameterValue(
-                type=value_type,
-                bool_value=value
-            )
-        )
+#         param = Parameter(
+#             name=name, 
+#             value=ParameterValue(
+#                 type=value_type,
+#                 bool_value=value
+#             )
+#         )
 
-        # Doesthis need to be a global param for persistance?
-        self.local_costmap_set_param_request.parameters = [param]
+#         # Doesthis need to be a global param for persistance?
+#         self.local_costmap_set_param_request.parameters = [param]
         
-        self.get_logger().info(f"amcl_set_param: sending {name=} {value=} {param=}")
-        future = self.local_costmap_set_param_svc.call_async(self.amcl_set_param_request)
+#         self.get_logger().info(f"amcl_set_param: sending {name=} {value=} {param=}")
+#         future = self.local_costmap_set_param_svc.call_async(self.amcl_set_param_request)
         
-        self.callback_local_costmap_set_param_done = False
+#         self.callback_local_costmap_set_param_done = False
         
-        future.add_done_callback(partial(self.callback_local_costmap_set_param, name=name, value=value))
+#         future.add_done_callback(partial(self.callback_local_costmap_set_param, name=name, value=value))
         
-        self.get_logger().info(f"local_costmap_set_param: waiting for callback")
-        while not self.callback_local_costmap_set_param_done :
-            time.sleep(0.1)
-        self.get_logger().info(f"local_costmap_set_param: callback wait done {name=} {value=}")
+#         self.get_logger().info(f"local_costmap_set_param: waiting for callback")
+#         while not self.callback_local_costmap_set_param_done :
+#             time.sleep(0.1)
+#         self.get_logger().info(f"local_costmap_set_param: callback wait done {name=} {value=}")
         
 
-    def callback_local_costmap_set_param(self,future, name, value) :
-        #SetParametersResult
-        result = future.result()
-        successful = result.results[0].successful
-        self.local_costmap_set_param_successful = successful
+#     def callback_local_costmap_set_param(self,future, name, value) :
+#         #SetParametersResult
+#         result = future.result()
+#         successful = result.results[0].successful
+#         self.local_costmap_set_param_successful = successful
 
-        self.get_logger().info(f"callback_local_costmap_set_param done {name=} {value=} {result=} {successful=}")
-        self.callback_local_costmap_set_param_done = True
+#         self.get_logger().info(f"callback_local_costmap_set_param done {name=} {value=} {result=} {successful=}")
+#         self.callback_local_costmap_set_param_done = True
 
 
     def send_set_param_request(self, svc, name, value):
@@ -1068,17 +1076,17 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         # Doesthis need to be a global param for persistance?
         self.set_param_request.parameters = [param]
         
-        self.get_logger().info(f"send_set_param_request: sending {svc=} {name=} {value=} {param=}")
+        # self.get_logger().info(f"send_set_param_request: sending {svc=} {name=} {value=} {param=}")
         future = svc.call_async(self.set_param_request)
         
         self.callback_set_param_done = False
         
         future.add_done_callback(partial(self.callback_set_param, name=name, value=value))
         
-        self.get_logger().info(f"send_set_param_request: waiting for callback")
+        # self.get_logger().info(f"send_set_param_request: waiting for callback")
         while not self.callback_set_param_done :
             time.sleep(0.1)
-        self.get_logger().info(f"send_set_param_request: callback wait done {name=} {value=}")
+        # self.get_logger().info(f"send_set_param_request: callback wait done {name=} {value=}")
         
 
     def callback_set_param(self,future, name, value) :
@@ -1087,7 +1095,7 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         successful = result.results[0].successful
         self.set_param_successful = successful
 
-        self.get_logger().info(f"callback_set_param done {name=} {value=} {result=} {successful=}")
+        # self.get_logger().info(f"callback_set_param done {name=} {value=} {result=} {successful=}")
         self.callback_set_param_done = True
 
     def freeze_static_tf (self, parent: str, child: str) -> None:
@@ -1098,7 +1106,7 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         self.get_logger().info(f"freeze_static_tf: {pose=} parent={parent} child={child}")
         if pose != None :
             self.make_static_tf(self.tf_static_broadcasterOdom, "map", "odom", pose)
-            self.get_logger().info("freeze_static_tf: make tf_static_broadcasterOdom")
+            # self.get_logger().info("freeze_static_tf: make tf_static_broadcasterOdom")
         
         
         
@@ -1117,7 +1125,7 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         t.header.frame_id = parent
         t.child_frame_id = child
         
-        self.get_logger().info(f"make_static_tf: {xyt=} {type(xyt)=}")
+        # self.get_logger().info(f"make_static_tf: {xyt=} {type(xyt)=}")
 
         if isinstance(xyt,list) or isinstance(xyt,tuple) :
             t.transform.translation.x = float(xyt[0])
@@ -1141,7 +1149,7 @@ class Roborama25ControllerNodeLc(LifecycleNode):
             return
             
         tf_static_broadcaster.sendTransform(t)
-        self.get_logger().info(f"make_static_tf: {t=}")
+        # self.get_logger().info(f"make_static_tf: {t=}")
 
     def on_map_timer(self) :
         #self.createMap()
