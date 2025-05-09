@@ -438,13 +438,14 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         
         self.nav.setInitialPose(pose)
        
-    def gotoPose(self, goto_pose, t):
+    def gotoPose(self, pose, t):
         """
         Go to the pose within in the time limit
         """
 
-        self.nav.goToPose(goto_pose)
+        self.nav.goToPose(pose)
         (result, feedback) = self.waitTaskComplete(t)
+        
         x = feedback.current_pose.pose.position.x
         y = feedback.current_pose.pose.position.y
         (xx,yy,a) = tf_transformations.euler_from_quaternion(
@@ -505,7 +506,7 @@ class Roborama25ControllerNodeLc(LifecycleNode):
                 
         return d
     
-    def gotoXY(self,x,y,t):
+    def gotoXY(self,x,y,t,obstacle_layer_enabled: bool=True) -> int:
         """
         Go to the X,Y coordinates from the current position within a lime limit
         Rotate to pint to the X,Y position then goto the position
@@ -517,7 +518,9 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         # rotating to point to the desired is faster
         # maybe the navigation behavior can be "fixed" 
         (tf_OK, current_pose) = self.getCurrentPose()
-        if not tf_OK : return False
+        if not tf_OK : 
+            self.get_logger().info(f"gotoXY: Failed to get current pose")
+            return False
         
         xd = float(x) - current_pose.pose.position.x
         yd = float(y) - current_pose.pose.position.y
@@ -528,7 +531,11 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         self.get_logger().info(f"gotoXY: {current_pose=}, goto {x=} {y=} {a=}")
 
         # rotate to point to goto xy position before moving to it
-        status = self.rotateToAngle(a,10)
+        status = self.rotateToAngle(a,2)
+        
+        self.send_set_param_request(self.local_costmap_set_param_svc, 
+                        'obstacle_layer.enabled', obstacle_layer_enabled)
+
         result = self.gotoPose(goto_pose,t)
         
         return result
@@ -769,22 +776,23 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         if dist == 0 :
             """
             Can is close but not detected by the narrow FOV of the front sensor
-            Use the L5 sensors to approach the can
+            Use the L5 sensors to rotate to the can
             """
             Lnum = 0
             i = 16
             for x in self.tofL5L_pcd :
-                if x>0 and x<0.35 : Lnum += i
+                if x>0 and x<0.4 : Lnum += i
                 i -= 1
             Rnum = 0
             i = 1
             for x in self.tofL5R_pcd :
-                if x>0 and x<0.35 : Rnum += i
+                if x>0 and x<0.4 : Rnum += i
                 i += 1
             if Lnum > Rnum :        
-                msg.angular.z = 0.025   
+                msg.angular.z = 0.05   
             if Rnum > Lnum :    
-                msg.angular.z = -0.025
+                msg.angular.z = -0.05
+                
             self.get_logger().info(f"run_approachCan: rotating to detect the can {dist=} {Lnum=} {Rnum=} {msg=}")
                 
         elif dist > 0.050 :
@@ -802,9 +810,9 @@ class Roborama25ControllerNodeLc(LifecycleNode):
             for x in self.tofL5R_pcd :
                 if x>0 and x<dist : Rnum += 1
             if Lnum > Rnum :
-                msg.angular.z = 0.025
+                msg.angular.z = 0.05
             if Rnum > Lnum :
-                msg.angular.z = -0.025
+                msg.angular.z = -0.05
             self.get_logger().info(f"run_approachCan: approaching the can {dist=} {Lnum=} {Rnum=} {msg=}")
             
         elif dist > 0.010 : # ensure it is a valid distance, maybe > 0 ???
@@ -824,7 +832,7 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         """
         next_state = "grabCan"
         
-        self.clawCmd(90, 100)
+        self.clawCmdClose()
         next_state = "gotoGoalOpening"
                                
         return next_state
@@ -835,8 +843,9 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         """
         next_state = "gotoGoalOpening"
 
-        # self.nav.clearAllCostmaps() 
-        self.gotoXY(2.25,0,30)
+        self.nav.clearLocalCostmap() 
+        self.gotoXY(2.2,0,30)
+        
         next_state = "gotoCanDrop"
         
         return next_state
@@ -847,15 +856,15 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         """
         next_state = "gotoCanDrop"
         
-        self.rotateToAngle(0, 10)
+        self.rotateToAngle(0, 1)
         
         # stays disabled until after backup
         # self.send_set_param_request(self.amcl_set_param_svc, 'tf_broadcast', False)
-        self.send_set_param_request(self.local_costmap_set_param_svc, 'obstacle_layer.enabled', False)
+        # self.send_set_param_request(self.local_costmap_set_param_svc, 'obstacle_layer.enabled', False)
+        # self.nav.clearAllCostmaps() 
         
-        self.nav.clearAllCostmaps() 
-        # self.nav.driveOnHeading(0.5, 0.1, 10) # doesnt seem to exist in Humble?
-        self.gotoXY(2.75,0,30)
+        # self.nav.driveOnHeading(0.5, 0.1, 10) # doesn't seem to exist in Humble?
+        self.gotoXY(2.6,0,5, obstacle_layer_enabled=False)
 
         next_state = "dropCan"
         
@@ -867,7 +876,7 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         """
         next_state = "dropCan"
 
-        self.clawCmd(0, 100)
+        self.clawCmdOpen()
         next_state = "backupFromCan"
         
         return next_state
@@ -901,7 +910,7 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         """
         next_state = "gotoNewLocation"
               
-        self.gotoXY(2.0,0,30)
+        self.gotoXY(1.25,0,30)
         # TODO: ???? Rotate to point straight out ????
         next_state = "findCan"
         
@@ -943,11 +952,23 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         self.tofL5R_pcd = data
 
     # send a message to claw to open/close
+    def clawCmdOpen(self) :
+        """
+        sends (publish) a message to claw to open
+        """
+        self.clawCmd(0, 100)
+        
+    def clawCmdClose(self) :
+        """
+        sends (publish) a message to claw to close
+        """
+        self.clawCmd(90, 100)
+        
     #TODO: use custom msg (2 ints) instead of string
     def clawCmd(self, pct: int, msec: int) -> None:
         """
         sends (publish) a message to claw to open/close
-        pct is percent claw closed (0 = 100%o pen)
+        pct is percent claw closed (0 = 100% open)
         msec is how long the claw moves to the new position
         """
         cmd_json = {"claw": {"open": pct, "time": msec}}
