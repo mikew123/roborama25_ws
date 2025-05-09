@@ -273,6 +273,7 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         """
         Called in a timer 
         """
+        # initialize
         if self.nav2_run_first_exec == True :
             self.get_logger().info(f"nav2_run: {self.nav2_run_first_exec=}")
 
@@ -477,7 +478,7 @@ class Roborama25ControllerNodeLc(LifecycleNode):
             if tf_OK==True :
                 x = can_pose.pose.position.x
                 y = can_pose.pose.position.y
-                self.get_logger().info(f"gotoCanTF:b can TF {x=} {y=}")
+                self.get_logger().info(f"gotoCanTF:b can TF {x=:.3f} {y=:.3f}")
                 # get current pose to determine the angle offset
                 # rotating to point to the desired is faster
                 # maybe the navigation behavior can be "fixed" 
@@ -495,7 +496,7 @@ class Roborama25ControllerNodeLc(LifecycleNode):
                 y = current_pose.pose.position.y + d*math.sin(a)
                 
                 goto_pose = self.createPose(x,y,a)
-                self.get_logger().info(f"gotoXY: goto {x=} {y=} {d=} {a=}")
+                self.get_logger().info(f"gotoXY: goto {x=:.3f} {y=:.3f} {d=:.3f} {a=:.3f}")
 
                 # rotate to point to goto xy position before moving to it
                 status = self.rotateToAngle(a,10)
@@ -521,14 +522,15 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         if not tf_OK : 
             self.get_logger().info(f"gotoXY: Failed to get current pose")
             return False
-        
-        xd = float(x) - current_pose.pose.position.x
-        yd = float(y) - current_pose.pose.position.y
+        cx = current_pose.pose.position.x
+        cy = current_pose.pose.position.y
+        xd = float(x) - cx
+        yd = float(y) - cy
         # Calc angle to target XY coordinate
         a = math.atan2(yd,xd)
 
         goto_pose = self.createPose(x,y,a)
-        self.get_logger().info(f"gotoXY: {current_pose=}, goto {x=} {y=} {a=}")
+        self.get_logger().info(f"gotoXY: from {cx=:.3f} {cy=:.3f}, goto {x=:.3f} {y=:.3f} {a=:.3f}")
 
         # rotate to point to goto xy position before moving to it
         status = self.rotateToAngle(a,2)
@@ -598,7 +600,7 @@ class Roborama25ControllerNodeLc(LifecycleNode):
             current_time = self.get_clock().now()
             elapsed_time = (current_time - start_time).nanoseconds / 1e9  # Convert nanoseconds to seconds
 
-            self.get_logger().info(f"rotateToAngle: rotate {result=} {a=} {aa=} {spin=} {elapsed_time=}")
+            self.get_logger().info(f"rotateToAngle: rotate {result=} {a=:.3f} {aa=:.3f} {spin=:.3f} {elapsed_time=}")
             
         return result
         
@@ -611,7 +613,6 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         cnt = 0
         tf_OK = False
         while tf_OK == False and cnt < 5 :
-            cnt += 1
             try:
                 tf = self.tf_buffer.lookup_transform (
                     'map',
@@ -625,9 +626,11 @@ class Roborama25ControllerNodeLc(LifecycleNode):
             except (LookupException, ConnectivityException, ExtrapolationException) as ex:
                 self.get_logger().info(f'getPoseFromTF: Could not find transform map->{target_frame}: {ex}')
                 tf_OK = False
+                cnt += 1
+                
         if tf_OK == False or cnt >= 5 :
             self.get_logger().info(f'getPoseFromTF: Failed to find transform map->{target_frame} after {cnt} tries {tf_OK=}')
-            return (tf_OK,None) 
+            return (False,None) 
         
         # translate wall points to align with map coordinates
         if tf_OK :
@@ -860,8 +863,8 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         
         # stays disabled until after backup
         # self.send_set_param_request(self.amcl_set_param_svc, 'tf_broadcast', False)
-        # self.send_set_param_request(self.local_costmap_set_param_svc, 'obstacle_layer.enabled', False)
-        # self.nav.clearAllCostmaps() 
+        self.send_set_param_request(self.local_costmap_set_param_svc, 'obstacle_layer.enabled', False)
+        self.nav.clearLocalCostmap() 
         
         # self.nav.driveOnHeading(0.5, 0.1, 10) # doesn't seem to exist in Humble?
         self.gotoXY(2.6,0,5, obstacle_layer_enabled=False)
@@ -1005,7 +1008,7 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         # Doesthis need to be a global param for persistance?
         self.set_param_request.parameters = [param]
         
-        # self.get_logger().info(f"send_set_param_request: sending {svc=} {name=} {value=} {param=}")
+        self.get_logger().info(f"send_set_param_request: Sending {name=} {value=}")
         future = svc.call_async(self.set_param_request)
         
         self.callback_set_param_done = False
@@ -1035,9 +1038,13 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         make a static tf using the current tf values
         """
         tf_OK,pose = self.getOdomPose()
-        self.get_logger().info(f"freeze_static_tf: {pose=} parent={parent} child={child}")
+        
+        x=pose.pose.position.x
+        y=pose.pose.position.y
+        self.get_logger().info(f"freeze_static_tf: {x=:.2f} {y=:.2f} {parent}->{child}")
+        
         if pose != None :
-            self.make_static_tf(self.tf_static_broadcasterOdom, "map", "odom", pose)
+            self.make_static_tf(self.tf_static_broadcasterOdom, parent, child, pose)
             # self.get_logger().info("freeze_static_tf: make tf_static_broadcasterOdom")
         
         
