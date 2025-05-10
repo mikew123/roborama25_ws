@@ -88,7 +88,7 @@ class Roborama25ControllerNodeLc(LifecycleNode):
     
     home_can6Width:int = int((9.0 * ft2m)/mapResolution) # 6-can walls
     home_can6Height:int = int((7.0 * ft2m)/mapResolution)
-    home_can6GoalArea:int = int((2.0 * ft2m)/mapResolution) # goal area outside walls
+    home_can6GoalArea:int = int((3.0 * ft2m)/mapResolution) # goal area outside walls
     home_can6GoalOpening:int = int((3.0 * ft2m)/mapResolution) #width of goal openin
     home_mapWidth:int = home_can6Width + home_can6GoalArea
     home_mapHeight:int = home_can6Height
@@ -106,8 +106,8 @@ class Roborama25ControllerNodeLc(LifecycleNode):
 
     dprg_can6Width:int = int((10.0 * ft2m)/mapResolution) # 6-can walls
     dprg_can6Height:int = int((7.0 * ft2m)/mapResolution)
-    dprg_can6GoalArea:int = int((2 * ft2m)/mapResolution) # goal area outside walls
-    dprg_can6GoalOpening:int = int((3 * ft2m)/mapResolution) #width of goal openin
+    dprg_can6GoalArea:int = int((3.0 * ft2m)/mapResolution) # goal area outside walls
+    dprg_can6GoalOpening:int = int((3.0 * ft2m)/mapResolution) #width of goal opening
     dprg_mapWidth:int = dprg_can6Width + dprg_can6GoalArea
     dprg_mapHeight:int = dprg_can6Height
     dprg_startWpX0:int = (8/12.0*ft2m) # offset from back wall, inches to meters
@@ -870,12 +870,12 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         # self.rotateToAngle(0, 10)
         
         # stays disabled until after backup
-        # self.send_set_param_request(self.local_costmap_set_param_svc, 'obstacle_layer.enabled', False)
-        # self.send_set_param_request(self.global_costmap_set_param_svc, 'obstacle_layer.enabled', False)
+        self.send_set_param_request(self.local_costmap_set_param_svc, 'obstacle_layer.enabled', False)
+        self.send_set_param_request(self.global_costmap_set_param_svc, 'obstacle_layer.enabled', False)
         self.nav.clearAllCostmaps() 
         
         # self.nav.driveOnHeading(0.5, 0.1, 10) # doesn't seem to exist in Humble?
-        self.gotoXY(2.4,0, 10) #, obstacle_layer_enabled=False)
+        self.gotoXY(2.4,0, 10, obstacle_layer_enabled=False)
 
         next_state = "dropCan"
         
@@ -907,7 +907,6 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         self.nav.backup(0.30, 0.1, 10)
         self.waitTaskComplete(10)
         self.rotateToAngle(math.pi, 10)
-        self.nav.clearAllCostmaps() 
 
         self.send_set_param_request(self.local_costmap_set_param_svc, 'obstacle_layer.enabled', True)
         
@@ -921,8 +920,11 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         """
         next_state = "gotoNewLocation"
               
+        self.nav.clearAllCostmaps() 
+        
         self.gotoXY(1.25,0,30)
         # TODO: ???? Rotate to point straight out ????
+        
         next_state = "findCan"
         
         return next_state
