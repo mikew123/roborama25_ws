@@ -867,15 +867,15 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         """
         next_state = "gotoCanDrop"
         
-        self.rotateToAngle(0, 10)
+        # self.rotateToAngle(0, 10)
         
         # stays disabled until after backup
-        self.send_set_param_request(self.local_costmap_set_param_svc, 'obstacle_layer.enabled', False)
-        self.send_set_param_request(self.global_costmap_set_param_svc, 'obstacle_layer.enabled', False)
+        # self.send_set_param_request(self.local_costmap_set_param_svc, 'obstacle_layer.enabled', False)
+        # self.send_set_param_request(self.global_costmap_set_param_svc, 'obstacle_layer.enabled', False)
         self.nav.clearAllCostmaps() 
         
         # self.nav.driveOnHeading(0.5, 0.1, 10) # doesn't seem to exist in Humble?
-        self.gotoXY(2.6,0, 10, obstacle_layer_enabled=False)
+        self.gotoXY(2.4,0, 10) #, obstacle_layer_enabled=False)
 
         next_state = "dropCan"
         
@@ -898,18 +898,18 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         """
         next_state = "backupFromCan"
         
-        self.rotateToAngle(0, 10)
-        # self.nav.clearLocalCostmap() 
+        self.nav.clearAllCostmaps() 
         self.send_set_param_request(self.local_costmap_set_param_svc, 'obstacle_layer.enabled', False)
-        self.nav.backup(0.35, 0.1, 10)
+        self.nav.backup(0.05, 0.1, 10)
+        self.waitTaskComplete(10)
+        self.rotateToAngle(0, 10)
+        self.send_set_param_request(self.local_costmap_set_param_svc, 'obstacle_layer.enabled', False)
+        self.nav.backup(0.30, 0.1, 10)
         self.waitTaskComplete(10)
         self.rotateToAngle(math.pi, 10)
-
-        
-        # self.send_set_param_request(self.amcl_set_param_svc, 'tf_broadcast', True)
-        self.send_set_param_request(self.local_costmap_set_param_svc, 'obstacle_layer.enabled', True)
-
         self.nav.clearAllCostmaps() 
+
+        self.send_set_param_request(self.local_costmap_set_param_svc, 'obstacle_layer.enabled', True)
         
         next_state = "gotoNewLocation"
         
@@ -1016,17 +1016,17 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         # Doesthis need to be a global param for persistance?
         self.set_param_request.parameters = [param]
         
-        self.get_logger().info(f"send_set_param_request: Sending {name=} {value=}")
+        # self.get_logger().info(f"send_set_param_request: Sending {name=} {value=}")
         future = svc.call_async(self.set_param_request)
         
         self.callback_set_param_done = False
         
         future.add_done_callback(partial(self.callback_set_param, name=name, value=value))
         
-        self.get_logger().info(f"send_set_param_request: waiting for callback")
+        # self.get_logger().info(f"send_set_param_request: waiting for callback")
         while not self.callback_set_param_done :
             time.sleep(0.1)
-        self.get_logger().info(f"send_set_param_request: callback wait done {name=} {value=}")
+        # self.get_logger().info(f"send_set_param_request: callback wait done {name=} {value=}")
 
         # if name=='tf_broadcast' and value==False :
         #     self.freeze_static_tf("map", "odom")
@@ -1038,7 +1038,7 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         successful = result.results[0].successful
         self.set_param_successful = successful
 
-        self.get_logger().info(f"callback_set_param done {name=} {value=} {result=} {successful=}")
+        # self.get_logger().info(f"callback_set_param done {name=} {value=} {result=} {successful=}")
         self.callback_set_param_done = True
 
     def freeze_static_tf (self, parent: str, child: str) -> None:
