@@ -164,6 +164,10 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         while not self.local_costmap_set_param_svc.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('/local_costmap/local_costmap/set_parameters service not available, waiting again...')
 
+        self.global_costmap_set_param_svc = self.create_client(SetParameters, '/global_costmap/global_costmap/set_parameters')
+        while not self.global_costmap_set_param_svc.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info('/global_costmap/global_costmap/set_parameters service not available, waiting again...')
+
         self.set_param_request = SetParameters.Request()
 
         self.robot_json_publisher = self.create_publisher(String, '/robot_json',10)
@@ -414,8 +418,10 @@ class Roborama25ControllerNodeLc(LifecycleNode):
                 # self.get_logger().info(f"{feedback=}")
                 # spin does not provide time in feedback
                 try :
-                    if feedback.navigation_time.sec > t :
-                            self.nav.cancelTask()
+                    nt = feedback.navigation_time.sec
+                    if nt > t :
+                        self.get_logger().info(f"waitTaskComplete: Canceling task {nt=} > {t=}")
+                        self.nav.cancelTask()
                 except :
                     pass
                 
@@ -424,13 +430,13 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         # self.get_logger().info(f"{feedback=} {result=}")
         
         if result == TaskResult.SUCCEEDED:
-            self.get_logger().info('Goal succeeded!')
+            self.get_logger().info('waitTaskComplete: Goal succeeded!')
         elif result == TaskResult.CANCELED:
-            self.get_logger().info('Goal was canceled!')
+            self.get_logger().info('waitTaskComplete: Goal was canceled!')
         elif result == TaskResult.FAILED:
-            self.get_logger().info('Goal failed!')
+            self.get_logger().info('waitTaskComplete: Goal failed!')
         else :
-            self.get_logger().info(f"nav.getResult() {result=}")
+            self.get_logger().info(f"waitTaskComplete: nav.getResult() {result=}")
 
         return (result, feedback)
 
@@ -533,9 +539,11 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         self.get_logger().info(f"gotoXY: from {cx=:.3f} {cy=:.3f}, goto {x=:.3f} {y=:.3f} {a=:.3f}")
 
         # rotate to point to goto xy position before moving to it
-        status = self.rotateToAngle(a,2)
+        status = self.rotateToAngle(a,10)
         
         self.send_set_param_request(self.local_costmap_set_param_svc, 
+                        'obstacle_layer.enabled', obstacle_layer_enabled)
+        self.send_set_param_request(self.global_costmap_set_param_svc, 
                         'obstacle_layer.enabled', obstacle_layer_enabled)
 
         result = self.gotoPose(goto_pose,t)
@@ -575,10 +583,10 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         start_time = self.get_clock().now()
         elapsed_time = 0.0
         result = False
-        spinThresh = 0.02 #0.01 # about 3 degrees
+        spinThresh = 0.05 #0.02 #0.01 # about 3 degrees
         
         # Loop until the timeout is reached or the task is complete
-        while rclpy.ok() and elapsed_time <t:
+        while rclpy.ok() and elapsed_time <t and self.lifecycle_state_active==True:
             # get current pose to determine the angle offset
             # rotating to point to the desired is faster
             # maybe the navigation behavior can be "fixed" 
@@ -846,8 +854,8 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         """
         next_state = "gotoGoalOpening"
 
-        self.nav.clearLocalCostmap() 
-        self.gotoXY(2.2,0,30)
+        self.nav.clearAllCostmaps() 
+        self.gotoXY(2.2,0,30, obstacle_layer_enabled=False)
         
         next_state = "gotoCanDrop"
         
@@ -859,15 +867,15 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         """
         next_state = "gotoCanDrop"
         
-        self.rotateToAngle(0, 1)
+        self.rotateToAngle(0, 10)
         
         # stays disabled until after backup
-        # self.send_set_param_request(self.amcl_set_param_svc, 'tf_broadcast', False)
         self.send_set_param_request(self.local_costmap_set_param_svc, 'obstacle_layer.enabled', False)
-        self.nav.clearLocalCostmap() 
+        self.send_set_param_request(self.global_costmap_set_param_svc, 'obstacle_layer.enabled', False)
+        self.nav.clearAllCostmaps() 
         
         # self.nav.driveOnHeading(0.5, 0.1, 10) # doesn't seem to exist in Humble?
-        self.gotoXY(2.6,0,5, obstacle_layer_enabled=False)
+        self.gotoXY(2.6,0, 10, obstacle_layer_enabled=False)
 
         next_state = "dropCan"
         
@@ -1015,10 +1023,10 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         
         future.add_done_callback(partial(self.callback_set_param, name=name, value=value))
         
-        # self.get_logger().info(f"send_set_param_request: waiting for callback")
+        self.get_logger().info(f"send_set_param_request: waiting for callback")
         while not self.callback_set_param_done :
             time.sleep(0.1)
-        # self.get_logger().info(f"send_set_param_request: callback wait done {name=} {value=}")
+        self.get_logger().info(f"send_set_param_request: callback wait done {name=} {value=}")
 
         # if name=='tf_broadcast' and value==False :
         #     self.freeze_static_tf("map", "odom")
@@ -1030,7 +1038,7 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         successful = result.results[0].successful
         self.set_param_successful = successful
 
-        # self.get_logger().info(f"callback_set_param done {name=} {value=} {result=} {successful=}")
+        self.get_logger().info(f"callback_set_param done {name=} {value=} {result=} {successful=}")
         self.callback_set_param_done = True
 
     def freeze_static_tf (self, parent: str, child: str) -> None:
