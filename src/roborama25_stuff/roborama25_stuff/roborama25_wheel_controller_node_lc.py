@@ -40,10 +40,9 @@ class Roborama25WheelControllerNodeLC(LifecycleNode):
 
     # values sent to wheel Pico over serial interface
     odometryRateHz = 30; # Rate that the wheel and odom encoders send data on the serial port
-    # fwdPullOffset = 1.0025 # cal 5M forward compensate for pull offset
-    fwdPullOffset = 1.0020 # cal Quick Trip with laser
-    revPullOffset = 1.0300  # reverse compesate for pull offset
-    wheelVelocityAccLimit = 1.5 # acceleration max in meters per sec per sec
+    fwdPullOffset = 1.0 # cal Quick Trip with laser
+    revPullOffset = 1.0 
+    wheelVelocityAccLimit = 0.5 #1.5 # acceleration max in meters per sec per sec
     
     serialTimerRateHz = 1.5*odometryRateHz; # Rate to check serial port for messages
 
@@ -56,7 +55,7 @@ class Roborama25WheelControllerNodeLC(LifecycleNode):
 
     wheelDiameter = 0.084
     wheelEncoderCounts = 48*20.408666666
-    wheelDistance = 0.280
+    wheelDistance = 0.282 #0.280
 
     # odomDiameter = 0.048 * 65651/65910 # adjust for 5M-5cm travel, re-glued
     # odomEncoderCounts = 2000.0 #per rotation

@@ -285,8 +285,9 @@ class Roborama25ControllerNodeLc(LifecycleNode):
             self.setInitialPose(initial_pose)    
 
             # rviz2 grid area 10x10 with origin 0,0 at the center
+
             self.publishEmptyMap(0.05, 10, 10, -5, -5)
-#            self.send_set_param_request(self.amcl_set_param_svc, 'tf_broadcast', False)
+            self.send_set_param_request(self.amcl_set_param_svc, 'tf_broadcast', False)
             self.nav2_run_first_exec = False
             
         # Start a course when gamepad button is pushed
@@ -334,6 +335,40 @@ class Roborama25ControllerNodeLc(LifecycleNode):
 
         # status = self.rotateToAngle(0,10)
         # self.get_logger().info(f"runWPoints: final rotation {status=}")    
+    
+    def rotate(self, a: float, va: float = 0.05) :
+        """
+        Rotate simple using wheel odom only
+        a: angle in rads
+        va: angular velocity in rads/sec
+        """
+        dt = 0.1 # time step
+        
+        # limit rotation angle to -pi to pi 
+        while a>math.pi : a -= 2*math.pi
+        while a<-math.pi : a += 2*math.pi
+        
+        va = math.fabs(va)
+        if a < 0 : va = -va
+        
+        msg = Twist()
+        msg.angular.z = va
+        self.cmd_vel_publisher.publish(msg)
+        
+        # time to rotate at va velocity to angle a
+        t = math.fabs(a/va)
+        start_time = self.get_clock().now()
+        elapsed_time = 0.0
+        while rclpy.ok() and elapsed_time <t and self.lifecycle_state_active==True:
+            current_time = self.get_clock().now()
+            elapsed_time = (current_time - start_time).nanoseconds / 1e9
+            self.get_logger().info(f"rotate: {elapsed_time=:.3f} {a=:.3f} {va=:.3f} {t=:.3f}")
+            self.cmd_vel_publisher.publish(msg)
+            time.sleep(dt)
+
+        msg.angular.z = 0.0
+        self.cmd_vel_publisher.publish(msg)
+        self.get_logger().info(f"rotate: finished rotation {elapsed_time=:.3f} {a=:.3f} {va=:.3f} {t=:.3f}")
         
     def run4Corner(self) :
         """
@@ -346,15 +381,29 @@ class Roborama25ControllerNodeLc(LifecycleNode):
 
         # Drive to 4 corners of a square area
         d = self.size4corner[self.nav_arena]
+        
         # need to account for robot radius since nav2 stops that amount
         # because of the obstacle mapping             
-        r = self.robotRadius
-        for wp in [(d+r,0), (d,-(d+r)), (0,-(d+r)), (0,r)] :
-            status = self.gotoXY(wp[0],wp[1], 30)
+        # r = self.robotRadius
+        # for wp in [(d+r,0), (d,-(d+r)), (0,-(d+r)), (0,r)] :
+        #     status = self.gotoXY(wp[0],wp[1], 30)
 
-        status = self.rotateToAngle(0,10)
-        self.get_logger().info(f"run4Corner: final rotation {status=}")    
-    
+        # status = self.rotateToAngle(0,10)
+        # self.get_logger().info(f"run4Corner: final rotation {status=}")    
+
+        # Drive to 4 corners of a square area
+        # using simple wheel odom only
+        vx = 0.25
+        va = 0.25
+        self.drive(d, vx)  
+        self.rotate(-math.pi/2, va)
+        self.drive(d, vx)  
+        self.rotate(-math.pi/2, va)
+        self.drive(d, vx)  
+        self.rotate(-math.pi/2, va)
+        self.drive(d, vx)  
+        self.rotate(-math.pi/2, va)
+        
     def runQTrip(self) :
         """
         button B
@@ -362,28 +411,16 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         self.get_logger().info(f"runQTrip: {self.nav_arena=} started (button B)")
         
         self.createQTMap()
-        #self.send_set_param_request(self.amcl_set_param_svc, 'tf_broadcast', False)
+        self.send_set_param_request(self.amcl_set_param_svc, 'tf_broadcast', False)
         self.send_set_param_request(self.local_costmap_set_param_svc, 'obstacle_layer.enabled', False)
         self.send_set_param_request(self.global_costmap_set_param_svc, 'obstacle_layer.enabled', False)
                 
         # status = self.gotoXY(8*self.feetToMeter,0, 30)
         d = self.lengthQuickTrip[self.nav_arena]
-        # need to account for robot radius since nav2 stops that amount
-        # because of the obstacle mapping             
-        r = self.robotRadius
-        
-        # self.get_logger().info(f"runQTrip: d={d} {self.nav_arena=}")
-        # return
-    
-        # status = self.gotoXY(d+r,0, 30, obstacle_layer_enabled=False)
-        # status = self.gotoXY(-r,0, 30, obstacle_layer_enabled=False)
-        
-        # status = self.rotateToAngle(0,10)
-        # self.get_logger().info(f"runQTrip: final rotation {status=}")    
 
         self.drive(d, 0.25)
-        self.drive(d, -0.25)
-        #self.nav.backup(d, 0.5)
+        time.sleep(2)
+        self.drive(-d, 0.25)
         
     def run6Can(self) :    
         """
@@ -556,7 +593,7 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         
         return result
     
-    def rotate(self,a,t):
+    def rotateRad(self,a,t):
         """
         Rotate a radians within time t
         Adjust rotation angle to a minimum angle -pi to pi
@@ -609,7 +646,7 @@ class Roborama25ControllerNodeLc(LifecycleNode):
                 self.get_logger().info(f"rotateToAngle: spin threshold reached {spin:.3f} < {spinThresh:.3f}, breaking loop")
                 break
             
-            result = self.rotate(spin,t)
+            result = self.rotateRad(spin,t)
             
             current_time = self.get_clock().now()
             elapsed_time = (current_time - start_time).nanoseconds / 1e9  # Convert nanoseconds to seconds
@@ -757,7 +794,7 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         if timer > 2 :
             self.findCanTime = time.monotonic()
             if tf_OK==False and timer < 3:
-                self.rotate(math.pi/16, 10)
+                self.rotateRad(math.pi/16, 10)
                 self.get_logger().info(f"run_findCan: Failed to find can TF, rotating")
             
         if tf_OK == True : 
@@ -870,12 +907,15 @@ class Roborama25ControllerNodeLc(LifecycleNode):
     def drive(self, dist: float, vx: float=0.5) :
         """
         Drive for a distance, return when done
-        Drives in reverse when xv<0
+        Drives in reverse when d<0
+        vx must be > 0 and != 0
         """
-        dist = math.fabs(dist)
+        vx = math.fabs(vx)
+        if dist < 0 : vx *= -1
+        dt = 0.01
         
         if vx==0.0 :
-            self.get_logger().info(f"drive: {vx=:.3f}, not driving")
+            self.get_logger().info(f"drive: {vx=:.3f}, aborted driving")
             return
         
         msg = Twist()
@@ -888,9 +928,9 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         while rclpy.ok() and elapsed_time <t and self.lifecycle_state_active==True:
             current_time = self.get_clock().now()
             elapsed_time = (current_time - start_time).nanoseconds / 1e9
-            self.get_logger().info(f"drive: {elapsed_time=:.3f} {dist=:.3f} {vx=:.3f} {t=:.3f}")
+            # self.get_logger().info(f"drive: {elapsed_time=:.3f} {dist=:.3f} {vx=:.3f} {t=:.3f}")
             self.cmd_vel_publisher.publish(msg)
-            time.sleep(0.05)
+            time.sleep(dt)
         self.get_logger().info(f"drive: done {elapsed_time=:.3f} {dist=:.3f} {vx=:.3f} {t=:.3f}")
         msg.linear.x = 0.0
         self.cmd_vel_publisher.publish(msg)
@@ -1061,8 +1101,8 @@ class Roborama25ControllerNodeLc(LifecycleNode):
             time.sleep(0.1)
         # self.get_logger().info(f"send_set_param_request: callback wait done {name=} {value=}")
 
-        # if name=='tf_broadcast' and value==False :
-        #     self.freeze_static_tf("map", "odom")
+        if name=='tf_broadcast' and value==False :
+            self.freeze_static_tf("map", "odom")
         
 
     def callback_set_param(self,future, name, value) :
