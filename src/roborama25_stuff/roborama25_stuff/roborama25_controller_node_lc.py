@@ -286,7 +286,7 @@ class Roborama25ControllerNodeLc(LifecycleNode):
 
             # rviz2 grid area 10x10 with origin 0,0 at the center
             self.publishEmptyMap(0.05, 10, 10, -5, -5)
-            self.send_set_param_request(self.amcl_set_param_svc, 'tf_broadcast', False)
+#            self.send_set_param_request(self.amcl_set_param_svc, 'tf_broadcast', False)
             self.nav2_run_first_exec = False
             
         # Start a course when gamepad button is pushed
@@ -362,7 +362,9 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         self.get_logger().info(f"runQTrip: {self.nav_arena=} started (button B)")
         
         self.createQTMap()
-        self.send_set_param_request(self.amcl_set_param_svc, 'tf_broadcast', False)
+        #self.send_set_param_request(self.amcl_set_param_svc, 'tf_broadcast', False)
+        self.send_set_param_request(self.local_costmap_set_param_svc, 'obstacle_layer.enabled', False)
+        self.send_set_param_request(self.global_costmap_set_param_svc, 'obstacle_layer.enabled', False)
                 
         # status = self.gotoXY(8*self.feetToMeter,0, 30)
         d = self.lengthQuickTrip[self.nav_arena]
@@ -373,11 +375,15 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         # self.get_logger().info(f"runQTrip: d={d} {self.nav_arena=}")
         # return
     
-        status = self.gotoXY(d+r,0, 30)
-        status = self.gotoXY(-r,0, 30)
+        # status = self.gotoXY(d+r,0, 30, obstacle_layer_enabled=False)
+        # status = self.gotoXY(-r,0, 30, obstacle_layer_enabled=False)
         
-        status = self.rotateToAngle(0,10)
-        self.get_logger().info(f"runQTrip: final rotation {status=}")    
+        # status = self.rotateToAngle(0,10)
+        # self.get_logger().info(f"runQTrip: final rotation {status=}")    
+
+        self.drive(d, 0.25)
+        self.drive(d, -0.25)
+        #self.nav.backup(d, 0.5)
         
     def run6Can(self) :    
         """
@@ -861,22 +867,47 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         
         return next_state
     
+    def drive(self, dist: float, vx: float=0.5) :
+        """
+        Drive for a distance, return when done
+        Drives in reverse when xv<0
+        """
+        dist = math.fabs(dist)
+        
+        if vx==0.0 :
+            self.get_logger().info(f"drive: {vx=:.3f}, not driving")
+            return
+        
+        msg = Twist()
+        msg.linear.x = vx
+        self.cmd_vel_publisher.publish(msg)
+        
+        t = math.fabs(dist/vx) # time to go distnace at vx velocity
+        start_time = self.get_clock().now()
+        elapsed_time = 0.0
+        while rclpy.ok() and elapsed_time <t and self.lifecycle_state_active==True:
+            current_time = self.get_clock().now()
+            elapsed_time = (current_time - start_time).nanoseconds / 1e9
+            self.get_logger().info(f"drive: {elapsed_time=:.3f} {dist=:.3f} {vx=:.3f} {t=:.3f}")
+            self.cmd_vel_publisher.publish(msg)
+            time.sleep(0.05)
+        self.get_logger().info(f"drive: done {elapsed_time=:.3f} {dist=:.3f} {vx=:.3f} {t=:.3f}")
+        msg.linear.x = 0.0
+        self.cmd_vel_publisher.publish(msg)
+        
     def run_gotoCanDrop(self) :
         """
         Go to the drop location from the goal opening
         """
         next_state = "gotoCanDrop"
         
-        # self.rotateToAngle(0, 10)
+        self.rotateToAngle(0, 10)
         
-        # stays disabled until after backup
-        self.send_set_param_request(self.local_costmap_set_param_svc, 'obstacle_layer.enabled', False)
-        self.send_set_param_request(self.global_costmap_set_param_svc, 'obstacle_layer.enabled', False)
-        self.nav.clearAllCostmaps() 
         
         # self.nav.driveOnHeading(0.5, 0.1, 10) # doesn't seem to exist in Humble?
-        self.gotoXY(2.4,0, 10, obstacle_layer_enabled=False)
-
+        # self.gotoXY(2.4,0, 10, obstacle_layer_enabled=False)
+        self.drive(0.5, 0.5)
+        
         next_state = "dropCan"
         
         return next_state

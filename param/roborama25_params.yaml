@@ -100,11 +100,16 @@ bt_navigator_rclcpp_node:
 
 controller_server:
   ros__parameters:
+    #To use the use_realtime_priority feature, you use set the following inside of /etc/security/limits.conf 
+    # to give userspace access to elevated prioritization permissions: 
+    #<username> soft rtprio 99 <username> hard rtprio 99
+    use_realtime_priority: True
+
     use_sim_time: False
     controller_frequency: 10.0
     min_x_velocity_threshold: 0.001
     min_y_velocity_threshold: 0.5
-    min_theta_velocity_threshold: 0.001
+    min_theta_velocity_threshold: 0.001 
     failure_tolerance: 0.3
     progress_checker_plugin: "progress_checker"
     goal_checker_plugins: ["general_goal_checker"]
@@ -150,7 +155,7 @@ controller_server:
       linear_granularity: 0.02 #0.05
       angular_granularity: 0.02 #0.025
       transform_tolerance: 1.0 #0.2
-      xy_goal_tolerance: 0.02 #0.05
+      xy_goal_tolerance: 0.05 #0.05
       trans_stopped_velocity: 0.25
       short_circuit_trajectory_evaluation: True
       stateful: True
@@ -171,9 +176,9 @@ controller_server:
 #      GoalAlign.forward_point_distance: 0.1
       PathDist.scale: 32.0
       GoalDist.scale: 24.0
-      RotateToGoal.scale: 32.0
-      RotateToGoal.slowing_factor: 5.0
-      RotateToGoal.lookahead_time: -1.0
+      # RotateToGoal.scale: 32.0
+      # RotateToGoal.slowing_factor: 5.0
+      # RotateToGoal.lookahead_time: -1.0
 
 controller_server_rclcpp_node:
   ros__parameters:
