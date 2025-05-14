@@ -336,6 +336,73 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         # status = self.rotateToAngle(0,10)
         # self.get_logger().info(f"runWPoints: final rotation {status=}")    
         
+    def driveDirect(self, dist: float, vx: float=0.5) :
+        """
+        Drive with timing all in the wheels micro 
+        Drive for a distance, return when done
+        Drives in reverse when d<0
+        vx must be > 0 and != 0
+        """
+        
+        if dist == 0 or vx <= 0 :
+            self.get_logger().info(f"driveDirect: invalid params {dist=:.3f} {vx=:.3f}, aborted driving")
+            return
+        
+        if dist < 0 :
+            # drive in reverse with neg velocity
+            dist *= -1
+            vx   *= -1
+        
+        sec = math.fabs(dist/vx)
+        left = vx
+        right = vx
+    
+        self.get_logger().info(f"driveDirect: send json msg {dist=:.3f} {vx=:.3f} {sec=:.3f} {left=:.3f} {right=:.3f}")
+    
+        # wheels drive at veloocity m/s for sec
+        cmd_json = {"wheels": {"left": left, "right": right,  "sec": sec}}
+        cmd_str = json.dumps(cmd_json)+"\0"
+        self.robot_json_data_publish(cmd_str)
+
+        # blocking wait for the expected drive movement time
+        sec*=1.1
+        self.get_logger().info(f"driveDirect: waiting {sec=:.3f}")
+        time.sleep(sec)
+
+        
+    def rotateDirect(self, a: float, va: float=0.5) :
+        """
+        Rotate simple using wheel odom only
+        a: angle in rads
+        va: angular velocity in rads/sec
+        """
+                
+        # limit rotation angle to -pi to pi 
+        while a>math.pi : a -= 2*math.pi
+        while a<-math.pi : a += 2*math.pi
+
+        if a == 0 or va <= 0 :
+            self.get_logger().info(f"rotateDirect: invalid params {a=:.3f} {va=:.3f}, aborted driving")
+            return
+        
+        va = math.fabs(va)
+        if a < 0 : va = -va
+        
+        # time to rotate at va velocity to angle a
+        sec = math.fabs(a/va)
+    
+        self.get_logger().info(f"rotateDirect: send json msg {a=:.3f} {va=:.3f} {sec=:.3f}")
+    
+        # wheels drive at veloocity m/s for sec
+        cmd_json = {"wheels": {"angular": va,  "sec": sec}}
+        cmd_str = json.dumps(cmd_json)+"\0"
+        self.robot_json_data_publish(cmd_str)
+
+        # blocking wait for the expected drive movement time
+        sec*=1.1
+        self.get_logger().info(f"rotateDirect: waiting {sec=:.3f}")
+        time.sleep(sec)
+          
     def driveOdom(self, dist: float, vx: float=0.5) :
         """
         Drive for a distance, return when done
@@ -400,7 +467,7 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         while a<-math.pi : a += 2*math.pi
         
         va = math.fabs(va)
-        if a < 0 : va = -va
+        if a > 0 : va = -va
         
         msg = Twist()
         msg.angular.z = va
@@ -456,14 +523,14 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         # using simple wheel odom only
         vx = 0.125
         va = 0.25
-        self.driveOdom(d, vx)  
-        self.rotateOdom(-math.pi/2, va)
-        self.driveOdom(d, vx)  
-        self.rotateOdom(-math.pi/2, va)
-        self.driveOdom(d, vx)  
-        self.rotateOdom(-math.pi/2, va)
-        self.driveOdom(d, vx)  
-        self.rotateOdom(-math.pi/2, va)
+        self.driveDirect(d, vx)  
+        self.rotateDirect(math.pi/2, va)
+        self.driveDirect(d, vx)  
+        self.rotateDirect(math.pi/2, va)
+        self.driveDirect(d, vx)  
+        self.rotateDirect(math.pi/2, va)
+        self.driveDirect(d, vx)  
+        self.rotateDirect(math.pi/2, va)
         
     def runQTrip(self) :
         """
@@ -479,9 +546,9 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         # status = self.gotoXY(8*self.feetToMeter,0, 30)
         d = self.lengthQuickTrip[self.nav_arena]
 
-        self.driveOdom(d, 0.25)
-        time.sleep(2)
-        self.driveOdom(-d, 0.25)
+        self.driveDirect(d, 0.25)
+        time.sleep(1)
+        self.driveDirect(-d, 0.25)
         
     def run6Can(self) :    
         """

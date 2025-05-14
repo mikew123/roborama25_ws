@@ -55,7 +55,7 @@ class Roborama25WheelControllerNodeLC(LifecycleNode):
 
     wheelDiameter = 0.084
     wheelEncoderCounts = 48*20.408666666
-    wheelDistance = 0.282 #0.280
+    wheelDistance = 0.279 #0.280
 
     # odomDiameter = 0.048 * 65651/65910 # adjust for 5M-5cm travel, re-glued
     # odomEncoderCounts = 2000.0 #per rotation
@@ -248,7 +248,7 @@ class Roborama25WheelControllerNodeLC(LifecycleNode):
             od[3] = int(odStrArray[4]) #odomF-X(translation fwd-rev)
             od[4] = int(odStrArray[5]) #odomB-Y(rotation CW-CC)
         except:
-            self.get_logger().error(f"OD message error: {msg.data}")
+            self.get_logger().warning(f"OD message error: {msg.data}")
             return
 
         # init to zero offset
@@ -417,39 +417,50 @@ class Roborama25WheelControllerNodeLC(LifecycleNode):
         cv[5*(6+1)] = rz
         return cv
 
-    # def watch_json_callback(self, msg) ->None :
-    #     #self.get_logger().info(f"wheel watch_json_callback {msg=}")
-    #     packet_bytes = msg.data
-    #     try :
-    #         packet = json.loads(packet_bytes)
-    #         # if (("motor" in packet) and ("action" in packet)):
-    #             # motor = packet['motor']
-
-    #     except Exception as ex:
-    #         self.get_logger().error(f"wheel controller watch_json_callback exception {ex}")        
-
-
     CPmsg = ""
 
     def robot_json_callback(self, msg) :
         if not self.lifecycle_state_active : return
 
-        #self.get_logger().info(f"{msg}")
+        self.get_logger().info(f"{msg}")
 
         try :
             packet = json.loads(msg.data)
             #self.get_logger().info(f"{packet}")
             if "claw" in packet :
+                pct=0
+                msec=0
                 claw_cmd = packet["claw"]
                 if "open" in claw_cmd :
-                    pct = claw_cmd["open"]
+                    pct = int(claw_cmd["open"])
                 if "time" in claw_cmd :
-                    msec = claw_cmd["time"]
+                    msec = int(claw_cmd["time"])
                 self.wheel_serial_port.write(f"CP {pct} {msec}\n".encode())
                 #self.get_logger().info(f"{packet}")
+                
+            if "wheels" in packet :
+                left=0.0
+                right=0.0
+                angular=0.0
+                sec=0.0
+                wheel_cmd = packet["wheels"]
+                if "left" in wheel_cmd :
+                    left = wheel_cmd["left"]
+                if "right" in wheel_cmd :
+                    right = wheel_cmd["right"]
+                if "angular" in wheel_cmd :
+                    angular = wheel_cmd["angular"]
+                if "sec" in wheel_cmd :
+                    sec = wheel_cmd["sec"]
+                    
+                right = right + (angular * self.wheelDistance / 2)
+                left  = left  - (angular * self.wheelDistance / 2)
+
+                self.wheel_serial_port.write(f"RL {left} {right} {sec}\n".encode())
+                self.get_logger().info(f"{packet}")
 
         except Exception as ex:
-            self.get_logger().error(f"wheel controller robot_json_callback exception {ex}")        
+            self.get_logger().warning(f"wheel controller robot_json_callback exception {ex=} {msg=}")        
 
     # check serial port at timerRateHz and parse out messages to publish
     # TODO: actually parse the messages (currently only OD encoder messages)
@@ -469,7 +480,7 @@ class Roborama25WheelControllerNodeLC(LifecycleNode):
                 self.encoders_msg_publisher.publish(emsg)
 
         except Exception as ex:
-            self.get_logger().error(f"wheel controller timer serial read exception {ex}")
+            self.get_logger().warning(f"wheel controller timer serial read exception {ex}")
             self.wheel_serial_port.close()
             self.wheel_serial_port.open()
             return
