@@ -38,7 +38,7 @@ int EncoderSendRateHz = 1; // msg= OR Hz
 float wheelFwdOffsetCal = 1.000; // msg= WO fwd rev
 float wheelRevOffsetCal = 1.000;
 float wheelAccellerationMaxMpsPs = 1.0;
-
+float wheelCircumferenceM = WHEEL_CIRCUMFERENCE_M;
 
 // not yet updatable
 
@@ -295,8 +295,8 @@ bool timerInterruptHandler(struct repeating_timer *t) {
     diffEncoderCount[enc] = currEncoderCount[enc] - lastEncoderCount[enc];
     lastEncoderCount[enc] = currEncoderCount[enc];
     if((enc==encoderR_e) || (enc==encoderL_e)) {
-      currTravelMeters[enc] = (currEncoderCount[enc]/WHEEL_ENCODER_COUNT_PER_ROTATION)*WHEEL_CIRCUMFERENCE_M;
-      diffTravelMeters[enc] = (diffEncoderCount[enc]/WHEEL_ENCODER_COUNT_PER_ROTATION)*WHEEL_CIRCUMFERENCE_M;
+      currTravelMeters[enc] = (currEncoderCount[enc]/WHEEL_ENCODER_COUNT_PER_ROTATION)*wheelCircumferenceM;
+      diffTravelMeters[enc] = (diffEncoderCount[enc]/WHEEL_ENCODER_COUNT_PER_ROTATION)*wheelCircumferenceM;
       velocityMPS[enc] = diffTravelMeters[enc]/(1e-6*diffTimeUs);
     } else {
       currTravelMeters[enc] = (currEncoderCount[enc]/ODOM_ENCODER_COUNT_PER_ROTATION)*ODOM_CIRCUMFERENCE_M;
@@ -437,7 +437,8 @@ void loop() {
     int Hz;
     float Fwd, Rev;
     float Acc;
-    int n1, n2, n3, n4, n5;
+    float wd;
+    int n1, n2, n3, n4, n5, n6;
 
     // Check command for RL wheel velocities in meters/sec
     n1 = sscanf(incomingString.c_str(), "RL %f %f %f", &Rv, &Lv, &Tv);
@@ -449,6 +450,8 @@ void loop() {
     n4 = sscanf(incomingString.c_str(), "AR %f", &Acc);
     // Check command for claw positioning
     n5 = sscanf(incomingString.c_str(), "CP %d %d", &clawPct, &clawPeriodMs);
+    // Check command for wheel diameter in meters
+    n6 = sscanf(incomingString.c_str(), "WD %f", &wd);
 
     if(n1==3) {
       // Set timeout 
@@ -507,6 +510,11 @@ void loop() {
         clawsBusy = true;
         //Serial.print("CP -> "); Serial.print(clawPct);Serial.print(" "); Serial.println(clawPeriodMs);
 
+      } else if(n6 == 1) {
+        // "WD" wheel diameter in meters
+        wheelCircumferenceM = 2*PI*wd/2.0;
+        //Serial.print("WD -> "); Serial.print(wd);Serial.println(" ");
+
       } else {
         Serial.println("Invalid serial command");
       }
@@ -541,4 +549,3 @@ void loop() {
     }
   } 
 }
-
