@@ -38,6 +38,7 @@ int EncoderSendRateHz = 1; // msg= OR Hz
 float wheelFwdOffsetCal = 1.000; // msg= WO fwd rev
 float wheelRevOffsetCal = 1.000;
 float wheelAccellerationMaxMpsPs = 1.0;
+//float wheelAccellerationMinMps = 0.01;
 float wheelCircumferenceM = WHEEL_CIRCUMFERENCE_M;
 
 // not yet updatable

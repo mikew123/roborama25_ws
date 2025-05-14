@@ -338,7 +338,7 @@ void initL5Sensor(SparkFun_VL53L5CX *myImager, int addr, int pinTofLP) {
 }
 
 void initL5Sensors() {
-  Serial.println("Initializing sensor boards. This can take up to 10s. Please wait.");
+  Serial.println("Initializing L5 sensor boards. This can take up to 10s. Please wait.");
 
   cfgL5DataRate(L5_DATARATE_HZ);
 
