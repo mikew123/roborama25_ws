@@ -24,7 +24,7 @@ class Robo24CanXYNode(Node):
     #Camera
     HFOV = 70.8 #Degrees horizontal left-right
     VFOV = 55.6 #Degrees vertical up-down
-    camThetaOffsetY = -1.5 #Degrees offset from vertical level
+    camThetaOffsetY = -0.0 #-1.5 #Degrees offset from vertical level
     camHeight = 140 #150 #mm from ground
     blobYHeight = int(120/2) #mm blob XY marker of can from ground (can=120mm high)
     cam2blobY = camHeight - blobYHeight #mm camera heigth above blob XY marker

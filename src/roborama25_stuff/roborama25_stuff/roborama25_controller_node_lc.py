@@ -2,6 +2,8 @@ import rclpy
 import math
 import tf_transformations
 import signal
+import json
+import time
 
 from rclpy.node import Node
 from functools import partial
@@ -24,6 +26,8 @@ from nav2_simple_commander.robot_navigator import BasicNavigator, TaskResult
 from geometry_msgs.msg import Pose, PoseStamped, PoseWithCovarianceStamped
 
 from geometry_msgs.msg import TransformStamped
+from geometry_msgs.msg import Twist
+
 from tf2_ros import LookupException, ConnectivityException, ExtrapolationException
 from tf2_ros import Duration
 from tf2_ros.buffer import Buffer
@@ -31,6 +35,10 @@ from tf2_ros.transform_listener import TransformListener
 from tf2_ros.static_transform_broadcaster import StaticTransformBroadcaster
 
 from sensor_msgs.msg import Joy
+from sensor_msgs.msg import PointCloud2, Range
+from sensor_msgs_py import point_cloud2
+
+from std_msgs.msg import String, Header
 
 class Roborama25ControllerNodeLc(LifecycleNode):
     """
@@ -78,10 +86,10 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         "dprg" : (d+(2*t))*ft2m
     }
     
-    home_can6Width:int = int(((9.0+(7/12.0)) * ft2m)/mapResolution) # 6-can walls
-    home_can6Height:int = int(((7.0+(10/12.0)) * ft2m)/mapResolution)
-    home_can6GoalArea:int = int((2 * ft2m)/mapResolution) # goal area outside walls
-    home_can6GoalOpening:int = int((3 * ft2m)/mapResolution) #width of goal openin
+    home_can6Width:int = int((9.0 * ft2m)/mapResolution) # 6-can walls
+    home_can6Height:int = int((7.0 * ft2m)/mapResolution)
+    home_can6GoalArea:int = int((3.0 * ft2m)/mapResolution) # goal area outside walls
+    home_can6GoalOpening:int = int((3.0 * ft2m)/mapResolution) #width of goal openin
     home_mapWidth:int = home_can6Width + home_can6GoalArea
     home_mapHeight:int = home_can6Height
     home_startWpX0:int = (8/12.0*ft2m) # offset from back wall, inches to meters
@@ -98,8 +106,8 @@ class Roborama25ControllerNodeLc(LifecycleNode):
 
     dprg_can6Width:int = int((10.0 * ft2m)/mapResolution) # 6-can walls
     dprg_can6Height:int = int((7.0 * ft2m)/mapResolution)
-    dprg_can6GoalArea:int = int((2 * ft2m)/mapResolution) # goal area outside walls
-    dprg_can6GoalOpening:int = int((3 * ft2m)/mapResolution) #width of goal openin
+    dprg_can6GoalArea:int = int((3.0 * ft2m)/mapResolution) # goal area outside walls
+    dprg_can6GoalOpening:int = int((3.0 * ft2m)/mapResolution) #width of goal opening
     dprg_mapWidth:int = dprg_can6Width + dprg_can6GoalArea
     dprg_mapHeight:int = dprg_can6Height
     dprg_startWpX0:int = (8/12.0*ft2m) # offset from back wall, inches to meters
@@ -119,6 +127,9 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         "dprg" : dprg_arena
     }
 
+    # flag to start running the 6can state machine
+    enable_6can_states = False
+
 
     nav_arena:str = "home"
 
@@ -126,6 +137,9 @@ class Roborama25ControllerNodeLc(LifecycleNode):
     
     nav2_run_first_exec = True
     
+    callback_set_param_done = False
+
+
     feetToMeter = 0.3048
 
     def __init__(self):
@@ -133,6 +147,7 @@ class Roborama25ControllerNodeLc(LifecycleNode):
 
         self.cb_group_re = ReentrantCallbackGroup()
         self.cb_group_mx = MutuallyExclusiveCallbackGroup()
+        self.cb_group_nav2_run = MutuallyExclusiveCallbackGroup()
 
         # Life cycle needed
         self.tf_buffer = Buffer()
@@ -141,12 +156,31 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         # map->odom static tf is broadcast when /amcl/tf_broadcast=False
         self.tf_static_broadcasterOdom = StaticTransformBroadcaster(self)
 
-        self.amcl_set_param_request = SetParameters.Request()
         self.amcl_set_param_svc = self.create_client(SetParameters, '/amcl/set_parameters')
         while not self.amcl_set_param_svc.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('/amcl/set_parameters service not available, waiting again...')
 
-        self.joy_subscription = self.create_subscription(Joy, '/joy', self.joy_callback, 10)
+        self.local_costmap_set_param_svc = self.create_client(SetParameters, '/local_costmap/local_costmap/set_parameters')
+        while not self.local_costmap_set_param_svc.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info('/local_costmap/local_costmap/set_parameters service not available, waiting again...')
+
+        self.global_costmap_set_param_svc = self.create_client(SetParameters, '/global_costmap/global_costmap/set_parameters')
+        while not self.global_costmap_set_param_svc.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info('/global_costmap/global_costmap/set_parameters service not available, waiting again...')
+
+        self.set_param_request = SetParameters.Request()
+
+        self.robot_json_publisher = self.create_publisher(String, '/robot_json',10)
+        self.cmd_vel_publisher = self.create_publisher(Twist, '/cmd_vel', 10)
+        
+        self.joy_subscription = self.create_subscription(Joy, '/joy', self.joy_callback, 
+                                                                10, callback_group=self.cb_group_mx)
+        self.tofL4_rng_subscription = self.create_subscription(Range, '/tofL4_rng', self.tofL4_rng_callback, 
+                                                                10, callback_group=self.cb_group_nav2_run)
+        self.tofL5L_pcd_subscription = self.create_subscription(PointCloud2, '/tofL5L_pcd', self.tofL5L_pcd_callback, 
+                                                                10, callback_group=self.cb_group_re)
+        self.tofL5R_pcd_subscription = self.create_subscription(PointCloud2, '/tofL5R_pcd', self.tofL5R_pcd_callback, 
+                                                                10, callback_group=self.cb_group_re)
 
         self.get_logger().info(f"roborama25_controller_node Started {self.nav_arena=}")
     
@@ -243,13 +277,17 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         """
         Called in a timer 
         """
+        # initialize
         if self.nav2_run_first_exec == True :
+            self.get_logger().info(f"nav2_run: {self.nav2_run_first_exec=}")
+
             initial_pose = self.createPose(0,0,0)
             self.setInitialPose(initial_pose)    
 
             # rviz2 grid area 10x10 with origin 0,0 at the center
+
             self.publishEmptyMap(0.05, 10, 10, -5, -5)
-            self.send_amcl_set_param_request('tf_broadcast', False)
+            self.send_set_param_request(self.amcl_set_param_svc, 'tf_broadcast', False)
             self.nav2_run_first_exec = False
             
         # Start a course when gamepad button is pushed
@@ -274,14 +312,191 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         self.get_logger().info(f"runWPoints: {self.nav_arena=} started (button Y)")
         
         self.createWPMap()
-        self.send_amcl_set_param_request('tf_broadcast', False)
+        self.send_set_param_request(self.amcl_set_param_svc, 'tf_broadcast', False)
 
-        # Drive waypoint pattern
-        for wp in [(2.5,0), (1,0.5), (1,-0.5), (0,0)] :
-            status = self.gotoXY(wp[0],wp[1], 30)
+        #DEBUG: testing can detect and goto
+        tfOK = False
+        can_pose = None
+        while not tfOK :
+            (tfOK, can_pose) = self.getCanPose()
+            
+        if tfOK :
+            dist = self.gotoCanTF(30)
+        
+        if dist > 0 :
+            self.get_logger().info(f"runWPoints: Robot is close to the can at {dist=}")
+        else :
+            self.get_logger().info(f"runWPoints: Robot failed to get close to the can")
+            
+            
+        # # Drive waypoint 
+        # for wp in [(2.5,0), (1,0.5), (1,-0.5), (0,0)] :
+        #     status = self.gotoXY(wp[0],wp[1], 30)
 
-        status = self.rotateToAngle(0,10)
-        self.get_logger().info(f"runWPoints: final rotation {status=}")    
+        # status = self.rotateToAngle(0,10)
+        # self.get_logger().info(f"runWPoints: final rotation {status=}")    
+        
+    def driveDirect(self, dist: float, vx: float=0.5) :
+        """
+        Drive with timing all in the wheels micro 
+        Drive for a distance, return when done
+        Drives in reverse when d<0
+        vx must be > 0 and != 0
+        """
+        
+        if dist == 0 or vx <= 0 :
+            self.get_logger().info(f"driveDirect: invalid params {dist=:.3f} {vx=:.3f}, aborted driving")
+            return
+        
+        if dist < 0 :
+            # drive in reverse with neg velocity
+            dist *= -1
+            vx   *= -1
+        
+        sec = math.fabs(dist/vx)
+        left = vx
+        right = vx
+    
+        self.get_logger().info(f"driveDirect: send json msg {dist=:.3f} {vx=:.3f} {sec=:.3f} {left=:.3f} {right=:.3f}")
+    
+        # wheels drive at veloocity m/s for sec
+        cmd_json = {"wheels": {"left": left, "right": right,  "sec": sec}}
+        cmd_str = json.dumps(cmd_json)+"\0"
+        self.robot_json_data_publish(cmd_str)
+
+        # blocking wait for the expected drive movement time
+        sec*=1.1
+        self.get_logger().info(f"driveDirect: waiting {sec=:.3f}")
+        time.sleep(sec)
+
+        
+    def rotateDirect(self, a: float, va: float=0.5) :
+        """
+        Rotate simple using wheel odom only
+        a: angle in rads
+        va: angular velocity in rads/sec
+        """
+                
+        # limit rotation angle to -pi to pi 
+        while a>math.pi : a -= 2*math.pi
+        while a<-math.pi : a += 2*math.pi
+
+        if a == 0 or va <= 0 :
+            self.get_logger().info(f"rotateDirect: invalid params {a=:.3f} {va=:.3f}, aborted driving")
+            return
+        
+        va = math.fabs(va)
+        if a < 0 : va = -va
+        
+        # time to rotate at va velocity to angle a
+        sec = math.fabs(a/va)
+    
+        self.get_logger().info(f"rotateDirect: send json msg {a=:.3f} {va=:.3f} {sec=:.3f}")
+    
+        # wheels drive at veloocity m/s for sec
+        cmd_json = {"wheels": {"angular": va,  "sec": sec}}
+        cmd_str = json.dumps(cmd_json)+"\0"
+        self.robot_json_data_publish(cmd_str)
+
+        # blocking wait for the expected drive movement time
+        sec*=1.1
+        self.get_logger().info(f"rotateDirect: waiting {sec=:.3f}")
+        time.sleep(sec)
+          
+    def driveOdom(self, dist: float, vx: float=0.5) :
+        """
+        Drive for a distance, return when done
+        Drives in reverse when d<0
+        vx must be > 0 and != 0
+        """
+        
+        if dist == 0 or vx <= 0 :
+            self.get_logger().info(f"driveOdom: invalid params {dist=:.3f} {vx=:.3f}, aborted driving")
+            return
+        
+        if dist < 0 :
+            # drive in reverse with neg velocity
+            dist *= -1
+            vx   *= -1
+        
+        dt = 0.05 # time step        
+        
+        msg = Twist()
+        msg.linear.x = vx
+        self.cmd_vel_publisher.publish(msg)
+        
+        # time to go distance at vx velocity
+        t = math.fabs(dist/vx)
+        elapsed_time = 0.0
+        start_time = self.get_clock().now()
+        while rclpy.ok() and elapsed_time <(t-dt) and self.lifecycle_state_active==True:
+            self.cmd_vel_publisher.publish(msg)
+            time.sleep(dt)
+            current_time = self.get_clock().now()
+            elapsed_time = (current_time - start_time).nanoseconds / 1e9
+            # self.get_logger().info(f"drive: {elapsed_time=:.3f} {dist=:.3f} {vx=:.3f} {t=:.3f}")
+
+        # wait for the remaining time (adjusting for publish time estimate)
+        current_time = self.get_clock().now()
+        elapsed_time = (current_time - start_time).nanoseconds / 1e9
+        ts = t-elapsed_time - 0.005
+        if (ts>0) : time.sleep(ts)
+        
+        # stop the robot motion
+        msg.linear.x = 0.0
+        self.cmd_vel_publisher.publish(msg)
+        
+        current_time = self.get_clock().now()
+        elapsed_time = (current_time - start_time).nanoseconds / 1e9
+        self.get_logger().info(f"driveOdom: done {elapsed_time=:.3f} {t=:.3f} {ts=:.3f} {dist=:.3f} {vx=:.3f} {dt=:.3f}")
+
+    def rotateOdom(self, a: float, va: float = 0.05) :
+        """
+        Rotate simple using wheel odom only
+        a: angle in rads
+        va: angular velocity in rads/sec
+        """
+        if a == 0 or va <= 0 :
+            self.get_logger().info(f"rotateOdom: invalid params {a=:.3f} {va=:.3f}, aborted driving")
+            return
+        
+        dt = 0.05 # time step
+                
+        # limit rotation angle to -pi to pi 
+        while a>math.pi : a -= 2*math.pi
+        while a<-math.pi : a += 2*math.pi
+        
+        va = math.fabs(va)
+        if a > 0 : va = -va
+        
+        msg = Twist()
+        msg.angular.z = va
+        self.cmd_vel_publisher.publish(msg)
+        
+        # time to rotate at va velocity to angle a
+        t = math.fabs(a/va)
+        elapsed_time = 0.0
+        start_time = self.get_clock().now()
+        while rclpy.ok() and elapsed_time <(t-dt) and self.lifecycle_state_active==True:
+            self.cmd_vel_publisher.publish(msg)
+            time.sleep(dt)
+            current_time = self.get_clock().now()
+            elapsed_time = (current_time - start_time).nanoseconds / 1e9
+            # self.get_logger().info(f"rotateOdom: {elapsed_time=:.3f} {t=:.3f} {a=:.3f} {va=:.3f} {dt=:.3f}")  
+
+        # wait for the remaining time (adjusting for publish time estimate)
+        current_time = self.get_clock().now()
+        elapsed_time = (current_time - start_time).nanoseconds / 1e9
+        ts = t-elapsed_time - 0.005
+        if (ts>0) : time.sleep(ts)
+
+        # stop the robot rotation
+        msg.angular.z = 0.0
+        self.cmd_vel_publisher.publish(msg)
+        
+        current_time = self.get_clock().now()
+        elapsed_time = (current_time - start_time).nanoseconds / 1e9
+        self.get_logger().info(f"rotateOdom: finished rotation {elapsed_time=:.3f} {t=:.3f} {ts=:.3f} {a=:.3f} {va=:.3f} {dt=:.3f}")
         
     def run4Corner(self) :
         """
@@ -290,19 +505,33 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         self.get_logger().info(f"run4Corner: {self.nav_arena=} started (button A)")
         
         self.create4CMap()
-        self.send_amcl_set_param_request('tf_broadcast', False)
+        self.send_set_param_request(self.amcl_set_param_svc, 'tf_broadcast', False)
 
         # Drive to 4 corners of a square area
         d = self.size4corner[self.nav_arena]
+        
         # need to account for robot radius since nav2 stops that amount
         # because of the obstacle mapping             
-        r = self.robotRadius
-        for wp in [(d+r,0), (d,-(d+r)), (0,-(d+r)), (0,r)] :
-            status = self.gotoXY(wp[0],wp[1], 30)
+        # r = self.robotRadius
+        # for wp in [(d+r,0), (d,-(d+r)), (0,-(d+r)), (0,r)] :
+        #     status = self.gotoXY(wp[0],wp[1], 30)
 
-        status = self.rotateToAngle(0,10)
-        self.get_logger().info(f"run4Corner: final rotation {status=}")    
-    
+        # status = self.rotateToAngle(0,10)
+        # self.get_logger().info(f"run4Corner: final rotation {status=}")    
+
+        # Drive to 4 corners of a square area
+        # using simple wheel odom only
+        vx = 0.125
+        va = 0.25
+        self.driveDirect(d, vx)  
+        self.rotateDirect(math.pi/2, va)
+        self.driveDirect(d, vx)  
+        self.rotateDirect(math.pi/2, va)
+        self.driveDirect(d, vx)  
+        self.rotateDirect(math.pi/2, va)
+        self.driveDirect(d, vx)  
+        self.rotateDirect(math.pi/2, va)
+        
     def runQTrip(self) :
         """
         button B
@@ -310,22 +539,16 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         self.get_logger().info(f"runQTrip: {self.nav_arena=} started (button B)")
         
         self.createQTMap()
-        self.send_amcl_set_param_request('tf_broadcast', False)
+        self.send_set_param_request(self.amcl_set_param_svc, 'tf_broadcast', False)
+#        self.send_set_param_request(self.local_costmap_set_param_svc, 'obstacle_layer.enabled', False)
+#        self.send_set_param_request(self.global_costmap_set_param_svc, 'obstacle_layer.enabled', False)
                 
         # status = self.gotoXY(8*self.feetToMeter,0, 30)
         d = self.lengthQuickTrip[self.nav_arena]
-        # need to account for robot radius since nav2 stops that amount
-        # because of the obstacle mapping             
-        r = self.robotRadius
-        
-        # self.get_logger().info(f"runQTrip: d={d} {self.nav_arena=}")
-        # return
-    
-        status = self.gotoXY(d+r,0, 30)
-        status = self.gotoXY(-r,0, 30)
-        
-        status = self.rotateToAngle(0,10)
-        self.get_logger().info(f"runQTrip: final rotation {status=}")    
+
+        self.driveDirect(d, 0.25)
+        time.sleep(1)
+        self.driveDirect(-d, 0.25)
         
     def run6Can(self) :    
         """
@@ -334,22 +557,14 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         self.get_logger().info(f"run6Can: {self.nav_arena=} started (button X) ")
         
         self.create6CMap()
+        self.send_set_param_request(self.amcl_set_param_svc, 'tf_broadcast', True)
     
-        # DEBUG test waypoint pattern, localization ON and OFF
-        for value in [True, False]:
-            self.send_amcl_set_param_request('tf_broadcast', value)
-                
-            status = self.gotoXY(2.5,0, 30)
-            self.get_logger().info(f"gotoXY() {status=}")
-            status = self.gotoXY(1,0.5, 30)
-            self.get_logger().info(f"gotoXY() {status=}")
-            status = self.gotoXY(1,-0.5, 30)
-            self.get_logger().info(f"gotoXY() {status=}")
-            status = self.gotoXY(0,0, 30)
-            self.get_logger().info(f"gotoXY() {status=}")
+        # Enables the 6 can statemachine running in tofL4 callback
+        self.enable_6can_states = True
+        
 
-        status = self.rotateToAngle(0,10)
-        self.get_logger().info(f"run6Can: final rotation {status=}")    
+        # status = self.rotateToAngle(0,10)
+        # self.get_logger().info(f"run6Can: final rotation {status=}")    
          
     def createPose(self,x,y,a) -> PoseStamped:
         pose = PoseStamped()
@@ -374,8 +589,10 @@ class Roborama25ControllerNodeLc(LifecycleNode):
                 # self.get_logger().info(f"{feedback=}")
                 # spin does not provide time in feedback
                 try :
-                    if feedback.navigation_time.sec > t :
-                            self.nav.cancelTask()
+                    nt = feedback.navigation_time.sec
+                    if nt > t :
+                        self.get_logger().info(f"waitTaskComplete: Canceling task {nt=} > {t=}")
+                        self.nav.cancelTask()
                 except :
                     pass
                 
@@ -384,13 +601,13 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         # self.get_logger().info(f"{feedback=} {result=}")
         
         if result == TaskResult.SUCCEEDED:
-            self.get_logger().info('Goal succeeded!')
+            self.get_logger().info('waitTaskComplete: Goal succeeded!')
         elif result == TaskResult.CANCELED:
-            self.get_logger().info('Goal was canceled!')
+            self.get_logger().info('waitTaskComplete: Goal was canceled!')
         elif result == TaskResult.FAILED:
-            self.get_logger().info('Goal failed!')
+            self.get_logger().info('waitTaskComplete: Goal failed!')
         else :
-            self.get_logger().info(f"nav.getResult() {result=}")
+            self.get_logger().info(f"waitTaskComplete: nav.getResult() {result=}")
 
         return (result, feedback)
 
@@ -399,13 +616,14 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         
         self.nav.setInitialPose(pose)
        
-    def gotoPose(self, goto_pose, t) -> tuple:
+    def gotoPose(self, pose, t):
         """
         Go to the pose within in the time limit
         """
 
-        self.nav.goToPose(goto_pose)
+        self.nav.goToPose(pose)
         (result, feedback) = self.waitTaskComplete(t)
+        
         x = feedback.current_pose.pose.position.x
         y = feedback.current_pose.pose.position.y
         (xx,yy,a) = tf_transformations.euler_from_quaternion(
@@ -415,9 +633,58 @@ class Roborama25ControllerNodeLc(LifecycleNode):
             feedback.current_pose.pose.orientation.w])
         t = feedback.navigation_time.sec
         
-        return (result,t)
+        return result
+    
+    def gotoCanTF(self, t) -> int:
+        """
+        Go to the can TF location, but stop 0.2m short
+        Rotates to point to the can before moving to it
+        gets new can position every 1 second as it approaches it
+        Returns distance to the can, -1 if it did not suceed
+        """
+        if self.lifecycle_state_active==False : return -1
+        
+        d=100
+        cnt=0
+        while d>0.25 :
+            (tf_OK, can_pose) = self.getCanPose()
+            cnt+=1
+            if tf_OK==False and cnt>5:
+                self.get_logger().warn(f"gotoCanTF: Failed to get can pose")
+                return -1
+            if tf_OK==True :
+                x = can_pose.pose.position.x
+                y = can_pose.pose.position.y
+                self.get_logger().info(f"gotoCanTF:b can TF {x=:.3f} {y=:.3f}")
+                # get current pose to determine the angle offset
+                # rotating to point to the desired is faster
+                # maybe the navigation behavior can be "fixed" 
+                (tf_OK, current_pose) = self.getCurrentPose()
+                xd = float(x) - current_pose.pose.position.x
+                yd = float(y) - current_pose.pose.position.y
+                # Calc angle to target XY coordinate
+                a = math.atan2(yd,xd)
+                d = math.sqrt(xd*xd + yd*yd)
+                
+                # adjust the distance to the can to be 0.2m (~robot radius)
+                # d = d - self.robotRadius
+                d-=0.2
+                x = current_pose.pose.position.x + d*math.cos(a)
+                y = current_pose.pose.position.y + d*math.sin(a)
+                
+                goto_pose = self.createPose(x,y,a)
+                self.get_logger().info(f"gotoXY: goto {x=:.3f} {y=:.3f} {d=:.3f} {a=:.3f}")
 
-    def gotoXY(self,x,y,t):
+                # rotate to point to goto xy position before moving to it
+                status = self.rotateToAngle(a,10)
+                if status != TaskResult.FAILED :
+                    status = self.gotoPose(goto_pose,1.0)
+                if status == TaskResult.FAILED :
+                    d=-1
+                
+        return d
+    
+    def gotoXY(self,x,y,t,obstacle_layer_enabled: bool=True) -> int:
         """
         Go to the X,Y coordinates from the current position within a lime limit
         Rotate to pint to the X,Y position then goto the position
@@ -429,21 +696,32 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         # rotating to point to the desired is faster
         # maybe the navigation behavior can be "fixed" 
         (tf_OK, current_pose) = self.getCurrentPose()
-        xd = float(x) - current_pose.pose.position.x
-        yd = float(y) - current_pose.pose.position.y
+        if not tf_OK : 
+            self.get_logger().info(f"gotoXY: Failed to get current pose")
+            return False
+        cx = current_pose.pose.position.x
+        cy = current_pose.pose.position.y
+        xd = float(x) - cx
+        yd = float(y) - cy
         # Calc angle to target XY coordinate
         a = math.atan2(yd,xd)
 
         goto_pose = self.createPose(x,y,a)
-        self.get_logger().info(f"gotoXY: {current_pose=}, goto {x=} {y=} {a=}")
+        self.get_logger().info(f"gotoXY: from {cx=:.3f} {cy=:.3f}, goto {x=:.3f} {y=:.3f} {a=:.3f}")
 
         # rotate to point to goto xy position before moving to it
         status = self.rotateToAngle(a,10)
-        (result,t) = self.gotoPose(goto_pose,t)
         
-        return (result,t)
+        self.send_set_param_request(self.local_costmap_set_param_svc, 
+                        'obstacle_layer.enabled', obstacle_layer_enabled)
+        self.send_set_param_request(self.global_costmap_set_param_svc, 
+                        'obstacle_layer.enabled', obstacle_layer_enabled)
+
+        result = self.gotoPose(goto_pose,t)
+        
+        return result
     
-    def rotate(self,a,t):
+    def rotateRad(self,a,t):
         """
         Rotate a radians within time t
         Adjust rotation angle to a minimum angle -pi to pi
@@ -452,9 +730,18 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         # limit rotation angle to -pi to pi
         while  a>math.pi : a -= 2*math.pi
         while a<-math.pi : a += 2*math.pi
+        
+        self.send_set_param_request(self.amcl_set_param_svc, 'tf_broadcast', False)
+        self.send_set_param_request(self.local_costmap_set_param_svc, 'obstacle_layer.enabled', False)
+        
+        
         self.nav.spin(float(a),t)
         (result, feedback) = self.waitTaskComplete(0)
-        return (result,t)
+        
+        self.send_set_param_request(self.local_costmap_set_param_svc, 'obstacle_layer.enabled', True)
+        self.send_set_param_request(self.amcl_set_param_svc, 'tf_broadcast', True)
+
+        return result
     
     def rotateToAngle(self,a,t) :
         """
@@ -467,10 +754,10 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         start_time = self.get_clock().now()
         elapsed_time = 0.0
         result = False
-        spinThresh = 0.01 # about 3 degrees
+        spinThresh = 0.05 #0.02 #0.01 # about 3 degrees
         
         # Loop until the timeout is reached or the task is complete
-        while rclpy.ok() and elapsed_time <t:
+        while rclpy.ok() and elapsed_time <t and self.lifecycle_state_active==True:
             # get current pose to determine the angle offset
             # rotating to point to the desired is faster
             # maybe the navigation behavior can be "fixed" 
@@ -487,31 +774,43 @@ class Roborama25ControllerNodeLc(LifecycleNode):
                 self.get_logger().info(f"rotateToAngle: spin threshold reached {spin:.3f} < {spinThresh:.3f}, breaking loop")
                 break
             
-            (result, feedback) = self.rotate(spin,t)
+            result = self.rotateRad(spin,t)
             
             current_time = self.get_clock().now()
             elapsed_time = (current_time - start_time).nanoseconds / 1e9  # Convert nanoseconds to seconds
 
-            self.get_logger().info(f"rotateToAngle: rotate {result=} {a=} {aa=} {spin=} {elapsed_time=}")
+            self.get_logger().info(f"rotateToAngle: rotate {result=} {a=:.3f} {aa=:.3f} {spin=:.3f} {elapsed_time=}")
             
         return result
         
-    def getCurrentPose(self):
-        # get map->base_foot transform
-        try:
-            tf = self.tf_buffer.lookup_transform (
-                'map',
-                'base_footprint',
-                #self.nav.get_clock().now().to_msg(),
-                rclpy.time.Time(), # default 0
-                timeout=rclpy.duration.Duration(seconds=0.0)
-                )
-            tf_OK = True
+    def getPoseFromTF(self, target_frame:str) -> tuple:
+        """
+        get map->'target_frame' transform
+        returns (tf_OK, pose) pose: PoseStamped
+        """
+        # try getting pose a few times
+        cnt = 0
+        tf_OK = False
+        while tf_OK == False and cnt < 5 :
+            try:
+                tf = self.tf_buffer.lookup_transform (
+                    'map',
+                    target_frame,
+                    #self.nav.get_clock().now().to_msg(),
+                    rclpy.time.Time(), # default 0
+                    timeout=rclpy.duration.Duration(seconds=0.1) #0.0)
+                    )
+                tf_OK = True
 
-        except (LookupException, ConnectivityException, ExtrapolationException) as ex:
-            self.get_logger().info(f'Could not transform map->base_footprint: {ex}')
-            tf_OK = False
-
+            except (LookupException, ConnectivityException, ExtrapolationException) as ex:
+                self.get_logger().info(f'getPoseFromTF: Could not find transform map->{target_frame}: {ex}')
+                tf_OK = False
+                cnt += 1
+                
+        if tf_OK == False or cnt >= 5 :
+            self.get_logger().info(f'getPoseFromTF: Failed to find transform map->{target_frame} after {cnt} tries {tf_OK=}')
+            return (False,None) 
+        
         # translate wall points to align with map coordinates
         if tf_OK :
             # get x, y, theta from TF
@@ -525,11 +824,352 @@ class Roborama25ControllerNodeLc(LifecycleNode):
             pose = None
             
         return (tf_OK,pose)
-
-
-    # cli > ros2 param set /amcl tf_broadcast False
-    def send_amcl_set_param_request(self, name, value):
         
+    def getCanPose(self) -> tuple:
+        """
+        get map->can transform
+        returns (tf_OK, pose) pose: PoseStamped
+        """
+        return self.getPoseFromTF('can')
+    
+    def getOdomPose(self) -> tuple:
+        """
+        get map->odom transform
+        returns (tf_OK, pose) pose: PoseStamped
+        """
+        return self.getPoseFromTF('odom')
+    
+    def getCurrentPose(self):
+        """
+        get map->base_footprint transform
+        returns (tf_OK, pose) pose: PoseStamped
+        """
+        return self.getPoseFromTF('base_footprint')
+    
+################################### 6CAN stuff ##########################    
+
+    
+    tofL4_rng = None
+    tofL5L_pcd = None
+    tofL5R_pcd = None
+    canTF_ok = False
+        
+    current_6can_state = "findCan"
+    next_6can_state =  current_6can_state
+    
+    def run_6can_states(self) :
+        """
+        Executes every tofL4_rng_callback
+        Runs the upper level states for six can
+        >findCan
+        >gotoCanLocation
+        >approachCan
+        >grabCan
+        >gotoCanDrop
+        >dropCan
+        >backupFromCan
+        >gotoNewLocation
+        """
+        
+        if self.lifecycle_state_active==False : return
+        
+        if self.enable_6can_states == False : return
+
+        
+        if self.current_6can_state != self.next_6can_state :
+            self.get_logger().info(f"run_6can_states: State changed {self.current_6can_state=} {self.next_6can_state=}")
+            
+        self.current_6can_state = self.next_6can_state
+        self.get_logger().info(f"run_6can_states: {self.current_6can_state=}")
+        match self.current_6can_state :
+            case "findCan" : 
+                next_state = self.run_findCan()
+            case "gotoCanLocation" :
+                next_state = self.run_gotoCanLocation()
+            case "approachCan" :
+                next_state = self.run_approachCan()
+            case "grabCan" :
+                next_state = self.run_grabCan()
+            case "gotoCanDrop" :
+                next_state = self.run_gotoCanDrop()
+            case "gotoGoalOpening" :
+                next_state = self.run_gotoGoalOpening()
+            case "dropCan" :
+                next_state = self.run_dropCan()  
+            case "backupFromCan" :
+                next_state = self.run_backupFromCan()                  
+            case "gotoNewLocation" :
+                next_state = self.run_gotoNewLocation()
+            case _ :
+                self.get_logger().info(f"run_6can_states: Unknown state {self.current_6can_state=}")
+                self.enable_6can_states = False
+
+        self.next_6can_state = next_state
+            
+    findCanTime = 0.0
+    
+    def run_findCan(self):
+        """
+        Find a can using the camera can detection which generates a "can" TF
+        """
+        next_state = "findCan"
+        # Check if the can transform is detected, discard pose
+        (tf_OK, can_pose) = self.getCanPose()
+        
+        # rotate every 2 seconds to find the can
+        # seems like it takes being still for 2 seconds is needed to detect can!!
+        timer = time.monotonic() - self.findCanTime
+        if timer > 2 :
+            self.findCanTime = time.monotonic()
+            if tf_OK==False and timer < 3:
+                self.rotateRad(math.pi/16, 10)
+                self.get_logger().info(f"run_findCan: Failed to find can TF, rotating")
+            
+        if tf_OK == True : 
+            next_state = "gotoCanLocation"
+
+        return next_state
+    
+    def run_gotoCanLocation(self) :
+        """
+        Try to go to the location of the can 
+        """
+        next_state = "gotoCanLocation"
+        
+        dist = self.gotoCanTF(30)
+        
+        if dist > 0 :
+            self.get_logger().info(f"run_gotoCanLocation: Robot is close to the can at {dist=}")
+            next_state = "approachCan"
+        else :
+            self.get_logger().info(f"run_gotoCanLocation: Robot failed to get close to the can")
+            next_state = "findCan"
+            
+        return next_state
+    
+    def run_approachCan(self) :
+        """
+        Approach the can using the TOF sensors
+        """
+        next_state = "approachCan"
+        msg = Twist()
+        
+        dist = self.tofL4_rng
+        if dist == 0 :
+            """
+            Can is close but not detected by the narrow FOV of the front sensor
+            Use the L5 sensors to rotate to the can
+            """
+            Lnum = 0
+            i = 16
+            for x in self.tofL5L_pcd :
+                if x>0 and x<0.4 : Lnum += i
+                i -= 1
+            Rnum = 0
+            i = 1
+            for x in self.tofL5R_pcd :
+                if x>0 and x<0.4 : Rnum += i
+                i += 1
+            if Lnum > Rnum :        
+                msg.angular.z = 0.05   
+            if Rnum > Lnum :    
+                msg.angular.z = -0.05
+                
+            self.get_logger().info(f"run_approachCan: rotating to detect the can {dist=} {Lnum=} {Rnum=} {msg=}")
+                
+        elif dist > 0.050 :
+            """
+            Move to approach the can
+            Rotate Left when number of L data points > R data points
+            Rotate Right when number of R data points > L data points
+            Move towards can while range > 0.035
+            """
+            msg.linear.x = 0.1
+            Lnum = 0
+            for x in self.tofL5L_pcd :
+                if x>0 and x<dist : Lnum += 1
+            Rnum = 0
+            for x in self.tofL5R_pcd :
+                if x>0 and x<dist : Rnum += 1
+            if Lnum > Rnum :
+                msg.angular.z = 0.05
+            if Rnum > Lnum :
+                msg.angular.z = -0.05
+            self.get_logger().info(f"run_approachCan: approaching the can {dist=} {Lnum=} {Rnum=} {msg=}")
+            
+        elif dist > 0.010 : # ensure it is a valid distance, maybe > 0 ???
+            """
+            Close enough to the can to grab it
+            """
+            self.get_logger().info(f"run_approachCan: at the can {dist=} {msg=}")
+            next_state = "grabCan"
+            
+        self.cmd_vel_publisher.publish(msg)
+        
+        return next_state
+    
+    def run_grabCan(self) :
+        """
+        Grab the can and go to next state
+        """
+        next_state = "grabCan"
+        
+        self.clawCmdClose()
+        next_state = "gotoGoalOpening"
+                               
+        return next_state
+
+    def run_gotoGoalOpening(self) :
+        """
+        Go to the Goal opening location
+        """
+        next_state = "gotoGoalOpening"
+
+        self.nav.clearAllCostmaps() 
+        self.gotoXY(2.2,0,30, obstacle_layer_enabled=False)
+        
+        next_state = "gotoCanDrop"
+        
+        return next_state
+        
+    def run_gotoCanDrop(self) :
+        """
+        Go to the drop location from the goal opening
+        """
+        next_state = "gotoCanDrop"
+        
+        self.rotateToAngle(0, 10)
+        
+        
+        # self.nav.driveOnHeading(0.5, 0.1, 10) # doesn't seem to exist in Humble?
+        # self.gotoXY(2.4,0, 10, obstacle_layer_enabled=False)
+        self.driveOdom(0.5, 0.5)
+        
+        next_state = "dropCan"
+        
+        return next_state
+    
+    def run_dropCan(self) :
+        """
+        Open claws to drop the can
+        """
+        next_state = "dropCan"
+
+        self.clawCmdOpen()
+        next_state = "backupFromCan"
+        
+        return next_state
+    
+    def run_backupFromCan(self) :  
+        """
+        Backup from the can so that it is not seen as an obstacle
+        """
+        next_state = "backupFromCan"
+        
+        self.nav.clearAllCostmaps() 
+        self.send_set_param_request(self.local_costmap_set_param_svc, 'obstacle_layer.enabled', False)
+        self.nav.backup(0.05, 0.1, 10)
+        self.waitTaskComplete(10)
+        self.rotateToAngle(0, 10)
+        self.send_set_param_request(self.local_costmap_set_param_svc, 'obstacle_layer.enabled', False)
+        self.nav.backup(0.30, 0.1, 10)
+        self.waitTaskComplete(10)
+        self.rotateToAngle(math.pi, 10)
+
+        self.send_set_param_request(self.local_costmap_set_param_svc, 'obstacle_layer.enabled', True)
+        
+        next_state = "gotoNewLocation"
+        
+        return next_state
+
+    def run_gotoNewLocation(self) :  
+        """
+        Placeholder for the 'run_gotoNewLocation' function.
+        """
+        next_state = "gotoNewLocation"
+              
+        self.nav.clearAllCostmaps() 
+        
+        self.gotoXY(1.25,0,30)
+        # TODO: ???? Rotate to point straight out ????
+        
+        next_state = "findCan"
+        
+        return next_state
+    
+    # Sensors used to run 6 CAN
+    def tofL4_rng_callback(self, msg: Range) :
+        """
+        Front range sensor message
+        This sensor is used for the final can approach after T5 sensors quit detecting
+        This call back also runs the 6 can state machine
+        """
+        self.tofL4_rng = msg.range
+        self.run_6can_states()
+        
+    def tofL5L_pcd_callback(self, msg: PointCloud2) :
+        """
+        Front Left TOF sensors message
+        This sensor (with the Right sensors) is used to align the can to the center
+        """      
+        pc2_data = point_cloud2.read_points_list(msg, field_names=["x", "y"])
+        #data = [pc2_data[13].x, pc2_data[14].x, pc2_data[15].x] 
+        data = []
+        for i in range(10,15) : data.append(pc2_data[i].x)
+        #self.get_logger().info(f"tofL5L_pcd_callback: {pc2_data=} {data=}")
+                
+        self.tofL5L_pcd = data
+
+    def tofL5R_pcd_callback(self, msg: PointCloud2) :
+        """
+        Front Right TOF sensors message
+        This sensor (with the Left sensors) is used to align the can to the center
+        """
+        pc2_data = point_cloud2.read_points_list(msg, field_names=["x", "y"])
+        #data = [pc2_data[0].x, pc2_data[1].x, pc2_data[2].x] 
+        data = []
+        for i in range(0,5) : data.append(pc2_data[i].x)
+        #self.get_logger().info(f"tofL5R_pcd_callback: {pc2_data=} {data=}")
+        self.tofL5R_pcd = data
+
+    # send a message to claw to open/close
+    def clawCmdOpen(self) :
+        """
+        sends (publish) a message to claw to open
+        """
+        self.clawCmd(0, 100)
+        
+    def clawCmdClose(self) :
+        """
+        sends (publish) a message to claw to close
+        """
+        self.clawCmd(90, 100)
+        
+    #TODO: use custom msg (2 ints) instead of string
+    def clawCmd(self, pct: int, msec: int) -> None:
+        """
+        sends (publish) a message to claw to open/close
+        pct is percent claw closed (0 = 100% open)
+        msec is how long the claw moves to the new position
+        """
+        cmd_json = {"claw": {"open": pct, "time": msec}}
+        cmd_str = json.dumps(cmd_json)+"\0"
+        self.robot_json_data_publish(cmd_str)
+
+        # blocking wait for the expected claw movement time
+        # blocking is OK since the robot should be stopped
+        time.sleep(msec/1000.0)
+
+    def robot_json_data_publish(self, data:str) -> None :
+        msg = String()
+        msg.data = data
+        self.robot_json_publisher.publish(msg)
+
+
+    def send_set_param_request(self, svc, name, value):
+        """
+        cli -> ros2 param set /local_costmap/local_costmap obstacle_layer.enabled False
+        """
         if isinstance(value, bool) :
             value_type = ParameterType.PARAMETER_BOOL
         else :
@@ -543,44 +1183,90 @@ class Roborama25ControllerNodeLc(LifecycleNode):
             )
         )
 
-        self.amcl_set_param_request.parameters = [param]
+        # Doesthis need to be a global param for persistance?
+        self.set_param_request.parameters = [param]
         
-        future = self.amcl_set_param_svc.call_async(self.amcl_set_param_request)
-        future.add_done_callback(partial(self.callback_amcl_set_param, name=name, value=value))
+        # self.get_logger().info(f"send_set_param_request: Sending {name=} {value=}")
+        future = svc.call_async(self.set_param_request)
         
-    def callback_amcl_set_param(self,future, name, value) :
+        self.callback_set_param_done = False
+        
+        future.add_done_callback(partial(self.callback_set_param, name=name, value=value))
+        
+        # self.get_logger().info(f"send_set_param_request: waiting for callback")
+        while not self.callback_set_param_done :
+            time.sleep(0.1)
+        # self.get_logger().info(f"send_set_param_request: callback wait done {name=} {value=}")
+
+        if name=='tf_broadcast' and value==False :
+            self.freeze_static_tf("map", "odom")
+        
+
+    def callback_set_param(self,future, name, value) :
         #SetParametersResult
         result = future.result()
         successful = result.results[0].successful
-        self.amcl_set_param_successful = successful
+        self.set_param_successful = successful
 
-        if name=='tf_broadcast' and value==False :
-            self.make_static_tf(self.tf_static_broadcasterOdom, "map", "odom", [0.0,0.0,0.0])
-            self.get_logger().info("make tf_static_broadcasterOdom")
-            
-        self.get_logger().info(f"callback_amcl_set_param {name=} {value=} {result=} {successful=}")
+        # self.get_logger().info(f"callback_set_param done {name=} {value=} {result=} {successful=}")
+        self.callback_set_param_done = True
+
+    def freeze_static_tf (self, parent: str, child: str) -> None:
+        """
+        make a static tf using the current tf values
+        """
+        tf_OK,pose = self.getOdomPose()
+        
+        x=pose.pose.position.x
+        y=pose.pose.position.y
+        self.get_logger().info(f"freeze_static_tf: {x=:.2f} {y=:.2f} {parent}->{child}")
+        
+        if pose != None :
+            self.make_static_tf(self.tf_static_broadcasterOdom, parent, child, pose)
+            # self.get_logger().info("freeze_static_tf: make tf_static_broadcasterOdom")
+        
+        
+        
 
     ############ END Nav2 run stuff #############
 
     def make_static_tf(self, tf_static_broadcaster, 
-                       parent: str, child: str, xyt: list) -> None:
+                       parent: str, child: str, xyt) -> None:
+        """
+        
+        """
+        
         t = TransformStamped()
 
-        #t.header.stamp = self.get_clock().now().to_msg()
+        t.header.stamp = self.get_clock().now().to_msg()
         t.header.frame_id = parent
         t.child_frame_id = child
+        
+        # self.get_logger().info(f"make_static_tf: {xyt=} {type(xyt)=}")
 
-        t.transform.translation.x = xyt[0]
-        t.transform.translation.y = xyt[1]
-        t.transform.translation.z = 0.0
-        quat = tf_transformations.quaternion_from_euler(0.0, 0.0, xyt[2]) #x,y,theta
-        t.transform.rotation.x = quat[0]
-        t.transform.rotation.y = quat[1]
-        t.transform.rotation.z = quat[2]
-        t.transform.rotation.w = quat[3]
-
+        if isinstance(xyt,list) or isinstance(xyt,tuple) :
+            t.transform.translation.x = float(xyt[0])
+            t.transform.translation.y = float(xyt[1])
+            t.transform.translation.z = 0.0
+            quat = tf_transformations.quaternion_from_euler(0.0, 0.0, float(xyt[2])) #x,y,theta
+            t.transform.rotation.x = quat[0]
+            t.transform.rotation.y = quat[1]
+            t.transform.rotation.z = quat[2]
+            t.transform.rotation.w = quat[3]
+        elif isinstance(xyt,PoseStamped) :
+            t.transform.translation.x = xyt.pose.position.x
+            t.transform.translation.y = xyt.pose.position.y
+            t.transform.translation.z = xyt.pose.position.z
+            t.transform.rotation.x = xyt.pose.orientation.x
+            t.transform.rotation.y = xyt.pose.orientation.y
+            t.transform.rotation.z = xyt.pose.orientation.z
+            t.transform.rotation.w = xyt.pose.orientation.w
+        else :
+            self.get_logger().info(f"make_static_tf: invalid xyt type {type(xyt)=}")
+            return
+            
         tf_static_broadcaster.sendTransform(t)
-        self.get_logger().info(f"make_static_tf {t=}")
+        # self.get_logger().info(f"make_static_tf: {t=}")
 
     def on_map_timer(self) :
         #self.createMap()
