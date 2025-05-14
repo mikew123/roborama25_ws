@@ -42,7 +42,7 @@ class Roborama25WheelControllerNodeLC(LifecycleNode):
     odometryRateHz = 30; # Rate that the wheel and odom encoders send data on the serial port
     fwdPullOffset = 1.0 # cal Quick Trip with laser
     revPullOffset = 1.0 
-    wheelVelocityAccLimit = 0.5 #1.5 # acceleration max in meters per sec per sec
+    wheelVelocityAccLimit = 5.0 #1.5 # acceleration max in meters per sec per sec
     
     serialTimerRateHz = 1.5*odometryRateHz; # Rate to check serial port for messages
 
@@ -53,7 +53,7 @@ class Roborama25WheelControllerNodeLC(LifecycleNode):
     #TODO: remove odom pod stuff
     wheelEncoders = True
 
-    wheelDiameter = 0.084
+    wheelDiameter = 0.0839 #0.084
     wheelEncoderCounts = 48*20.408666666
     wheelDistance = 0.279 #0.280
 
@@ -145,6 +145,7 @@ class Roborama25WheelControllerNodeLC(LifecycleNode):
         self.wheel_serial_port.write(f"OR {self.odometryRateHz}\n".encode())
         self.wheel_serial_port.write(f"WO {self.fwdPullOffset} {self.revPullOffset}\n".encode())
         self.wheel_serial_port.write(f"AR {self.wheelVelocityAccLimit}\n".encode())
+        self.wheel_serial_port.write(f"WD {self.wheelDiameter}\n".encode())
         self.wheel_serial_port.write("CP 0 1000\n".encode())
         self.wheel_serial_port.flush()
         

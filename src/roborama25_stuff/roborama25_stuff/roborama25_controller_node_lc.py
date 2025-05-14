@@ -336,6 +336,11 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         # status = self.rotateToAngle(0,10)
         # self.get_logger().info(f"runWPoints: final rotation {status=}")    
         
+    def driveDirectWiggle(self, dist: float, vx: float=0.5) :
+        self.driveDirect(dist, vx)
+        self.driveDirect( dist/1000, vx)
+        self.driveDirect(-dist/1000, vx)
+        
     def driveDirect(self, dist: float, vx: float=0.5) :
         """
         Drive with timing all in the wheels micro 
@@ -369,6 +374,10 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         self.get_logger().info(f"driveDirect: waiting {sec=:.3f}")
         time.sleep(sec)
 
+    def rotateDirectWiggle(self, a: float, va: float=0.5) :
+        self.rotateDirect(a, va)
+        self.rotateDirect(a/25, va)
+        self.rotateDirect(-a/25, va)
         
     def rotateDirect(self, a: float, va: float=0.5) :
         """
@@ -523,14 +532,15 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         # using simple wheel odom only
         vx = 0.125
         va = 0.25
-        self.driveDirect(d, vx)  
-        self.rotateDirect(math.pi/2, va)
-        self.driveDirect(d, vx)  
-        self.rotateDirect(math.pi/2, va)
-        self.driveDirect(d, vx)  
-        self.rotateDirect(math.pi/2, va)
-        self.driveDirect(d, vx)  
-        self.rotateDirect(math.pi/2, va)
+        self.driveDirectWiggle(d, vx)  
+        self.rotateDirectWiggle(math.pi/2, va)
+        self.driveDirectWiggle(d, vx)  
+        self.rotateDirectWiggle(math.pi/2, va)
+        self.driveDirectWiggle(d, vx)  
+        self.rotateDirectWiggle(math.pi/2, va)
+        self.driveDirectWiggle(d, vx)  
+        self.rotateDirectWiggle(math.pi/2, va)
+
         
     def runQTrip(self) :
         """
@@ -545,10 +555,10 @@ class Roborama25ControllerNodeLc(LifecycleNode):
                 
         # status = self.gotoXY(8*self.feetToMeter,0, 30)
         d = self.lengthQuickTrip[self.nav_arena]
-
-        self.driveDirect(d, 0.25)
+        vx = 0.25
+        self.driveDirectWiggle( d, vx)
         time.sleep(1)
-        self.driveDirect(-d, 0.25)
+        self.driveDirectWiggle(-d, vx)
         
     def run6Can(self) :    
         """
