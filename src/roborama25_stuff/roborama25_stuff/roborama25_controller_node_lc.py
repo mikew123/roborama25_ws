@@ -1002,9 +1002,9 @@ class Roborama25ControllerNodeLc(LifecycleNode):
             for x in self.tofL5R_pcd :
                 if x>0 and x<dist : Rnum += 1
             if Lnum > Rnum :
-                msg.angular.z = 0.05
+                msg.angular.z = 0.1 #0.05
             if Rnum > Lnum :
-                msg.angular.z = -0.05
+                msg.angular.z = -0.1 #-0.05
             self.get_logger().info(f"run_approachCan: approaching the can {dist=} {Lnum=} {Rnum=} {msg=}")
             
         elif dist > 0.010 : # ensure it is a valid distance, maybe > 0 ???
@@ -1053,7 +1053,7 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         
         # self.nav.driveOnHeading(0.5, 0.1, 10) # doesn't seem to exist in Humble?
         # self.gotoXY(2.4,0, 10, obstacle_layer_enabled=False)
-        self.driveOdom(0.5, 0.5)
+        self.driveOdom(0.5, 0.25)
         
         next_state = "dropCan"
         
@@ -1076,17 +1076,20 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         """
         next_state = "backupFromCan"
         
-        self.nav.clearAllCostmaps() 
-        self.send_set_param_request(self.local_costmap_set_param_svc, 'obstacle_layer.enabled', False)
-        self.nav.backup(0.05, 0.1, 10)
-        self.waitTaskComplete(10)
+        # self.nav.clearAllCostmaps() 
+        # self.send_set_param_request(self.local_costmap_set_param_svc, 'obstacle_layer.enabled', False)
+        # self.nav.backup(0.05, 0.1, 10)
+        # self.waitTaskComplete(10)
+        self.driveOdom(-0.05, 0.1)
         self.rotateToAngle(0, 10)
-        self.send_set_param_request(self.local_costmap_set_param_svc, 'obstacle_layer.enabled', False)
-        self.nav.backup(0.30, 0.1, 10)
-        self.waitTaskComplete(10)
+        # self.send_set_param_request(self.local_costmap_set_param_svc, 'obstacle_layer.enabled', False)
+        # self.nav.backup(0.30, 0.1, 10)
+        # self.waitTaskComplete(10)
+        self.driveOdom(-0.30, 0.1)
         self.rotateToAngle(math.pi, 10)
 
         self.send_set_param_request(self.local_costmap_set_param_svc, 'obstacle_layer.enabled', True)
+        self.nav.clearAllCostmaps() 
         
         next_state = "gotoNewLocation"
         

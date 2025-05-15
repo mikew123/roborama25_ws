@@ -42,7 +42,7 @@ class Roborama25WheelControllerNodeLC(LifecycleNode):
     odometryRateHz = 30; # Rate that the wheel and odom encoders send data on the serial port
     fwdPullOffset = 1.0 # cal Quick Trip with laser
     revPullOffset = 1.0 
-    wheelVelocityAccLimit = 5.0 #1.5 # acceleration max in meters per sec per sec
+    wheelVelocityAccLimit = 3.0 #1.5 # acceleration max in meters per sec per sec
     
     serialTimerRateHz = 1.5*odometryRateHz; # Rate to check serial port for messages
 
