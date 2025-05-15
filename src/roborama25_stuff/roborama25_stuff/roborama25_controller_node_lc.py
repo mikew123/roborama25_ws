@@ -1048,12 +1048,13 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         """
         next_state = "gotoCanDrop"
         
-        self.rotateToAngle(0, 10)
+        # self.rotateToAngle(0, 10)
         
         
         # self.nav.driveOnHeading(0.5, 0.1, 10) # doesn't seem to exist in Humble?
-        # self.gotoXY(2.4,0, 10, obstacle_layer_enabled=False)
-        self.driveOdom(0.75, 0.25)
+        self.gotoXY(2.75,0, 10, obstacle_layer_enabled=False)
+        
+        # self.driveOdom(0.75, 0.25)
         
         next_state = "dropCan"
         
