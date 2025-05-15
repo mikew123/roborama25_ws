@@ -183,21 +183,21 @@ controller_server:
     FollowPath:
       plugin: "nav2_rotation_shim_controller::RotationShimController"
       primary_controller: "nav2_regulated_pure_pursuit_controller::RegulatedPurePursuitController"
-      angular_dist_threshold: 0.785
+      angular_dist_threshold: 0.35 #0.785
       forward_sampling_distance: 0.5
-      angular_disengage_threshold: 0.3925
-      rotate_to_heading_angular_vel: 1.8
-      max_angular_accel: 3.2
+      angular_disengage_threshold: 0.15 #0.3925
+      rotate_to_heading_angular_vel: 0.2 #1.8
+      max_angular_accel: 1.0 #3.2
       simulate_ahead_time: 1.0
       rotate_to_goal_heading: false
     # FollowPath:
     #   plugin: "nav2_regulated_pure_pursuit_controller::RegulatedPurePursuitController"
-      desired_linear_vel: 0.5
+      desired_linear_vel: 0.25 #0.5
       lookahead_dist: 0.6
       min_lookahead_dist: 0.3
       max_lookahead_dist: 0.9
       lookahead_time: 1.5
-      rotate_to_heading_angular_vel: 1.8
+      rotate_to_heading_angular_vel: 0.2 #1.8
       transform_tolerance: 0.1
       use_velocity_scaled_lookahead_dist: false
       min_approach_linear_velocity: 0.05
@@ -212,8 +212,8 @@ controller_server:
       regulated_linear_scaling_min_speed: 0.25
       use_rotate_to_heading: true
       allow_reversing: false
-      rotate_to_heading_min_angle: 0.785
-      max_angular_accel: 3.2
+      rotate_to_heading_min_angle: 0.35 #0.785
+      max_angular_accel: 1.0 #3.2
       max_robot_pose_search_dist: 10.0
 
 
@@ -466,10 +466,25 @@ planner_server:
     use_sim_time: False
     planner_plugins: ["GridBased"]
     GridBased:
-      plugin: "nav2_navfn_planner/NavfnPlanner"
-      tolerance: 0.5
-      use_astar: false
-      allow_unknown: true
+      # plugin: "nav2_navfn_planner/NavfnPlanner"
+      # tolerance: 0.1 #0.5
+      # use_astar: false
+      # allow_unknown: true
+      plugin: "nav2_smac_planner/SmacPlanner2D" # In Iron and older versions, "/" was used instead of "::"
+      tolerance: 0.125                      # tolerance for planning if unable to reach exact pose, in meters
+      downsample_costmap: false             # whether or not to downsample the map
+      downsampling_factor: 1                # multiplier for the resolution of the costmap layer (e.g. 2 on a 5cm costmap would be 10cm)
+      allow_unknown: true                   # allow traveling in unknown space
+      max_iterations: 1000000               # maximum total iterations to search for before failing (in case unreachable), set to -1 to disable
+      max_on_approach_iterations: 1000      # maximum number of iterations to attempt to reach goal once in tolerance
+      max_planning_time: 2.0                # max time in s for planner to plan, smooth
+      cost_travel_multiplier: 2.0           # Cost multiplier to apply to search to steer away from high cost areas. Larger values will place in the center of aisles more exactly (if non-`FREE` cost potential field exists) but take slightly longer to compute. To optimize for speed, a value of 1.0 is reasonable. A reasonable tradeoff value is 2.0. A value of 0.0 effective disables steering away from obstacles and acts like a naive binary search A*.
+      use_final_approach_orientation: false # Whether to set the final path pose at the goal's orientation to the requested orientation (false) or in line with the approach angle so the robot doesn't rotate to heading (true)
+      smoother:
+        max_iterations: 1000
+        w_smooth: 0.3
+        w_data: 0.2
+        tolerance: 1.0e-10
 
 planner_server_rclcpp_node:
   ros__parameters:

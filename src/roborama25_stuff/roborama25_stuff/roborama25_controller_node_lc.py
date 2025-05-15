@@ -1036,7 +1036,7 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         next_state = "gotoGoalOpening"
 
         self.nav.clearAllCostmaps() 
-        self.gotoXY(2.2,0,30, obstacle_layer_enabled=False)
+        self.gotoXY(2.2,0,30, obstacle_layer_enabled=True)
         
         next_state = "gotoCanDrop"
         
@@ -1053,7 +1053,7 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         
         # self.nav.driveOnHeading(0.5, 0.1, 10) # doesn't seem to exist in Humble?
         # self.gotoXY(2.4,0, 10, obstacle_layer_enabled=False)
-        self.driveOdom(0.5, 0.25)
+        self.driveOdom(0.75, 0.25)
         
         next_state = "dropCan"
         
@@ -1080,12 +1080,12 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         # self.send_set_param_request(self.local_costmap_set_param_svc, 'obstacle_layer.enabled', False)
         # self.nav.backup(0.05, 0.1, 10)
         # self.waitTaskComplete(10)
-        self.driveOdom(-0.05, 0.1)
+        self.driveOdom(-0.05, 0.25)
         self.rotateToAngle(0, 10)
         # self.send_set_param_request(self.local_costmap_set_param_svc, 'obstacle_layer.enabled', False)
         # self.nav.backup(0.30, 0.1, 10)
         # self.waitTaskComplete(10)
-        self.driveOdom(-0.30, 0.1)
+        self.driveOdom(-0.70, 0.25)
         self.rotateToAngle(math.pi, 10)
 
         self.send_set_param_request(self.local_costmap_set_param_svc, 'obstacle_layer.enabled', True)
