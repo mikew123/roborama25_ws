@@ -1036,7 +1036,7 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         next_state = "gotoGoalOpening"
 
         self.nav.clearAllCostmaps() 
-        self.gotoXY(2.2,0,30, obstacle_layer_enabled=True)
+        self.gotoXY(2.0,0,30, obstacle_layer_enabled=True)
         
         next_state = "gotoCanDrop"
         
