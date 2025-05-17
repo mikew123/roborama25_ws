@@ -10,7 +10,7 @@ import numpy as np
 from urllib import response
 
 from rclpy.node import Node
-from std_msgs.msg import String, Header
+from std_msgs.msg import String, Float32, Header
 from sensor_msgs.msg import BatteryState
 from sensor_msgs.msg import Temperature
 from sensor_msgs.msg import Imu
@@ -91,6 +91,7 @@ class Roborama25FrontSensorsNodeLC(LifecycleNode):
         self.tofL4_rng_publisher = self.create_lifecycle_publisher(Range, 'tofL4_rng', 10)
         self.tofL5L_pcd_publisher = self.create_lifecycle_publisher(PointCloud2, 'tofL5L_pcd', 10)
         self.tofL5R_pcd_publisher = self.create_lifecycle_publisher(PointCloud2, 'tofL5R_pcd', 10)
+        self.tofL4_pcd_publisher = self.create_lifecycle_publisher(PointCloud2, 'tofL4_pcd', 10)
         self.IMU_msg_publisher = self.create_lifecycle_publisher(Imu, 'IMU', 10)
         self.battery_status_msg_publisher = self.create_lifecycle_publisher(BatteryState, 'battery_status', 10)
         self.temperature_msg_publisher = self.create_lifecycle_publisher(Temperature, 'temperature', 10)
@@ -114,6 +115,7 @@ class Roborama25FrontSensorsNodeLC(LifecycleNode):
         self.destroy_lifecycle_publisher(self.tofL4_rng_publisher)
         self.destroy_lifecycle_publisher(self.tofL5L_pcd_publisher)
         self.destroy_lifecycle_publisher(self.tofL5R_pcd_publisher)
+        self.destroy_lifecycle_publisher(self.tofL4_pcd_publisher)
         self.destroy_lifecycle_publisher(self.IMU_msg_publisher)
         self.destroy_lifecycle_publisher(self.battery_status_msg_publisher)
         self.destroy_lifecycle_publisher(self.temperature_msg_publisher)
@@ -309,6 +311,10 @@ class Roborama25FrontSensorsNodeLC(LifecycleNode):
                 
                 rng = self.range_msg(d,fov,"tofL4_link")
                 self.tofL4_rng_publisher.publish(rng)
+
+                # Create a point cloud to visualize in Foxglove
+                pcd = self.point_cloud([d, 0, 0], 'tofL4_link')                
+                self.tofL4_pcd_publisher.publish(pcd)
                 
             except Exception as e:
                 self.get_logger().error(f"L4_processing: Error in L4 message {e=} {strArray=}")

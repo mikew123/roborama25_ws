@@ -38,7 +38,7 @@ from sensor_msgs.msg import Joy
 from sensor_msgs.msg import PointCloud2, Range
 from sensor_msgs_py import point_cloud2
 
-from std_msgs.msg import String, Header
+from std_msgs.msg import String, Int32, Float32, Header
 
 class Roborama25ControllerNodeLc(LifecycleNode):
     """
@@ -172,6 +172,8 @@ class Roborama25ControllerNodeLc(LifecycleNode):
 
         self.robot_json_publisher = self.create_publisher(String, '/robot_json',10)
         self.cmd_vel_publisher = self.create_publisher(Twist, '/cmd_vel', 10)
+
+        self.run_state_publisher = self.create_publisher(Int32, '/run_state', 10)
         
         self.joy_subscription = self.create_subscription(Joy, '/joy', self.joy_callback, 
                                                                 10, callback_group=self.cb_group_mx)
@@ -322,7 +324,9 @@ class Roborama25ControllerNodeLc(LifecycleNode):
             
         if tfOK :
             dist = self.gotoCanTF(30)
-        
+        else :
+            dist = -1
+            
         if dist > 0 :
             self.get_logger().info(f"runWPoints: Robot is close to the can at {dist=}")
         else :
@@ -632,16 +636,17 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         """
 
         self.nav.goToPose(pose)
-        (result, feedback) = self.waitTaskComplete(t)
-        
-        x = feedback.current_pose.pose.position.x
-        y = feedback.current_pose.pose.position.y
-        (xx,yy,a) = tf_transformations.euler_from_quaternion(
-            [feedback.current_pose.pose.orientation.x,
-            feedback.current_pose.pose.orientation.y,
-            feedback.current_pose.pose.orientation.z,
-            feedback.current_pose.pose.orientation.w])
-        t = feedback.navigation_time.sec
+        # (result, feedback) = self.waitTaskComplete(t)
+        (result, _) = self.waitTaskComplete(t)
+       
+        # x = feedback.current_pose.pose.position.x
+        # y = feedback.current_pose.pose.position.y
+        # (_,_a) = tf_transformations.euler_from_quaternion(
+        #     [feedback.current_pose.pose.orientation.x,
+        #     feedback.current_pose.pose.orientation.y,
+        #     feedback.current_pose.pose.orientation.z,
+        #     feedback.current_pose.pose.orientation.w])
+        # t = feedback.navigation_time.sec
         
         return result
     
@@ -670,28 +675,32 @@ class Roborama25ControllerNodeLc(LifecycleNode):
                 # rotating to point to the desired is faster
                 # maybe the navigation behavior can be "fixed" 
                 (tf_OK, current_pose) = self.getCurrentPose()
-                xd = float(x) - current_pose.pose.position.x
-                yd = float(y) - current_pose.pose.position.y
-                # Calc angle to target XY coordinate
-                a = math.atan2(yd,xd)
-                d = math.sqrt(xd*xd + yd*yd)
-                
-                # adjust the distance to the can to be 0.2m (~robot radius)
-                # d = d - self.robotRadius
-                d-=0.2
-                x = current_pose.pose.position.x + d*math.cos(a)
-                y = current_pose.pose.position.y + d*math.sin(a)
-                
-                goto_pose = self.createPose(x,y,a)
-                self.get_logger().info(f"gotoXY: goto {x=:.3f} {y=:.3f} {d=:.3f} {a=:.3f}")
+                if tf_OK :
+                    xd = float(x) - current_pose.pose.position.x
+                    yd = float(y) - current_pose.pose.position.y
+                    # Calc angle to target XY coordinate
+                    a = math.atan2(yd,xd)
+                    d = math.sqrt(xd*xd + yd*yd)
+                    
+                    # adjust the distance to the can to be 0.2m (~robot radius)
+                    # d = d - self.robotRadius
+                    d-=0.2
+                    x = current_pose.pose.position.x + d*math.cos(a)
+                    y = current_pose.pose.position.y + d*math.sin(a)
+                    
+                    goto_pose = self.createPose(x,y,a)
+                    self.get_logger().info(f"gotoXY: goto {x=:.3f} {y=:.3f} {d=:.3f} {a=:.3f}")
 
-                # rotate to point to goto xy position before moving to it
-                status = self.rotateToAngle(a,10)
-                if status != TaskResult.FAILED :
-                    status = self.gotoPose(goto_pose,1.0)
-                if status == TaskResult.FAILED :
+                    # rotate to point to goto xy position before moving to it
+                    status = self.rotateToAngle(a,10)
+                    if status != TaskResult.FAILED :
+                        status = self.gotoPose(goto_pose,1.0)
+                    else :
+                        self.get_logger().info(f"gotoXY: Failed to rotateToAngle {a=}")
+                        d=-1
+                else :
+                    self.get_logger().info(f"gotoXY: Failed to get current pose")
                     d=-1
-                
         return d
     
     def gotoXY(self,x,y,t,obstacle_layer_enabled: bool=True) -> int:
@@ -888,33 +897,61 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         
         if self.current_6can_state != self.next_6can_state :
             self.get_logger().info(f"run_6can_states: State changed {self.current_6can_state=} {self.next_6can_state=}")
+            self.current_6can_state = self.next_6can_state
+            # Debug by plotting states in Foxglove
+            # msg = Int32()
+            # match self.current_6can_state :
+            #     case "findCan"          : msg.data=1
+            #     case "gotoCanLocation"  : msg.data=2
+            #     case "approachCan"      : msg.data=3
+            #     case "grabCan"          : msg.data=4
+            #     case "gotoGoalOpening"  : msg.data=5
+            #     case "gotoCanDrop"      : msg.data=6
+            #     case "dropCan"          : msg.data=7 
+            #     case "backupFromCan"    : msg.data=8                  
+            #     case "gotoNewLocation"  : msg.data=9
+            #     case _                  : msg.data=-1
+            # self.run_state_publisher.publish(msg)
+
             
-        self.current_6can_state = self.next_6can_state
-        self.get_logger().info(f"run_6can_states: {self.current_6can_state=}")
+        # self.get_logger().info(f"run_6can_states: {self.current_6can_state=}")
+        
+        msg = Int32()
         match self.current_6can_state :
             case "findCan" : 
+                msg.data=1
                 next_state = self.run_findCan()
             case "gotoCanLocation" :
+                msg.data=2
                 next_state = self.run_gotoCanLocation()
             case "approachCan" :
+                msg.data=3
                 next_state = self.run_approachCan()
             case "grabCan" :
+                msg.data=4
                 next_state = self.run_grabCan()
             case "gotoCanDrop" :
+                msg.data=5
                 next_state = self.run_gotoCanDrop()
             case "gotoGoalOpening" :
+                msg.data=6
                 next_state = self.run_gotoGoalOpening()
             case "dropCan" :
+                msg.data=7
                 next_state = self.run_dropCan()  
             case "backupFromCan" :
+                msg.data=8
                 next_state = self.run_backupFromCan()                  
             case "gotoNewLocation" :
+                msg.data=9
                 next_state = self.run_gotoNewLocation()
             case _ :
+                msg.data=-10
                 self.get_logger().info(f"run_6can_states: Unknown state {self.current_6can_state=}")
                 self.enable_6can_states = False
 
         self.next_6can_state = next_state
+        self.run_state_publisher.publish(msg)
             
     findCanTime = 0.0
     
@@ -925,17 +962,17 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         next_state = "findCan"
         # Check if the can transform is detected, discard pose
         (tf_OK, can_pose) = self.getCanPose()
-        
-        # rotate every 2 seconds to find the can
-        # seems like it takes being still for 2 seconds is needed to detect can!!
-        timer = time.monotonic() - self.findCanTime
-        if timer > 2 :
-            self.findCanTime = time.monotonic()
-            if tf_OK==False and timer < 3:
-                self.rotateRad(math.pi/16, 10)
-                self.get_logger().info(f"run_findCan: Failed to find can TF, rotating")
+        if not tf_OK :
+            # rotate every 2 seconds to find the can
+            # seems like it takes being still for 2 seconds is needed to detect can!!
+            timer = time.monotonic() - self.findCanTime
+            if timer > 2 :
+                self.findCanTime = time.monotonic()
+                if timer < 100:
+                    self.rotateRad(math.pi/16, 10)
+                    self.get_logger().info(f"run_findCan: Failed to find can TF, rotating")
             
-        if tf_OK == True : 
+        if tf_OK : 
             next_state = "gotoCanLocation"
 
         return next_state
@@ -965,17 +1002,17 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         msg = Twist()
         
         dist = self.tofL4_rng
+        Lnum = 0
+        Rnum = 0
         if dist == 0 :
             """
             Can is close but not detected by the narrow FOV of the front sensor
             Use the L5 sensors to rotate to the can
             """
-            Lnum = 0
             i = 16
             for x in self.tofL5L_pcd :
                 if x>0 and x<0.4 : Lnum += i
                 i -= 1
-            Rnum = 0
             i = 1
             for x in self.tofL5R_pcd :
                 if x>0 and x<0.4 : Rnum += i
@@ -987,7 +1024,7 @@ class Roborama25ControllerNodeLc(LifecycleNode):
                 
             self.get_logger().info(f"run_approachCan: rotating to detect the can {dist=} {Lnum=} {Rnum=} {msg=}")
                 
-        elif dist > 0.050 :
+        elif dist > 0.050 and dist < 0.65:
             """
             Move to approach the can
             Rotate Left when number of L data points > R data points
@@ -1007,12 +1044,19 @@ class Roborama25ControllerNodeLc(LifecycleNode):
                 msg.angular.z = -0.1 #-0.05
             self.get_logger().info(f"run_approachCan: approaching the can {dist=} {Lnum=} {Rnum=} {msg=}")
             
-        elif dist > 0.010 : # ensure it is a valid distance, maybe > 0 ???
+        elif dist > 0.010 and dist < 0.05: # ensure it is a valid distance, maybe > 0 ???
             """
             Close enough to the can to grab it
             """
-            self.get_logger().info(f"run_approachCan: at the can {dist=} {msg=}")
+            self.get_logger().info(f"run_approachCan: at the can {dist=} {Lnum=} {Rnum=} {msg=}")
             next_state = "grabCan"
+        else :
+            """
+            Not valid can range
+            this can be handled better
+            """
+            self.get_logger().info(f"run_approachCan: can not in detectable range {dist=} {Lnum=} {Rnum=} {msg=}")
+            next_state = "findCan"
             
         self.cmd_vel_publisher.publish(msg)
         
@@ -1038,6 +1082,13 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         self.nav.clearAllCostmaps() 
         self.gotoXY(2.0,0,30, obstacle_layer_enabled=True)
         
+        # The navigator stops with the edge of the robot at the XY coordinates
+        # The center of the robot needs to be at the XY coordinates
+        # a new XY coordinate needs to be calculated taking in consideration the 
+        # angle of the robot and the 0.180 radius of the circular robot
+        # simply move another 0.180 m forward to approximate the position
+        self.driveDirect(0.180, 0.25)
+        
         next_state = "gotoCanDrop"
         
         return next_state
@@ -1052,6 +1103,7 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         
         
         # self.nav.driveOnHeading(0.5, 0.1, 10) # doesn't seem to exist in Humble?
+        # "new" "MAC 2D planner and pure puruit/rotational shim rotates well
         self.gotoXY(2.75,0, 10, obstacle_layer_enabled=False)
         
         # self.driveOdom(0.75, 0.25)
@@ -1078,12 +1130,12 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         next_state = "backupFromCan"
         
         # self.nav.clearAllCostmaps() 
-        # self.send_set_param_request(self.local_costmap_set_param_svc, 'obstacle_layer.enabled', False)
+        self.send_set_param_request(self.local_costmap_set_param_svc, 'obstacle_layer.enabled', False)
         # self.nav.backup(0.05, 0.1, 10)
         # self.waitTaskComplete(10)
         self.driveOdom(-0.05, 0.25)
         self.rotateToAngle(0, 10)
-        # self.send_set_param_request(self.local_costmap_set_param_svc, 'obstacle_layer.enabled', False)
+        self.send_set_param_request(self.local_costmap_set_param_svc, 'obstacle_layer.enabled', False)
         # self.nav.backup(0.30, 0.1, 10)
         # self.waitTaskComplete(10)
         self.driveOdom(-0.70, 0.25)
@@ -1104,7 +1156,8 @@ class Roborama25ControllerNodeLc(LifecycleNode):
               
         self.nav.clearAllCostmaps() 
         
-        self.gotoXY(1.25,0,30)
+        # Adjust offset so that center of robot is in the center of the arena
+        self.gotoXY((1.25-0.180) ,0, 30)
         # TODO: ???? Rotate to point straight out ????
         
         next_state = "findCan"
