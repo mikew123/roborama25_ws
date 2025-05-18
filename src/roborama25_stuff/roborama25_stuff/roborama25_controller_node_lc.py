@@ -898,21 +898,6 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         if self.current_6can_state != self.next_6can_state :
             self.get_logger().info(f"run_6can_states: State changed {self.current_6can_state=} {self.next_6can_state=}")
             self.current_6can_state = self.next_6can_state
-            # Debug by plotting states in Foxglove
-            # msg = Int32()
-            # match self.current_6can_state :
-            #     case "findCan"          : msg.data=1
-            #     case "gotoCanLocation"  : msg.data=2
-            #     case "approachCan"      : msg.data=3
-            #     case "grabCan"          : msg.data=4
-            #     case "gotoGoalOpening"  : msg.data=5
-            #     case "gotoCanDrop"      : msg.data=6
-            #     case "dropCan"          : msg.data=7 
-            #     case "backupFromCan"    : msg.data=8                  
-            #     case "gotoNewLocation"  : msg.data=9
-            #     case _                  : msg.data=-1
-            # self.run_state_publisher.publish(msg)
-
             
         # self.get_logger().info(f"run_6can_states: {self.current_6can_state=}")
         
@@ -954,24 +939,92 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         self.run_state_publisher.publish(msg)
             
     findCanTime = 0.0
+
+    def getCanTFOK(self) ->bool:
+        try:
+            # discard TF ony used to detrmine if a TF is detected
+            tf_OK = self.tf_buffer.can_transform (
+                'map',
+                'can',
+                #self.nav.get_clock().now().to_msg(),
+                rclpy.time.Time(), # default 0 get latest
+                timeout=rclpy.duration.Duration(seconds=0.1)
+                )
+
+        except (LookupException, ConnectivityException, ExtrapolationException) as ex:
+            self.get_logger().info(f'getCanTFOK: Exception transforming transform map->can: {ex}')
+            tf_OK = False
+
+        if tf_OK : self.get_logger().info(f'getCanTFOK: Can detected map->can')
+        else :     self.get_logger().info(f'getCanTFOK: Could not find transform map->can')
+
+        return tf_OK
+    
+    def rotateCanDet(self, a: float) :
+        """
+        Rotate using wheel odom only
+        stops if a can is detected
+        a: angle in rads (not limited)
+        va: angular velocity in rads/sec
+        """
+        va = 0.5
+
+        tf_OK = False
+        if a == 0 or va <= 0 :
+            self.get_logger().info(f"rotateCanDet: invalid params {a=:.3f} {va=:.3f}, aborted")
+            return tf_OK
+        
+        va = math.fabs(va)
+        if a < 0 : va = -va
+        
+        # time to rotate at va velocity to angle a
+        sec = math.fabs(a/va)
+    
+        self.get_logger().info(f"rotateCanDet: send json msg {a=:.3f} {va=:.3f} {sec=:.3f}")
+    
+        # wheels drive at veloocity m/s for sec
+        # cmd_json = {"wheels": {"angular": va,  "sec": 1}}
+        # cmd_str = json.dumps(cmd_json)+"\0"
+        # self.robot_json_data_publish(cmd_str)
+        msg = Twist()
+        msg.angular.z = va
+        self.cmd_vel_publisher.publish(msg)
+
+        # wait for the expected drive movement time while looking for can
+        waitSec=sec
+        self.get_logger().info(f"rotateCanDet: waiting {sec=:.3f}")
+        self.findCanTime = time.monotonic()
+        timer = 0
+        while not tf_OK or timer > waitSec:
+            timer = time.monotonic() - self.findCanTime 
+            # cmd_json = {"wheels": {"angular": va,  "sec": 1}}
+            # cmd_str = json.dumps(cmd_json)+"\0"
+            # self.robot_json_data_publish(cmd_str)
+            self.cmd_vel_publisher.publish(msg)
+            tf_OK = self.getCanTFOK()
+
+        # stop rotation
+        msg.angular.z = 0.0
+        self.cmd_vel_publisher.publish(msg)
+
+        self.get_logger().info(f"rotateCanDet: Can detected = {tf_OK}")
+
+        return tf_OK
     
     def run_findCan(self):
         """
         Find a can using the camera can detection which generates a "can" TF
         """
         next_state = "findCan"
+
         # Check if the can transform is detected, discard pose
-        (tf_OK, can_pose) = self.getCanPose()
+        tf_OK = self.getCanTFOK()
         if not tf_OK :
-            # rotate every 2 seconds to find the can
-            # seems like it takes being still for 2 seconds is needed to detect can!!
-            timer = time.monotonic() - self.findCanTime
-            if timer > 2 :
-                self.findCanTime = time.monotonic()
-                if timer < 100:
-                    self.rotateRad(math.pi/16, 10)
-                    self.get_logger().info(f"run_findCan: Failed to find can TF, rotating")
-            
+            tf_OK = self.rotateCanDet(2*math.pi) 
+        
+        # Make sure can is still detected
+        tf_OK = self.getCanTFOK()
+
         if tf_OK : 
             next_state = "gotoCanLocation"
 
@@ -983,10 +1036,10 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         """
         next_state = "gotoCanLocation"
         
-        dist = self.gotoCanTF(30)
+        dist = self.gotoCanTF(10)
         
         if dist > 0 :
-            self.get_logger().info(f"run_gotoCanLocation: Robot is close to the can at {dist=}")
+            self.get_logger().info(f"run_gotoCanLocation: Robot is close to the can, tofL4 range {dist=}")
             next_state = "approachCan"
         else :
             self.get_logger().info(f"run_gotoCanLocation: Robot failed to get close to the can")
@@ -1004,6 +1057,8 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         dist = self.tofL4_rng
         Lnum = 0
         Rnum = 0
+        
+        # TODO: Needs a time out
         if dist == 0 :
             """
             Can is close but not detected by the narrow FOV of the front sensor
@@ -1017,6 +1072,8 @@ class Roborama25ControllerNodeLc(LifecycleNode):
             for x in self.tofL5R_pcd :
                 if x>0 and x<0.4 : Rnum += i
                 i += 1
+            if Lnum == 0 and Rnum == 0 :
+                next_state = "findCan"
             if Lnum > Rnum :        
                 msg.angular.z = 0.05   
             if Rnum > Lnum :    
