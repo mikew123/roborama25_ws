@@ -142,8 +142,10 @@ class Roborama25ControllerNodeLc(LifecycleNode):
 
     feetToMeter = 0.3048
 
-    def __init__(self):
+    def __init__(self, nav: BasicNavigator):
         super().__init__('roborama25_controller_node_lc')
+
+        self.nav = nav
 
         self.cb_group_re = ReentrantCallbackGroup()
         self.cb_group_mx = MutuallyExclusiveCallbackGroup()
@@ -193,7 +195,7 @@ class Roborama25ControllerNodeLc(LifecycleNode):
     def on_configure(self, previous_state: LifecycleState):
         self.get_logger().info(f"IN on_configure")
 
-        self.nav = BasicNavigator()
+        # self.nav = BasicNavigator()
         
         self.get_logger().info(f"on_configure: waitUntilNav2Active before starting configuration")
         self.nav.waitUntilNav2Active()
@@ -1544,7 +1546,9 @@ class Roborama25ControllerNodeLc(LifecycleNode):
 def main(args=None):
     rclpy.init(args=args)
 
-    node = Roborama25ControllerNodeLc()
+    nav = BasicNavigator()
+
+    node = Roborama25ControllerNodeLc(nav)
     # rclpy.spin(node)
     # MultiThread for life cycle operation
     rclpy.spin(node, MultiThreadedExecutor()) 
