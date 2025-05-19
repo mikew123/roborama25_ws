@@ -315,6 +315,8 @@ class Roborama25FrontSensorsNodeLC(LifecycleNode):
                 # Create a point cloud to visualize in Foxglove
                 pcd = self.point_cloud([d, 0, 0], 'tofL4_link')                
                 self.tofL4_pcd_publisher.publish(pcd)
+
+                # self.get_logger().info(f"L4_processing: {strArray=} {rng=} {pcd=}")
                 
             except Exception as e:
                 self.get_logger().error(f"L4_processing: Error in L4 message {e=} {strArray=}")
@@ -369,6 +371,8 @@ class Roborama25FrontSensorsNodeLC(LifecycleNode):
                 fovL = 2*math.pi*50.0/360
                 rng = self.range_msg(dL,fovL,"tofRL_link")
                 self.tofRL_rng_publisher.publish(rng)
+
+                # self.get_logger().error(f"OPT_processing: {strArray=}")
             
                 # Create scan messages for front center while moving backwards
                 if self.movingBackward==True:

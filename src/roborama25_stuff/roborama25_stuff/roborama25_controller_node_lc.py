@@ -657,7 +657,7 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         Go to the can TF location, but stop 0.2m short
         Rotates to point to the can before moving to it
         gets new can position every 1 second as it approaches it
-        Returns distance to the can, -1 if it did not suceed
+        Returns distance to the can, -1 if it did not succeed
         """
         if self.lifecycle_state_active==False : return -1
         
@@ -684,9 +684,9 @@ class Roborama25ControllerNodeLc(LifecycleNode):
                     a = math.atan2(yd,xd)
                     d = math.sqrt(xd*xd + yd*yd)
                     
-                    # adjust the distance to the can to be 0.2m (~robot radius)
-                    # d = d - self.robotRadius
-                    d-=0.2
+                    # adjust the distance to the can by robot radius to stop at the cost map boundary
+                    d = d - self.robotRadius
+                    # d-=0.2
                     x = current_pose.pose.position.x + d*math.cos(a)
                     y = current_pose.pose.position.y + d*math.sin(a)
                     
@@ -696,7 +696,8 @@ class Roborama25ControllerNodeLc(LifecycleNode):
                     # rotate to point to goto xy position before moving to it
                     status = self.rotateToAngle(a,10)
                     if status != TaskResult.FAILED :
-                        status = self.gotoPose(goto_pose,1.0)
+                        status = self.gotoPose(goto_pose, 5.0) #1.0)
+                        if status != TaskResult.SUCCEEDED : d = -1
                     else :
                         self.get_logger().info(f"gotoXY: Failed to rotateToAngle {a=}")
                         d=-1
@@ -962,16 +963,15 @@ class Roborama25ControllerNodeLc(LifecycleNode):
 
         return tf_OK
     
-    def rotateCanDet(self, a: float) :
+    def rotateCanDet(self, a: float, va: float = 0.5) ->bool:
         """
         Rotate using wheel odom only
         stops if a can is detected
         a: angle in rads (not limited)
         va: angular velocity in rads/sec
+        Returns bool tk_OK (can detected)
         """
-        va = 0.5
-
-        tf_OK = False
+        tf_OK: bool = False
         if a == 0 or va <= 0 :
             self.get_logger().info(f"rotateCanDet: invalid params {a=:.3f} {va=:.3f}, aborted")
             return tf_OK
@@ -984,28 +984,22 @@ class Roborama25ControllerNodeLc(LifecycleNode):
     
         self.get_logger().info(f"rotateCanDet: send json msg {a=:.3f} {va=:.3f} {sec=:.3f}")
     
-        # wheels drive at veloocity m/s for sec
-        # cmd_json = {"wheels": {"angular": va,  "sec": 1}}
-        # cmd_str = json.dumps(cmd_json)+"\0"
-        # self.robot_json_data_publish(cmd_str)
+        # wheels drive at velocity m/s for sec
         msg = Twist()
         msg.angular.z = va
         self.cmd_vel_publisher.publish(msg)
 
         # wait for the expected drive movement time while looking for can
         waitSec=sec
-        self.get_logger().info(f"rotateCanDet: waiting {sec=:.3f}")
+        # self.get_logger().info(f"rotateCanDet: waiting {sec=:.3f}")
         self.findCanTime = time.monotonic()
         timer = 0
         while not tf_OK or timer > waitSec:
             timer = time.monotonic() - self.findCanTime 
-            # cmd_json = {"wheels": {"angular": va,  "sec": 1}}
-            # cmd_str = json.dumps(cmd_json)+"\0"
-            # self.robot_json_data_publish(cmd_str)
             self.cmd_vel_publisher.publish(msg)
             tf_OK = self.getCanTFOK()
 
-        # stop rotation
+        # stop rotation after can is detected or time out
         msg.angular.z = 0.0
         self.cmd_vel_publisher.publish(msg)
 
@@ -1013,9 +1007,10 @@ class Roborama25ControllerNodeLc(LifecycleNode):
 
         return tf_OK
     
-    def run_findCan(self):
+    def run_findCan(self) ->str:
         """
         Find a can using the camera can detection which generates a "can" TF
+        Returns next state string
         """
         next_state = "findCan"
 
@@ -1032,9 +1027,10 @@ class Roborama25ControllerNodeLc(LifecycleNode):
 
         return next_state
     
-    def run_gotoCanLocation(self) :
+    def run_gotoCanLocation(self) ->str:
         """
         Try to go to the location of the can 
+        Returns next state string
         """
         next_state = "gotoCanLocation"
         
@@ -1049,38 +1045,42 @@ class Roborama25ControllerNodeLc(LifecycleNode):
             
         return next_state
     
-    def run_approachCan(self) :
+    def run_approachCan(self) ->str:
         """
         Approach the can using the TOF sensors
+        Returns next state string
         """
         next_state = "approachCan"
         msg = Twist()
         
         dist = self.tofL4_rng
+        distMin = 1000
         Lnum = 0
         Rnum = 0
         
+        # get the minimum distance from the sensors
+        for d in self.tofL5L_pcd :
+            if d>0 and d<distMin: distMin = d
+        for d in self.tofL5R_pcd :
+            if d>0 and d<distMin: distMin = d
+
+        for d in self.tofL5L_pcd :
+            if d>0 and d<(distMin+0.04) : Lnum += 1
+        for d in self.tofL5R_pcd :
+            if d>0 and d<(distMin+0.04) : Rnum += 1
+
         # TODO: Needs a time out
         if dist == 0 :
             """
             Can is close but not detected by the narrow FOV of the front sensor
-            Use the L5 sensors to rotate to the can
+            Use the L5 distances from sensors to rotate to the can
             """
-            i = 16
-            for x in self.tofL5L_pcd :
-                if x>0 and x<0.4 : Lnum += i
-                i -= 1
-            i = 1
-            for x in self.tofL5R_pcd :
-                if x>0 and x<0.4 : Rnum += i
-                i += 1
             if Lnum == 0 and Rnum == 0 :
                 next_state = "findCan"
             if Lnum > Rnum :        
-                msg.angular.z = 0.05   
+                msg.angular.z = 0.1 #0.05   
             if Rnum > Lnum :    
-                msg.angular.z = -0.05
-                
+                msg.angular.z = -0.1 #-0.05
             self.get_logger().info(f"run_approachCan: rotating to detect the can {dist=} {Lnum=} {Rnum=} {msg=}")
                 
         elif dist > 0.050 and dist < 0.65:
@@ -1091,12 +1091,6 @@ class Roborama25ControllerNodeLc(LifecycleNode):
             Move towards can while range > 0.035
             """
             msg.linear.x = 0.1
-            Lnum = 0
-            for x in self.tofL5L_pcd :
-                if x>0 and x<dist : Lnum += 1
-            Rnum = 0
-            for x in self.tofL5R_pcd :
-                if x>0 and x<dist : Rnum += 1
             if Lnum > Rnum :
                 msg.angular.z = 0.1 #0.05
             if Rnum > Lnum :
@@ -1121,9 +1115,10 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         
         return next_state
     
-    def run_grabCan(self) :
+    def run_grabCan(self) ->str:
         """
         Grab the can and go to next state
+        Returns next state string
         """
         next_state = "grabCan"
         
@@ -1132,9 +1127,10 @@ class Roborama25ControllerNodeLc(LifecycleNode):
                                
         return next_state
 
-    def run_gotoGoalOpening(self) :
+    def run_gotoGoalOpening(self) ->str:
         """
         Go to the Goal opening location
+        Returns next state string
         """
         next_state = "gotoGoalOpening"
 
@@ -1152,9 +1148,10 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         
         return next_state
         
-    def run_gotoCanDrop(self) :
+    def run_gotoCanDrop(self) ->str:
         """
         Go to the drop location from the goal opening
+        Returns next state string
         """
         next_state = "gotoCanDrop"
         
@@ -1171,9 +1168,10 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         
         return next_state
     
-    def run_dropCan(self) :
+    def run_dropCan(self) ->str:
         """
         Open claws to drop the can
+        Returns next state string
         """
         next_state = "dropCan"
 
@@ -1182,9 +1180,10 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         
         return next_state
     
-    def run_backupFromCan(self) :  
+    def run_backupFromCan(self) ->str:  
         """
         Backup from the can so that it is not seen as an obstacle
+        returns next state string
         """
         next_state = "backupFromCan"
         
@@ -1207,9 +1206,10 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         
         return next_state
 
-    def run_gotoNewLocation(self) :  
+    def run_gotoNewLocation(self) ->str:  
         """
-        Placeholder for the 'run_gotoNewLocation' function.
+        Go to a new location to search for a can
+        Returns next state string
         """
         next_state = "gotoNewLocation"
               
@@ -1237,24 +1237,32 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         """
         Front Left TOF sensors message
         This sensor (with the Right sensors) is used to align the can to the center
+        compute the distance from the sensor
         """      
         pc2_data = point_cloud2.read_points_list(msg, field_names=["x", "y"])
-        #data = [pc2_data[13].x, pc2_data[14].x, pc2_data[15].x] 
         data = []
-        for i in range(10,15) : data.append(pc2_data[i].x)
+        for i in range(10,15) : 
+            x = pc2_data[i].x
+            y = pc2_data[i].y
+            d = math.sqrt(x*x + y*y)
+            data.append(d)
         #self.get_logger().info(f"tofL5L_pcd_callback: {pc2_data=} {data=}")
-                
         self.tofL5L_pcd = data
 
     def tofL5R_pcd_callback(self, msg: PointCloud2) :
         """
         Front Right TOF sensors message
         This sensor (with the Left sensors) is used to align the can to the center
+        compute the distance from the sensor
         """
         pc2_data = point_cloud2.read_points_list(msg, field_names=["x", "y"])
         #data = [pc2_data[0].x, pc2_data[1].x, pc2_data[2].x] 
         data = []
-        for i in range(0,5) : data.append(pc2_data[i].x)
+        for i in range(10,15) : 
+            x = pc2_data[i].x
+            y = pc2_data[i].y
+            d = math.sqrt(x*x + y*y)
+            data.append(d)
         #self.get_logger().info(f"tofL5R_pcd_callback: {pc2_data=} {data=}")
         self.tofL5R_pcd = data
 
