@@ -943,14 +943,16 @@ class Roborama25ControllerNodeLc(LifecycleNode):
             
     findCanTime = 0.0
 
+    tf_OK: bool = False
     def getCanTFOK(self) ->bool:
         try:
             # discard TF ony used to detrmine if a TF is detected
             tf_OK = self.tf_buffer.can_transform (
                 'map',
                 'can',
-                #self.nav.get_clock().now().to_msg(),
-                rclpy.time.Time(), # default 0 get latest
+                self.nav.get_clock().now().to_msg(),
+                #
+                # rclpy.time.Time(), # default 0 get latest
                 timeout=rclpy.duration.Duration(seconds=0.1)
                 )
 
@@ -1054,36 +1056,52 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         msg = Twist()
         
         dist = self.tofL4_rng
-        distMin = 1000
+        distMin = 1000.0
+        distMinL = distMin
+        distMinR = distMin
         Lnum = 0
         Rnum = 0
-        
+        distCanDet = 0.06
+
         # get the minimum distance from the sensors
         for d in self.tofL5L_pcd :
-            if d>0 and d<distMin: distMin = d
+            if d>0.0 and d<distMinL: distMinL = d
         for d in self.tofL5R_pcd :
-            if d>0 and d<distMin: distMin = d
+            if d>0.0 and d<distMinR: distMinR = d
+        if distMinL<distMinR : distMin = distMinL
+        else : distMin = distMinR
 
         for d in self.tofL5L_pcd :
-            if d>0 and d<(distMin+0.04) : Lnum += 1
+            if d>0.0 and d<(distMin+0.07) : Lnum += 1
         for d in self.tofL5R_pcd :
-            if d>0 and d<(distMin+0.04) : Rnum += 1
+            if d>0.0 and d<(distMin+0.07) : Rnum += 1
 
         # TODO: Needs a time out
-        if dist == 0 :
+        if dist > 0.0 and dist <= distCanDet :
+            """
+            Close enough to the can to grab it
+            """
+            self.get_logger().info(f"run_approachCan: at the can {dist=} {distMin=} {Lnum=} {Rnum=} {msg=}")
+            next_state = "grabCan"
+        
+        elif dist == 0.0 :
             """
             Can is close but not detected by the narrow FOV of the front sensor
             Use the L5 distances from sensors to rotate to the can
             """
             if Lnum == 0 and Rnum == 0 :
                 next_state = "findCan"
-            if Lnum > Rnum :        
+            # elif Lnum > Rnum :        
+            #     msg.angular.z = 0.1 #0.05   
+            # elif Rnum > Lnum :    
+            #     msg.angular.z = -0.1 #-0.05
+            elif distMinL < distMinR :        
                 msg.angular.z = 0.1 #0.05   
-            if Rnum > Lnum :    
+            elif distMinR < distMinL :    
                 msg.angular.z = -0.1 #-0.05
-            self.get_logger().info(f"run_approachCan: rotating to detect the can {dist=} {Lnum=} {Rnum=} {msg=}")
+            self.get_logger().info(f"run_approachCan: rotating to detect the can {dist=} {distMin=} {distMinL=} {distMinR=} {Lnum=} {Rnum=} {msg=}")
                 
-        elif dist > 0.050 and dist < 0.65:
+        elif dist < 0.65: # arbitrary 0.65
             """
             Move to approach the can
             Rotate Left when number of L data points > R data points
@@ -1091,24 +1109,22 @@ class Roborama25ControllerNodeLc(LifecycleNode):
             Move towards can while range > 0.035
             """
             msg.linear.x = 0.1
-            if Lnum > Rnum :
-                msg.angular.z = 0.1 #0.05
-            if Rnum > Lnum :
+            # if Lnum > Rnum :
+            #     msg.angular.z = 0.1 #0.05
+            # elif Rnum > Lnum :
+            #     msg.angular.z = -0.1 #-0.05
+            if distMinL < distMinR :        
+                msg.angular.z = 0.1 #0.05   
+            elif distMinR < distMinL :    
                 msg.angular.z = -0.1 #-0.05
-            self.get_logger().info(f"run_approachCan: approaching the can {dist=} {Lnum=} {Rnum=} {msg=}")
+            self.get_logger().info(f"run_approachCan: approaching the can {dist=} {distMin=} {distMinL=} {distMinR=} {Lnum=} {Rnum=} {msg=}")
             
-        elif dist > 0.010 and dist < 0.05: # ensure it is a valid distance, maybe > 0 ???
-            """
-            Close enough to the can to grab it
-            """
-            self.get_logger().info(f"run_approachCan: at the can {dist=} {Lnum=} {Rnum=} {msg=}")
-            next_state = "grabCan"
         else :
             """
             Not valid can range
             this can be handled better
             """
-            self.get_logger().info(f"run_approachCan: can not in detectable range {dist=} {Lnum=} {Rnum=} {msg=}")
+            self.get_logger().info(f"run_approachCan: can not in detectable range {dist=} {distMin=} {distMinL=} {distMinR=} {Lnum=} {Rnum=} {msg=}")
             next_state = "findCan"
             
         self.cmd_vel_publisher.publish(msg)
