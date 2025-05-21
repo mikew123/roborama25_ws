@@ -142,18 +142,18 @@ class Roborama25FrontSensorsNodeLC(LifecycleNode):
     # Activate/Enable HW
     def on_activate(self, previous_state: LifecycleState):
         self.get_logger().info("IN on_activate")
-        # self.broadcast_timer.reset()
         self.serial_timer.reset()
+
         self.sensor_serial_port.port = self.serial_port
         self.sensor_serial_port.open() #= serial.Serial(self.serial_port, 2000000)
         # configure interface
         self.sensor_serial_port.write(f"MODE ROS2\n".encode()) 
         self.sensor_serial_port.write(f"MODE ROS2\n".encode()) # extra write for startup
-        # I need to change arduino code to respond to the L5 sensor filters
         self.sensor_serial_port.write(f"REFL {self.reflVal}\n".encode())
         self.sensor_serial_port.write(f"SIGM {self.sigmVal}\n".encode())
         #self.sensor_serial_port.write(f"OPHZ 16\n".encode()) #rear sensor data rate
         self.sensor_serial_port.flush()
+
         self.lifecycle_state_active = True
         return super().on_activate(previous_state)
 
@@ -226,7 +226,7 @@ class Roborama25FrontSensorsNodeLC(LifecycleNode):
         trim_dist = 1.07 # trim the TOF distance to match Lidar
         if strArray[0]=="L5" and len(strArray)==1+num_data :
             try :
-                # Publish the received serial line as a String message
+                # DEBUG: Publish the received serial line as a String message
                 emsg = String()
                 for i in range(1, num_data+1):
                     emsg.data += strArray[i]+" "
@@ -249,7 +249,7 @@ class Roborama25FrontSensorsNodeLC(LifecycleNode):
                     if n == 0 : s0 = s
                     tofCurveCor.append(s0/s)
                 
-                # Adjust for angle of 
+                # Adjust for angle of each sensor in the array
                 
                 #convert string data to integer mm distance
                 # break up into 4 sets of 8 for each sensor
@@ -258,7 +258,8 @@ class Roborama25FrontSensorsNodeLC(LifecycleNode):
                 for s in range(0, 4):
                     for i in range(0, 8):
                         d = int(strArray[(s*8)+i+1])
-                        dist[s][i] = d * trim_dist
+                        if d==-1 : dist[s][i] = -1
+                        else : dist[s][i] = d * trim_dist
                 #self.get_logger().info(f"{dist=}")
                 
                 xy0 = [[],[]]
@@ -270,19 +271,19 @@ class Roborama25FrontSensorsNodeLC(LifecycleNode):
                             theta = (n-4+0.5)*fovPtRad  - mntAngleRad # scaled to radians
                             d = dist[s+(2*m)][n]
                             if d==-1: 
-                                # Bad data-Put point cloud at center of sensor module
-                                xx0 = 0 # use INF ?
-                                yy0 = 0
+                                # Bad data - set as infinate number (use NaN instead?)
+                                xx0 = math.inf
+                                yy0 = math.inf
                             else :
                                 Wx =  int(d*math.cos(theta)*tofCurveCor[n])
                                 Wy = -int(d*math.sin(theta)*tofCurveCor[n])
-                                #Convert mm to meters
+                                # Convert mm to meters
                                 xx0 = np.float32(Wx/1000.0)
                                 yy0 = np.float32(Wy/1000.0)
                             
                             xy0[m].append((xx0,yy0,zz0))
                             
-                #self.get_logger().info(f"{xy0=}")
+                # self.get_logger().info(f"{xy0=}")
 
                 pcd = self.point_cloud(xy0[0], 'tofL5L_link')
                 self.tofL5L_pcd_publisher.publish(pcd)
@@ -306,7 +307,9 @@ class Roborama25FrontSensorsNodeLC(LifecycleNode):
                 s = int(strArray[1]) #status
                 d = int(strArray[2]) #distance mm
             
-                d = d/1000.0
+                # check data status - 0 is OK
+                if s==0 : d = d/1000.0 # convert mm to meters
+                else    : d = math.inf # Use NaN instead?
                 fov = 2*math.pi*18.0/360
                 
                 rng = self.range_msg(d,fov,"tofL4_link")
@@ -316,7 +319,7 @@ class Roborama25FrontSensorsNodeLC(LifecycleNode):
                 pcd = self.point_cloud([d, 0, 0], 'tofL4_link')                
                 self.tofL4_pcd_publisher.publish(pcd)
 
-                # self.get_logger().info(f"L4_processing: {strArray=} {rng=} {pcd=}")
+                # self.get_logger().info(f"L4_processing: {s=} {d=} {rng=} {pcd=} {strArray=}")
                 
             except Exception as e:
                 self.get_logger().error(f"L4_processing: Error in L4 message {e=} {strArray=}")
