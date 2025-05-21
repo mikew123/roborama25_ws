@@ -918,12 +918,12 @@ class Roborama25ControllerNodeLc(LifecycleNode):
             case "grabCan" :
                 msg.data=4
                 next_state = self.run_grabCan()
-            case "gotoCanDrop" :
-                msg.data=5
-                next_state = self.run_gotoCanDrop()
             case "gotoGoalOpening" :
-                msg.data=6
+                msg.data=5
                 next_state = self.run_gotoGoalOpening()
+            case "gotoCanDrop" :
+                msg.data=6
+                next_state = self.run_gotoCanDrop()
             case "dropCan" :
                 msg.data=7
                 next_state = self.run_dropCan()  
@@ -1154,15 +1154,39 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         next_state = "gotoGoalOpening"
 
         self.nav.clearAllCostmaps() 
-        self.gotoXY(2.0,0,30, obstacle_layer_enabled=True)
+        # self.gotoXY(2.0,0,30, obstacle_layer_enabled=True)
         
-        # The navigator stops with the edge of the robot at the XY coordinates
-        # The center of the robot needs to be at the XY coordinates
-        # a new XY coordinate needs to be calculated taking in consideration the 
-        # angle of the robot and the 0.180 radius of the circular robot
-        # simply move another 0.180 m forward to approximate the position
-        self.driveDirect(0.180, 0.25)
+        # # The navigator stops with the edge of the robot at the XY coordinates
+        # # The center of the robot needs to be at the XY coordinates
+        # # a new XY coordinate needs to be calculated taking in consideration the 
+        # # angle of the robot and the 0.180 radius of the circular robot
+        # # simply move another aprox 0.180 m forward to approximate the position
+        # time.sleep(1.0) # nav2 seems to send 0 speed for a second after stopping
+        # self.driveDirect(0.2, 0.25)
         
+        # calculate a new XY that takes into account the robot radius
+        x=2.0
+        y=0.0
+        # get current pose to determine the angle offset
+        (tf_OK,current_pose) = self.getCurrentPose()
+        if tf_OK :
+            xd = float(x) - current_pose.pose.position.x
+            yd = float(y) - current_pose.pose.position.y
+            # Calc angle to target XY coordinate
+            a = math.atan2(yd,xd)
+            d = math.sqrt(xd*xd + yd*yd)
+            # adjust the distance to the can by robot radius to stop with center at xy
+            d = d + self.robotRadius
+            x = current_pose.pose.position.x + d*math.cos(a)
+            y = current_pose.pose.position.y + d*math.sin(a)
+
+            self.get_logger().info(f"run_gotoGoalOpening: adjusted {x=:.3f} {y=:.3f} {a=:.3f}")
+        else : 
+            self.get_logger().info(f"run_gotoGoalOpening: Failed to get current pose, goto non adjusted xy {x=:.3f} {y=:.3f}")
+
+        self.gotoXY(x,y, 5.0,obstacle_layer_enabled=True)
+
+
         next_state = "gotoCanDrop"
         
         return next_state

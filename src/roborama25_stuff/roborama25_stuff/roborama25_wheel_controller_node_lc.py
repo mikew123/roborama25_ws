@@ -206,16 +206,13 @@ class Roborama25WheelControllerNodeLC(LifecycleNode):
     # Convert /cmd_vel messages to physical 2 wheel diff drive velocities in meters per second
     def cmd_vel_callback(self, msg):
         if not self.lifecycle_state_active : return
-        
-    ##??    self.Life
-        
+                
         linear_velocity = msg.linear.x
         angular_velocity = msg.angular.z
         
         #self.get_logger().info("/vel_cmd " + str(linear_velocity) +", "+str(angular_velocity))
        
         # A simple differential drive model
-        # TODO wheel_base should come from a parameter
         
         # angular_scale = 2*self.pi # Increase angular velocity to rotate once per second?
         angular_scale = 1 # 2pi was not correct for nav2
@@ -224,7 +221,8 @@ class Roborama25WheelControllerNodeLC(LifecycleNode):
         left_wheel_velocity = linear_velocity - (angular_velocity*angular_scale * self.wheelDistance / 2)
 
         # Send velocities over USB serial
-        self.wheel_serial_port.write(f"RL {right_wheel_velocity} {left_wheel_velocity} {self.vel_cmd_timeout_sec}\n".encode())
+        self.wheel_serial_port.write(f"RL {right_wheel_velocity:.3f} {left_wheel_velocity:.3f} {self.vel_cmd_timeout_sec:.3f}\n".encode())
+        # self.get_logger().info(f"RL {right_wheel_velocity:.3f} {left_wheel_velocity:.3f} {self.vel_cmd_timeout_sec:.3f}")
     
     # Convert encoder messages from physical wheels into tf2 position/velocity messages
     # and publish the /wheel_odom topic for NAV2 stack
@@ -257,8 +255,6 @@ class Roborama25WheelControllerNodeLC(LifecycleNode):
             self.od_last = od
             self.xy_last = [0.0, 0.0, 0.0]
             self.odMesssageCount = 1
-
-            # self.xyo_last = [0.0, 0.0, 0.0]
 
             return
         
@@ -294,44 +290,8 @@ class Roborama25WheelControllerNodeLC(LifecycleNode):
             xy[1] = self.xy_last[1] + (dRL * math.sin(-xy[2])) #Y
             #-------------------------------------------------------------------------
 
-#        else :
-        #     xyo = np.empty(3, dtype=float) #x,y,theta
-        #     #using odom_encoders
-        #     #using wheel encoders
-        #     dEncX:int = od[3] - self.od_last[3]
-        #     dEncY:int = od[4] - self.od_last[4]
-
-        #     odomWheelCircum  = (self.pi*self.odomDiameter)
-        #     odomCircleCircum = (self.pi*self.odomDistance)
-        #     dT:float = 2*self.pi*(((dEncY/self.odomEncoderCounts)*odomWheelCircum)/odomCircleCircum)
-        #     xyo[2] = self.xyo_last[2] - dT
-        #     #wrap Theta to range of +-pi
-        #     if xyo[2] > self.pi:
-        #         xyo[2] = xyo[2] - (2*self.pi)
-        #     if xyo[2] < -self.pi:
-        #         xyo[2] = xyo[2] + (2*self.pi)
-        #     To = xyo[2] # current rotation
-
-        #     dXenc:float = (dEncX/self.odomEncoderCounts) * odomWheelCircum
-        #     #X offset error caused by rotation
-        #     #dXoff:float = self.odomDistance/2.0 * (1 - math.cos(dT))
-        #     #dX:float = dXenc - dXoff
-        #     #dY:float = dX * math.tan(dT)
-        #     dXo:float = dXenc * math.cos(To)
-        #     dYo:float = dXenc * -math.sin(To)
-
-
-        #     xyo[0] = self.xyo_last[0] + dXo
-        #     xyo[1] = self.xyo_last[1] + dYo
-
-
-        # wdmsg = String()
-        # wdmsg.data = f"\n{xy  = }\n{xyo = }\n{xy - xyo = }"
-        # self.wheel_debug_msg_publisher.publish(wdmsg)
-
         if self.tf_enable == True :
             self.broadcast_tf(xy[0], xy[1], -xy[2]) # x,y,theta
-            #self.broadcast_tf(xyo[0], xyo[1], -xyo[2]) # x,y,theta
 
 
         # Publish odometry
@@ -342,22 +302,15 @@ class Roborama25WheelControllerNodeLC(LifecycleNode):
         dy = xy[1] - self.xy_last[1] # Meters
         dtheta = self.xy_last[2] - xy[2] # Radians
 
-        #dx = xyo[0] - self.xyo_last[0] # Meters
-        #dy = xyo[1] - self.xyo_last[1] # Meters
-        #dtheta = self.xyo_last[2] - xyo[2] # Radians
-
         # handle the transition .999<>-.999 rollover
         if dtheta > +self.pi : dtheta -= 2*self.pi
         if dtheta < -self.pi : dtheta += 2*self.pi
         vl = Vector3()
         va = Vector3()
         if dt > 0 :
-            #vl.x = dx/dt
-            #vl.y = dy/dt
             vl.x = dRL/dt
             vl.y = 0.0
             va.z = dtheta/dt
-
 
         # publish the Odometry topic /wheel_odom for NAV2
         omsg = Odometry()
@@ -370,10 +323,6 @@ class Roborama25WheelControllerNodeLC(LifecycleNode):
         omsg.pose.pose.position.x = xy[0] #X
         omsg.pose.pose.position.y = xy[1] #Y
         qa = self.quaternion_from_euler(0.0, 0.0, -xy[2]) #0,0,theta
-
-        #omsg.pose.pose.position.x = xyo[0] #X
-        #omsg.pose.pose.position.y = xyo[1] #Y
-        #qa = self.quaternion_from_euler(0.0, 0.0, -xyo[2]) #0,0,theta
 
         omsg.pose.pose.orientation.x = qa[0]
         omsg.pose.pose.orientation.y = qa[1]
@@ -403,8 +352,6 @@ class Roborama25WheelControllerNodeLC(LifecycleNode):
             self.xy_last = xy
             self.odMesssageCount += 1
 
-            # self.xyo_last = xyo
-
 
     #set diagnal of 6x6 covariance matrix 
     # returns array float64[36]
@@ -423,11 +370,11 @@ class Roborama25WheelControllerNodeLC(LifecycleNode):
     def robot_json_callback(self, msg) :
         if not self.lifecycle_state_active : return
 
-        self.get_logger().info(f"{msg}")
+        # self.get_logger().info(f"robot_json_callback: {msg}")
 
         try :
             packet = json.loads(msg.data)
-            #self.get_logger().info(f"{packet}")
+            #self.get_logger().info(f"robot_json_callback: {packet}")
             if "claw" in packet :
                 pct=0
                 msec=0
@@ -437,7 +384,7 @@ class Roborama25WheelControllerNodeLC(LifecycleNode):
                 if "time" in claw_cmd :
                     msec = int(claw_cmd["time"])
                 self.wheel_serial_port.write(f"CP {pct} {msec}\n".encode())
-                #self.get_logger().info(f"{packet}")
+                #self.get_logger().info(f"robot_json_callback: {packet}")
                 
             if "wheels" in packet :
                 left=0.0
@@ -457,8 +404,9 @@ class Roborama25WheelControllerNodeLC(LifecycleNode):
                 right = right + (angular * self.wheelDistance / 2)
                 left  = left  - (angular * self.wheelDistance / 2)
 
-                self.wheel_serial_port.write(f"RL {left} {right} {sec}\n".encode())
-                self.get_logger().info(f"{packet}")
+                drvStr = f"RL {left:.3f} {right:.3f} {sec:.3f}\n".encode()
+                self.wheel_serial_port.write(drvStr)
+                # self.get_logger().info(f"robot_json_callback: {drvStr=} {packet=}")
 
         except Exception as ex:
             self.get_logger().warning(f"wheel controller robot_json_callback exception {ex=} {msg=}")        
