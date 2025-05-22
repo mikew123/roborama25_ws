@@ -944,8 +944,11 @@ class Roborama25ControllerNodeLc(LifecycleNode):
             case "backupFromCan" :
                 msg.data=8
                 next_state = self.run_backupFromCan()                  
-            case "gotoNewLocation" :
+            case "findCanAtGoal" :
                 msg.data=9
+                next_state = self.run_findCanAtGoal()                  
+            case "gotoNewLocation" :
+                msg.data=10
                 next_state = self.run_gotoNewLocation()
             case _ :
                 msg.data=-10
@@ -998,22 +1001,22 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         # time to rotate at va velocity to angle a
         sec = math.fabs(a/va)
     
-        self.get_logger().info(f"rotateCanDet: send json msg {a=:.3f} {va=:.3f} {sec=:.3f}")
-    
         # wheels drive at velocity m/s for sec
         msg = Twist()
         msg.angular.z = va
         self.cmd_vel_publisher.publish(msg)
 
+        self.get_logger().info(f"rotateCanDet: start rotating {a=:.3f} {va=:.3f} {sec=:.3f}")
+
         # wait for the expected drive movement time while looking for can
         waitSec=sec
-        # self.get_logger().info(f"rotateCanDet: waiting {sec=:.3f}")
         self.findCanTime = time.monotonic()
         timer = 0
-        while not tf_OK or timer > waitSec:
+        while (not tf_OK) and (timer < waitSec) :
             timer = time.monotonic() - self.findCanTime 
             self.cmd_vel_publisher.publish(msg)
             tf_OK = self.getCanTFOK()
+            self.get_logger().info(f"rotateCanDet: waiting {timer=:.3f} {tf_OK=} {a=:.3f} {va=:.3f} {waitSec=:.3f}")
 
         # stop rotation after can is detected or time out
         msg.angular.z = 0.0
@@ -1245,11 +1248,39 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         self.driveOdom(-0.05, 0.25)
         self.rotateToAngle(0, 10)
         self.driveOdom(-(d-0.05), 0.25)
-        self.rotateToAngle(math.pi, 10)
+        # self.rotateToAngle(math.pi, 10)
+
+        
+        next_state = "findCanAtGoal"
+        
+        return next_state
+
+    def run_findCanAtGoal(self) ->str:  
+        """
+        Scan over 180 degrees for a can at the goal opening
+        Stops when a can is detected and goes to find the can
+        If a can is not detected it goes to a new location
+        returns next state string
+        """
+        next_state = "findCanAtGoal"
 
         self.nav.clearAllCostmaps() 
+
+        # point towards one side of the goal opening
+        self.rotateToAngle(math.pi/2, 5)
+
+        # Check if the can is detected while rotating 180 degrees 
+        tf_OK = self.getCanTFOK()
+        if not tf_OK :
+            tf_OK = self.rotateCanDet(math.pi) 
         
-        next_state = "gotoNewLocation"
+        # Make sure can is still detected
+        tf_OK = self.getCanTFOK()
+
+        if tf_OK : 
+            next_state = "gotoCanLocation"
+        else :
+            next_state = "gotoNewLocation"
         
         return next_state
 
