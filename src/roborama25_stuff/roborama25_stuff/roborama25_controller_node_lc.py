@@ -71,29 +71,41 @@ class Roborama25ControllerNodeLc(LifecycleNode):
     robotRadius:float = 0.180 # meters
     mapResolution:float = 0.05 # pixel size in meters
     
+    # DPRG QT arena info in feet
     d = 12.0
     t = 1.25 # put in center of target zones
     lengthQuickTrip = {
         "home" : 2, # meters
-        "dprg" : (d+(2*1.25))*ft2m
+        "dprg" : (d+(2*t))*ft2m
     }
     
+    # DPRG 4C arena info in feet
     # needs to be updated on site for actual size 8-15 ft sq
-    d = 10.0
-    t = 1.0 # distance from actual corner of square, 3ft clear zone
+    d = 10.0 # dist between square corner markers
+    t = 1.5 # distance from actual corner of square, center of 3ft clear zone
     size4corner = {
         "home" : 1.0, # meters
         "dprg" : (d+(2*t))*ft2m
     }
     
+    # dimensions in units of map resolution
     home_can6Width:int = int((9.0 * ft2m)/mapResolution) # 6-can walls
     home_can6Height:int = int((7.0 * ft2m)/mapResolution)
     home_can6GoalArea:int = int((3.0 * ft2m)/mapResolution) # goal area outside walls
-    home_can6GoalOpening:int = int((3.0 * ft2m)/mapResolution) #width of goal openin
+    home_can6GoalOpening:int = int((3.0 * ft2m)/mapResolution) # width of goal opening
     home_mapWidth:int = home_can6Width + home_can6GoalArea
     home_mapHeight:int = home_can6Height
-    home_startWpX0:int = (8/12.0*ft2m) # offset from back wall, inches to meters
-
+    # dimensions in units of meters
+    home_startWpXoffM:float = (8/12.0*ft2m) # offset from back wall, inches to meters
+    home_can6WidthM:float = 9.0 * ft2m # 6-can walls from end to end
+    home_startWpX0M:float = home_startWpXoffM # X coordinate of the start waypoint xy = (0,0)
+    home_goalOpeningX0M:float =  ( # X coordinate of the goal opening goto before going to dropoff
+        home_can6WidthM - home_startWpXoffM - (1.5*ft2m)) 
+    home_canDropoffX0M:float = ( # X coordinate of the dropoff can location
+        home_can6WidthM - home_startWpXoffM + (1.0*ft2m))
+    home_scanWpX0M:float = ( # X coordinate of the scan waypoint in the center of the arena
+        home_can6WidthM/2 - home_startWpXoffM)
+    home_canBackupM:float = 2*ft2m # distance to back up after dropping off the can
     home_arena: dict = {
         "can6Width"       : home_can6Width,
         "can6Height"      : home_can6Height,
@@ -101,16 +113,25 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         "can6GoalOpening" : home_can6GoalOpening,
         "mapWidth"        : home_mapWidth,
         "mapHeight"       : home_mapHeight,
-        "startWpX0"       : home_startWpX0
+        "startWpX0"       : home_startWpX0M,
+        "goalOpeningX0"   : home_goalOpeningX0M,
+        "canDropoffX0"    : home_canDropoffX0M,
+        "scanWpX0"        : home_scanWpX0M,
+        "canBackup"       : home_canBackupM
     }
 
+    # dimensions in units of map reolution
     dprg_can6Width:int = int((10.0 * ft2m)/mapResolution) # 6-can walls
     dprg_can6Height:int = int((7.0 * ft2m)/mapResolution)
     dprg_can6GoalArea:int = int((3.0 * ft2m)/mapResolution) # goal area outside walls
     dprg_can6GoalOpening:int = int((3.0 * ft2m)/mapResolution) #width of goal opening
     dprg_mapWidth:int = dprg_can6Width + dprg_can6GoalArea
     dprg_mapHeight:int = dprg_can6Height
-    dprg_startWpX0:int = (8/12.0*ft2m) # offset from back wall, inches to meters
+    # dimensions in units of meters
+    dprg_startWpX0:float = (8/12.0*ft2m) # offset from back wall, inches to meters
+    dprg_goalOpeningX0:float = 2.5 # X coordinate of the goal opening goto before going to dropoff
+    dprg_canDropoffX0:float = 3.25 # X coordinate of the dropoff can location
+    dprg_scanWpX0:float = 2.0 # X coordinate of the scan waypoint
 
     dprg_arena: dict = {
         "can6Width"       : dprg_can6Width,
@@ -119,10 +140,12 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         "can6GoalOpening" : dprg_can6GoalOpening,
         "mapWidth"        : dprg_mapWidth,
         "mapHeight"       : dprg_mapHeight,
-        "startWpX0"       : dprg_startWpX0
+        "startWpX0"       : dprg_startWpX0,
+        "goalOpeningX0"   : dprg_goalOpeningX0,
+        "canDropoffX0"    : dprg_canDropoffX0
     }
 
-    arenas = {
+    arenas:dict = {
         "home" : home_arena,
         "dprg" : dprg_arena
     }
@@ -641,15 +664,6 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         # (result, feedback) = self.waitTaskComplete(t)
         (result, _) = self.waitTaskComplete(t)
        
-        # x = feedback.current_pose.pose.position.x
-        # y = feedback.current_pose.pose.position.y
-        # (_,_a) = tf_transformations.euler_from_quaternion(
-        #     [feedback.current_pose.pose.orientation.x,
-        #     feedback.current_pose.pose.orientation.y,
-        #     feedback.current_pose.pose.orientation.z,
-        #     feedback.current_pose.pose.orientation.w])
-        # t = feedback.navigation_time.sec
-        
         return result
     
     def gotoCanTF(self, t) -> int:
@@ -1159,13 +1173,10 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         # # The navigator stops with the edge of the robot at the XY coordinates
         # # The center of the robot needs to be at the XY coordinates
         # # a new XY coordinate needs to be calculated taking in consideration the 
-        # # angle of the robot and the 0.180 radius of the circular robot
-        # # simply move another aprox 0.180 m forward to approximate the position
-        # time.sleep(1.0) # nav2 seems to send 0 speed for a second after stopping
-        # self.driveDirect(0.2, 0.25)
-        
+        # # angle of the robot and the 0.180 radius of the circular robot       
         # calculate a new XY that takes into account the robot radius
-        x=2.0
+        # x=2.0
+        x = self.arenas[self.nav_arena]["goalOpeningX0"]
         y=0.0
         # get current pose to determine the angle offset
         (tf_OK,current_pose) = self.getCurrentPose()
@@ -1198,15 +1209,13 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         """
         next_state = "gotoCanDrop"
         
-        # self.rotateToAngle(0, 10)
-        
         
         # self.nav.driveOnHeading(0.5, 0.1, 10) # doesn't seem to exist in Humble?
         # "new" "MAC 2D planner and pure puruit/rotational shim rotates well
-        self.gotoXY(2.75,0, 10, obstacle_layer_enabled=False)
-        
-        # self.driveOdom(0.75, 0.25)
-        
+        x = self.arenas[self.nav_arena]["canDropoffX0"]
+        y= 0.0
+        self.gotoXY(x,y, 10, obstacle_layer_enabled=False)
+
         next_state = "dropCan"
         
         return next_state
@@ -1219,6 +1228,7 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         next_state = "dropCan"
 
         self.clawCmdOpen()
+
         next_state = "backupFromCan"
         
         return next_state
@@ -1230,19 +1240,13 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         """
         next_state = "backupFromCan"
         
-        # self.nav.clearAllCostmaps() 
-        self.send_set_param_request(self.local_costmap_set_param_svc, 'obstacle_layer.enabled', False)
-        # self.nav.backup(0.05, 0.1, 10)
-        # self.waitTaskComplete(10)
+        d = self.arenas[self.nav_arena]["canBackup"]
+
         self.driveOdom(-0.05, 0.25)
         self.rotateToAngle(0, 10)
-        self.send_set_param_request(self.local_costmap_set_param_svc, 'obstacle_layer.enabled', False)
-        # self.nav.backup(0.30, 0.1, 10)
-        # self.waitTaskComplete(10)
-        self.driveOdom(-0.70, 0.25)
+        self.driveOdom(-(d-0.05), 0.25)
         self.rotateToAngle(math.pi, 10)
 
-        self.send_set_param_request(self.local_costmap_set_param_svc, 'obstacle_layer.enabled', True)
         self.nav.clearAllCostmaps() 
         
         next_state = "gotoNewLocation"
