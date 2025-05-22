@@ -1588,10 +1588,10 @@ class Roborama25ControllerNodeLc(LifecycleNode):
                 self.nav_arena = "home"
                 self.get_logger().info(f"joy_callback: {arenaSelect=} {self.nav_arena=}")
 
-        # if resetAxes :
-        #     self.state = 0
-        #     self.waypoint_num = 0
-        #     self.clawCmd(0, 100) #open claw
+        if resetAxes :
+            self.cmd_vel_publisher.publish(Twist()) # Stop
+            self.clawCmd(0, 100) #open claw
+            rclpy.shutdown()
 
         # if (   msg.buttons[2]==1 or  msg.buttons[3]==1  \
         #     or msg.buttons[0]==1 or  msg.buttons[1]==1) :
