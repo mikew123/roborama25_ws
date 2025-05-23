@@ -963,6 +963,35 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         self.get_logger().info(f"rotateCanDet: Can detect {tf_OK=}")
 
         return tf_OK
+    
+    def closeCanDet(self) -> bool :
+        """
+        Check if can is close enough to be detected with tof sensors
+        Returns True if can signiture is detected 
+        """
+        canDet:bool = False
+
+        dist = self.tofL4_rng
+        Lnum = 0
+        Rnum = 0
+        distCanDet = 0.25
+        l4NumMax = 5
+
+        # get the minimum distance from the sensors
+        distMinL = min(self.tofL5L_pcd)
+        distMinR = min(self.tofL5R_pcd)
+        distMin  = min(distMinL, distMinR, dist)
+        for d in self.tofL5L_pcd :
+            if d<(distMin+0.07) : Lnum += 1
+        for d in self.tofL5R_pcd :
+            if d<(distMin+0.07) : Rnum += 1
+
+        distLim = distMin + distCanDet
+        distMinMax = max(distMinL, distMinR, dist)
+        if distMinMax<distLim and Lnum<=l4NumMax and Rnum<=l4NumMax:
+            canDet = True
+
+        return canDet
 
 ################################### 6CAN stuff ##########################    
 
@@ -970,10 +999,12 @@ class Roborama25ControllerNodeLc(LifecycleNode):
     tofL4_rng = None
     tofL5L_pcd = None
     tofL5R_pcd = None
-    canTF_ok = False
+    changed_6can_state = False
+
+    findCanCnt:int = 0       
         
-    current_6can_state = "findCan"
-    next_6can_state =  current_6can_state
+    current_6can_state = "start"
+    next_6can_state =  "findCan"
     
     def run_6can_states(self) :
         """
@@ -983,10 +1014,14 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         >gotoCanLocation
         >approachCan
         >grabCan
+        >gotoGoalOpening
         >gotoCanDrop
         >dropCan
         >backupFromCan
+        >findCanAtGoal
         >gotoNewLocation
+        >returnHome
+        >done
         """
         
         if self.lifecycle_state_active==False : return
@@ -997,7 +1032,10 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         if self.current_6can_state != self.next_6can_state :
             self.get_logger().info(f"run_6can_states: State changed {self.current_6can_state=} {self.next_6can_state=}")
             self.current_6can_state = self.next_6can_state
-            
+            self.changed_6can_state = True
+        else :
+            self.changed_6can_state = False
+
         # self.get_logger().info(f"run_6can_states: {self.current_6can_state=}")
         
         msg = Int32()
@@ -1045,36 +1083,7 @@ class Roborama25ControllerNodeLc(LifecycleNode):
 
         self.next_6can_state = next_state
         self.run_state_publisher.publish(msg)
-            
-    
-    def closeCanDet(self) -> bool :
-        """
-        Check if can is close enough to be detected with tof sensors
-        Returns True if can signiture is detected 
-        """
-        canDet:bool = False
 
-        dist = self.tofL4_rng
-        Lnum = 0
-        Rnum = 0
-        distCanDet = 0.25
-        l4NumMax = 5
-
-        # get the minimum distance from the sensors
-        distMinL = min(self.tofL5L_pcd)
-        distMinR = min(self.tofL5R_pcd)
-        distMin  = min(distMinL, distMinR, dist)
-        for d in self.tofL5L_pcd :
-            if d<(distMin+0.07) : Lnum += 1
-        for d in self.tofL5R_pcd :
-            if d<(distMin+0.07) : Rnum += 1
-
-        distLim = distMin + distCanDet
-        distMinMax = max(distMinL, distMinR, dist)
-        if distMinMax<distLim and Lnum<=l4NumMax and Rnum<=l4NumMax:
-            canDet = True
-
-        return canDet
     
     def run_findCan(self) ->str:
         """
@@ -1084,6 +1093,8 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         Returns next state string
         """
         next_state = "findCan"
+
+        if self.changed_6can_state : self.findCanCnt = 0
 
         # return with next state instantly if a can is detected as close by
         if self.closeCanDet() : return "gotoCanLocation"
@@ -1096,9 +1107,12 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         # Make sure can is still detected
         tf_OK = self.getCanTFOK()
 
-        # TODO: goto a new locations after N rotations and no can detected
+        self.findCanCnt +=1
         if tf_OK : 
             next_state = "gotoCanLocation"
+        elif self.findCanCnt >= 2 :
+            self.get_logger().info(f"run_findCan: Failed to find cangoto new location {self.findCanCnt=}")
+            next_state = "gotoNewLocation"
 
         return next_state
     
@@ -1343,6 +1357,9 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         
         return next_state
 
+    new_locxy_idx:int = 0
+    new_locxy_list:list = [(1.5,0.0), (0.5,0.0)]
+
     def run_gotoNewLocation(self) ->str:  
         """
         Go to a new location to search for a can
@@ -1353,8 +1370,13 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         self.nav.clearAllCostmaps() 
         
         # Adjust offset so that center of robot is in the center of the arena
-        self.gotoXY((1.25-0.180) ,0, 30)
-        # TODO: ???? Rotate to point straight out ????
+        (x,y) = self.new_locxy_list[self.new_locxy_idx]
+        if self.new_locxy_idx < len(self.new_locxy_list)-1 : 
+            self.new_locxy_idx += 1
+        else : 
+            self.new_locxy_idx = 0
+
+        self.gotoXY(x,y, 30)
         
         next_state = "findCan"
         
