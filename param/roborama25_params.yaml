@@ -346,7 +346,7 @@ controller_server:
       plugin: "vector_pursuit_controller::VectorPursuitController"
       k: 5.0
       desired_linear_vel: 0.5
-      min_turning_radius: 0.25
+      min_turning_radius: 0.05 #0.25
       lookahead_dist: 1.0
       min_lookahead_dist: 0.5
       max_lookahead_dist: 1.5

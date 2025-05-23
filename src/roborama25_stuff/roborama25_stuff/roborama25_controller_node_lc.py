@@ -351,7 +351,7 @@ class Roborama25ControllerNodeLc(LifecycleNode):
             (tfOK, can_pose) = self.getCanPose()
             
         if tfOK :
-            dist = self.gotoCanTF(30)
+            dist = self.gotoCanTF(45)
         else :
             dist = -1
             
@@ -671,7 +671,7 @@ class Roborama25ControllerNodeLc(LifecycleNode):
        
         return result
     
-    def gotoCanTF(self, t) -> int:
+    def gotoCanTF(self, t:float = 10) -> int:
         """
         Go to the can TF location, but stop 0.2m short
         Rotates to point to the can before moving to it
@@ -682,7 +682,9 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         
         d=100
         cnt=0
-        while d>0.25 :
+        timeStart = time.monotonic()
+        timer = 0.0
+        while d>0.25 and timer<t and self.lifecycle_state_active==True :
             (tf_OK, can_pose) = self.getCanPose()
             cnt+=1
             if tf_OK==False and cnt>5:
@@ -710,7 +712,7 @@ class Roborama25ControllerNodeLc(LifecycleNode):
                     y = current_pose.pose.position.y + d*math.sin(a)
                     
                     goto_pose = self.createPose(x,y,a)
-                    self.get_logger().info(f"gotoXY: goto {x=:.3f} {y=:.3f} {d=:.3f} {a=:.3f}")
+                    self.get_logger().info(f"gotoXY: goto {x=:.3f} {y=:.3f} {d=:.3f} {a=:.3f} {timer=:.3f} {t=:.3f}")
 
                     # rotate to point to goto xy position before moving to it
                     status = self.rotateToAngle(a,10)
@@ -723,6 +725,8 @@ class Roborama25ControllerNodeLc(LifecycleNode):
                 else :
                     self.get_logger().info(f"gotoXY: Failed to get current pose")
                     d=-1
+            timer = time.monotonic() - timeStart
+
         return d
     
     def gotoXY(self,x,y,t,obstacle_layer_enabled: bool=True) -> int:
@@ -887,6 +891,79 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         """
         return self.getPoseFromTF('base_footprint')
     
+    # findCanTime = 0.0
+
+    # tf_OK: bool = False
+    def getCanTFOK(self) ->bool:
+        try:
+            # discard TF ony used to detrmine if a TF is detected
+            tf_OK = self.tf_buffer.can_transform (
+                'map',
+                'can',
+                self.nav.get_clock().now().to_msg(),
+                #
+                # rclpy.time.Time(), # default 0 get latest
+                timeout=rclpy.duration.Duration(seconds=0.1)
+                )
+
+        except (LookupException, ConnectivityException, ExtrapolationException) as ex:
+            self.get_logger().info(f'getCanTFOK: Exception transforming transform map->can: {ex}')
+            tf_OK = False
+
+        if tf_OK : self.get_logger().info(f'getCanTFOK: Can detected map->can')
+        else :     self.get_logger().info(f'getCanTFOK: Could not find transform map->can')
+
+        return tf_OK
+    
+    def rotateCanDet(self, a: float, va: float = 0.5) ->bool:
+        """
+        Rotate using wheel odom only
+        stops if a can is detected
+        a: angle in rads (not limited)
+        va: angular velocity in rads/sec
+        Returns bool tk_OK (can detected)
+        """
+        tf_OK: bool = False
+        if a == 0 or va <= 0 :
+            self.get_logger().info(f"rotateCanDet: invalid params {a=:.3f} {va=:.3f}, aborted")
+            return False
+        
+        if self.closeCanDet() : 
+            return True
+        
+        va = math.fabs(va)
+        if a < 0 : va = -va
+        
+        # time to rotate at va velocity to angle a
+        sec = math.fabs(a/va)
+    
+        # wheels drive at velocity m/s for sec
+        msg = Twist()
+        msg.angular.z = va
+        self.cmd_vel_publisher.publish(msg)
+
+        self.get_logger().info(f"rotateCanDet: start rotating {a=:.3f} {va=:.3f} {sec=:.3f}")
+
+        # wait for the expected drive movement time while looking for can
+        waitSec=sec
+        # self.findCanTime = time.monotonic()
+        findCanTime = time.monotonic()
+        timer = 0
+        while (not tf_OK) and (timer < waitSec) :
+            timer = time.monotonic() - findCanTime 
+            self.cmd_vel_publisher.publish(msg)
+            tf_OK = self.closeCanDet()
+            if not tf_OK : tf_OK = self.getCanTFOK()
+            self.get_logger().info(f"rotateCanDet: waiting {timer=:.3f} {tf_OK=} {a=:.3f} {va=:.3f} {waitSec=:.3f}")
+
+        # stop rotation after can is detected or time out
+        msg.angular.z = 0.0
+        self.cmd_vel_publisher.publish(msg)
+
+        self.get_logger().info(f"rotateCanDet: Can detect {tf_OK=}")
+
+        return tf_OK
+
 ################################### 6CAN stuff ##########################    
 
     
@@ -969,80 +1046,47 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         self.next_6can_state = next_state
         self.run_state_publisher.publish(msg)
             
-    findCanTime = 0.0
-
-    tf_OK: bool = False
-    def getCanTFOK(self) ->bool:
-        try:
-            # discard TF ony used to detrmine if a TF is detected
-            tf_OK = self.tf_buffer.can_transform (
-                'map',
-                'can',
-                self.nav.get_clock().now().to_msg(),
-                #
-                # rclpy.time.Time(), # default 0 get latest
-                timeout=rclpy.duration.Duration(seconds=0.1)
-                )
-
-        except (LookupException, ConnectivityException, ExtrapolationException) as ex:
-            self.get_logger().info(f'getCanTFOK: Exception transforming transform map->can: {ex}')
-            tf_OK = False
-
-        if tf_OK : self.get_logger().info(f'getCanTFOK: Can detected map->can')
-        else :     self.get_logger().info(f'getCanTFOK: Could not find transform map->can')
-
-        return tf_OK
     
-    def rotateCanDet(self, a: float, va: float = 0.5) ->bool:
+    def closeCanDet(self) -> bool :
         """
-        Rotate using wheel odom only
-        stops if a can is detected
-        a: angle in rads (not limited)
-        va: angular velocity in rads/sec
-        Returns bool tk_OK (can detected)
+        Check if can is close enough to be detected with tof sensors
+        Returns True if can signiture is detected 
         """
-        tf_OK: bool = False
-        if a == 0 or va <= 0 :
-            self.get_logger().info(f"rotateCanDet: invalid params {a=:.3f} {va=:.3f}, aborted")
-            return tf_OK
-        
-        va = math.fabs(va)
-        if a < 0 : va = -va
-        
-        # time to rotate at va velocity to angle a
-        sec = math.fabs(a/va)
-    
-        # wheels drive at velocity m/s for sec
-        msg = Twist()
-        msg.angular.z = va
-        self.cmd_vel_publisher.publish(msg)
+        canDet:bool = False
 
-        self.get_logger().info(f"rotateCanDet: start rotating {a=:.3f} {va=:.3f} {sec=:.3f}")
+        dist = self.tofL4_rng
+        Lnum = 0
+        Rnum = 0
+        distCanDet = 0.25
+        l4NumMax = 5
 
-        # wait for the expected drive movement time while looking for can
-        waitSec=sec
-        self.findCanTime = time.monotonic()
-        timer = 0
-        while (not tf_OK) and (timer < waitSec) :
-            timer = time.monotonic() - self.findCanTime 
-            self.cmd_vel_publisher.publish(msg)
-            tf_OK = self.getCanTFOK()
-            self.get_logger().info(f"rotateCanDet: waiting {timer=:.3f} {tf_OK=} {a=:.3f} {va=:.3f} {waitSec=:.3f}")
+        # get the minimum distance from the sensors
+        distMinL = min(self.tofL5L_pcd)
+        distMinR = min(self.tofL5R_pcd)
+        distMin  = min(distMinL, distMinR, dist)
+        for d in self.tofL5L_pcd :
+            if d<(distMin+0.07) : Lnum += 1
+        for d in self.tofL5R_pcd :
+            if d<(distMin+0.07) : Rnum += 1
 
-        # stop rotation after can is detected or time out
-        msg.angular.z = 0.0
-        self.cmd_vel_publisher.publish(msg)
+        distLim = distMin + distCanDet
+        distMinMax = max(distMinL, distMinR, dist)
+        if distMinMax<distLim and Lnum<=l4NumMax and Rnum<=l4NumMax:
+            canDet = True
 
-        self.get_logger().info(f"rotateCanDet: Can detect {tf_OK=}")
-
-        return tf_OK
+        return canDet
     
     def run_findCan(self) ->str:
         """
         Find a can using the camera can detection which generates a "can" TF
+        or can detected using TOF sensors
+        Returns instantly if a can is detected as close by
         Returns next state string
         """
         next_state = "findCan"
+
+        # return with next state instantly if a can is detected as close by
+        if self.closeCanDet() : return "gotoCanLocation"
 
         # Check if the can transform is detected, discard pose
         tf_OK = self.getCanTFOK()
@@ -1065,7 +1109,7 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         """
         next_state = "gotoCanLocation"
         
-        dist = self.gotoCanTF(10)
+        dist = self.gotoCanTF(20)
         
         if dist > 0 :
             self.get_logger().info(f"run_gotoCanLocation: Robot is close to the can, tofL4 range {dist=}")
@@ -1344,6 +1388,10 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         Returns next state string
         """
         next_state = "done"
+        self.clawCmdClose()
+        self.clawCmdOpen()
+        self.clawCmdClose()
+        self.clawCmdOpen()
         self.enable_6can_states = False
         return next_state
 
