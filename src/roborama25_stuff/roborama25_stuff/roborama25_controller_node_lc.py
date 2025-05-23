@@ -72,9 +72,9 @@ class Roborama25ControllerNodeLc(LifecycleNode):
     mapResolution:float = 0.05 # pixel size in meters
     
     # DPRG QT arena info in feet
-    d = 12.0
-    t = 1.25 # put in center of target zones
-    lengthQuickTrip = {
+    d:float = 12.0
+    t:float = 1.25 # put in center of target zones
+    lengthQuickTrip:dict = {
         "home" : 2, # meters
         "dprg" : (d+(2*t))*ft2m
     }
@@ -83,7 +83,7 @@ class Roborama25ControllerNodeLc(LifecycleNode):
     # needs to be updated on site for actual size 8-15 ft sq
     d = 10.0 # dist between square corner markers
     t = 1.5 # distance from actual corner of square, center of 3ft clear zone
-    size4corner = {
+    size4corner:dict = {
         "home" : 1.0, # meters
         "dprg" : (d+(2*t))*ft2m
     }
@@ -151,19 +151,21 @@ class Roborama25ControllerNodeLc(LifecycleNode):
     }
 
     # flag to start running the 6can state machine
-    enable_6can_states = False
+    enable_6can_states:bool = False
 
+    # can counter to know when to stop
+    can_counter:int = 0
 
     nav_arena:str = "home"
 
     # diyslamEnabled = True
     
-    nav2_run_first_exec = True
+    nav2_run_first_exec:bool = True
     
-    callback_set_param_done = False
+    callback_set_param_done:bool = False
 
 
-    feetToMeter = 0.3048
+    feetToMeter:float = 0.3048
 
     def __init__(self, nav: BasicNavigator):
         super().__init__('roborama25_controller_node_lc')
@@ -319,6 +321,7 @@ class Roborama25ControllerNodeLc(LifecycleNode):
             
         # Start a course when gamepad button is pushed
         if self.gotoCan==True and self.gotoCan_last==False :
+            self.can_counter = 0
             self.run6Can() # Button X
         elif self.gotoQtWaypoints==True and self.gotoQtWaypoints_last==False :
             self.runQTrip() # Button B
@@ -600,11 +603,13 @@ class Roborama25ControllerNodeLc(LifecycleNode):
     
         # Enables the 6 can statemachine running in tofL4 callback
         self.enable_6can_states = True
-        
 
-        # status = self.rotateToAngle(0,10)
-        # self.get_logger().info(f"run6Can: final rotation {status=}")    
-         
+        # 6 can runs when enable state is True using the tofL4 callback
+        while self.enable_6can_states==True and self.lifecycle_state_active==True :
+            time.sleep(0.1)
+                 
+        self.get_logger().info(f"run6Can: 6 can state machine finished {self.can_counter=}")
+
     def createPose(self,x,y,a) -> PoseStamped:
         pose = PoseStamped()
         pose.header.frame_id = 'map'
@@ -950,6 +955,12 @@ class Roborama25ControllerNodeLc(LifecycleNode):
             case "gotoNewLocation" :
                 msg.data=10
                 next_state = self.run_gotoNewLocation()
+            case "returnHome" :
+                msg.data=11
+                next_state = self.run_returnHome()
+            case "done" :
+                msg.data=12
+                next_state = self.run_done()
             case _ :
                 msg.data=-10
                 self.get_logger().info(f"run_6can_states: Unknown state {self.current_6can_state=}")
@@ -1022,7 +1033,7 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         msg.angular.z = 0.0
         self.cmd_vel_publisher.publish(msg)
 
-        self.get_logger().info(f"rotateCanDet: Can detected = {tf_OK}")
+        self.get_logger().info(f"rotateCanDet: Can detect {tf_OK=}")
 
         return tf_OK
     
@@ -1041,6 +1052,7 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         # Make sure can is still detected
         tf_OK = self.getCanTFOK()
 
+        # TODO: goto a new locations after N rotations and no can detected
         if tf_OK : 
             next_state = "gotoCanLocation"
 
@@ -1232,6 +1244,8 @@ class Roborama25ControllerNodeLc(LifecycleNode):
 
         self.clawCmdOpen()
 
+        self.can_counter +=1
+
         next_state = "backupFromCan"
         
         return next_state
@@ -1248,10 +1262,11 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         self.driveOdom(-0.05, 0.25)
         self.rotateToAngle(0, 10)
         self.driveOdom(-(d-0.05), 0.25)
-        # self.rotateToAngle(math.pi, 10)
 
-        
-        next_state = "findCanAtGoal"
+        if self.can_counter >=6 :
+            next_state = "returnHome"
+        else :
+            next_state = "findCanAtGoal"
         
         return next_state
 
@@ -1267,12 +1282,12 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         self.nav.clearAllCostmaps() 
 
         # point towards one side of the goal opening
-        self.rotateToAngle(math.pi/2, 5)
+        self.rotateToAngle(math.pi*0.4, 5)
 
         # Check if the can is detected while rotating 180 degrees 
         tf_OK = self.getCanTFOK()
         if not tf_OK :
-            tf_OK = self.rotateCanDet(math.pi) 
+            tf_OK = self.rotateCanDet(math.pi*1.2) 
         
         # Make sure can is still detected
         tf_OK = self.getCanTFOK()
@@ -1300,7 +1315,38 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         next_state = "findCan"
         
         return next_state
-    
+
+    def run_returnHome(self) ->str:  
+        """
+        Goto the home location xy = (0,0)
+        Point towards goal similar to starting pose
+        Returns next state string
+        """
+        next_state = "returnHome"
+              
+        self.nav.clearAllCostmaps() 
+
+        # take into account the robot size to stop with center of robot at 0,0
+        x = 0.0 - self.robotRadius
+        y = 0.0
+        self.rotateToAngle(math.pi , 5)
+        self.gotoXY(x,y, 10)
+        self.rotateToAngle(0, 5)
+        
+        next_state = "done"
+        
+        return next_state
+
+    def run_done(self) ->str:  
+        """
+        Set the state machine to done
+        This is the fianl state
+        Returns next state string
+        """
+        next_state = "done"
+        self.enable_6can_states = False
+        return next_state
+
     # Sensors used to run 6 CAN
     def tofL4_rng_callback(self, msg: Range) :
         """
