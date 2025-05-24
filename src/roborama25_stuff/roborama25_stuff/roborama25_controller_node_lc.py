@@ -132,6 +132,17 @@ class Roborama25ControllerNodeLc(LifecycleNode):
     dprg_goalOpeningX0:float = 2.5 # X coordinate of the goal opening goto before going to dropoff
     dprg_canDropoffX0:float = 3.25 # X coordinate of the dropoff can location
     dprg_scanWpX0:float = 2.0 # X coordinate of the scan waypoint
+    # dimensions in units of meters
+    dprg_startWpXoffM:float = (8/12.0*ft2m) # offset from back wall, inches to meters
+    dprg_can6WidthM:float = 10.0 * ft2m # 6-can walls from end to end
+    dprg_startWpX0M:float = dprg_startWpXoffM # X coordinate of the start waypoint xy = (0,0)
+    dprg_goalOpeningX0M:float =  ( # X coordinate of the goal opening goto before going to dropoff
+        dprg_can6WidthM - dprg_startWpXoffM - (1.5*ft2m)) 
+    dprg_canDropoffX0M:float = ( # X coordinate of the dropoff can location
+        dprg_can6WidthM - dprg_startWpXoffM + (1.0*ft2m))
+    dprg_scanWpX0M:float = ( # X coordinate of the scan waypoint in the center of the arena
+        dprg_can6WidthM/2 - dprg_startWpXoffM)
+    dprg_canBackupM:float = 2*ft2m # distance to back up after dropping off the can
 
     dprg_arena: dict = {
         "can6Width"       : dprg_can6Width,
@@ -140,9 +151,18 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         "can6GoalOpening" : dprg_can6GoalOpening,
         "mapWidth"        : dprg_mapWidth,
         "mapHeight"       : dprg_mapHeight,
-        "startWpX0"       : dprg_startWpX0,
-        "goalOpeningX0"   : dprg_goalOpeningX0,
-        "canDropoffX0"    : dprg_canDropoffX0
+        "startWpX0"       : dprg_startWpX0M,
+        "goalOpeningX0"   : dprg_goalOpeningX0M,
+        "canDropoffX0"    : dprg_canDropoffX0M,
+        "scanWpX0"        : dprg_scanWpX0M,
+        "canBackup"       : dprg_canBackupM
+    }
+
+
+    new_locxy_idx:int = 0
+    new_locxy_dict:dict = { 
+        "home": [(1.5,0.0), (0.5,0.0)],
+        "dprg": [(1.5,0.0), (0.5,0.0)]
     }
 
     arenas:dict = {
@@ -1377,9 +1397,6 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         
         return next_state
 
-    new_locxy_idx:int = 0
-    new_locxy_list:list = [(1.5,0.0), (0.5,0.0)]
-
     def run_gotoNewLocation(self) ->str:  
         """
         Go to a new location to search for a can
@@ -1390,8 +1407,9 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         self.nav.clearAllCostmaps() 
         
         # Adjust offset so that center of robot is in the center of the arena
-        (x,y) = self.new_locxy_list[self.new_locxy_idx]
-        if self.new_locxy_idx < len(self.new_locxy_list)-1 : 
+        new_locxy_list = self.new_locxy_dict[self.nav_arena]
+        (x,y) = new_locxy_list[self.new_locxy_idx]
+        if self.new_locxy_idx < len(new_locxy_list)-1 : 
             self.new_locxy_idx += 1
         else : 
             self.new_locxy_idx = 0
