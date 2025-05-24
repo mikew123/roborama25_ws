@@ -974,8 +974,9 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         dist = self.tofL4_rng
         Lnum = 0
         Rnum = 0
-        distCanDet = 0.25
-        l4NumMax = 5
+        distCanDet = 0.125
+        distMinDet = 0.25
+        l4NumMax = 9
 
         # get the minimum distance from the sensors
         distMinL = min(self.tofL5L_pcd)
@@ -988,8 +989,10 @@ class Roborama25ControllerNodeLc(LifecycleNode):
 
         distLim = distMin + distCanDet
         distMinMax = max(distMinL, distMinR, dist)
-        if distMinMax<distLim and Lnum<=l4NumMax and Rnum<=l4NumMax:
+        if distMin<distMinDet and distMinMax<distLim and Lnum<=l4NumMax and Rnum<=l4NumMax:
             canDet = True
+
+        self.get_logger().info(f"closeCanDet: {dist=:.3f} {distMin=:.3f} {distMinMax=:.3f} {distMinL=:.3f} {distMinR=:.3f} {distLim=:.3f} {Lnum=} {Rnum=} {canDet=}")
 
         return canDet
 
@@ -1140,7 +1143,18 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         Returns next state string
         """
         next_state = "approachCan"
+
+        if self.changed_6can_state :
+            self.approachCanTimeStart = time.monotonic()
+
         msg = Twist()
+
+        if (time.monotonic() -  self.approachCanTimeStart) > 20.0 :
+            self.get_logger().info(f"run_approachCan: Time out, going to findCan")
+            next_state = "findCan"
+            self.cmd_vel_publisher.publish(msg) # stop
+            return next_state
+        
         
         dist = self.tofL4_rng
         # distMin = 1000.0
@@ -1149,14 +1163,10 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         Lnum = 0
         Rnum = 0
         distCanDet = 0.06
+        l4NumMax = 9
+        distWallDet = 0.2
 
         # get the minimum distance from the sensors
-        # for d in self.tofL5L_pcd :
-        #     if d<distMinL: distMinL = d
-        # for d in self.tofL5R_pcd :
-        #     if d<distMinR: distMinR = d
-        # if distMinL<distMinR : distMin = distMinL
-        # else : distMin = distMinR
         distMinL = min(self.tofL5L_pcd)
         distMinR = min(self.tofL5R_pcd)
         distMin  = min(distMinL, distMinR)
@@ -1165,6 +1175,13 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         for d in self.tofL5R_pcd :
             if d<(distMin+0.07) : Rnum += 1
 
+        if (Lnum>l4NumMax or Rnum>l4NumMax) and (distMin<distWallDet) and (dist>(distMin+0.05)):
+            self.get_logger().info(f"run_approachCan: seems like I am approaching a wall - abort {dist=:.3f} {distMin=:.3f} {distMinL=:.3f} {distMinR=:.3f} {Lnum=} {Rnum=}")
+            #Back up a bit
+            self.driveOdom(-0.5, 0.5)
+            next_state = "findCan"
+            return next_state
+        
         # TODO: Needs a time out
         if dist <= distCanDet :
             """
@@ -1178,15 +1195,18 @@ class Roborama25ControllerNodeLc(LifecycleNode):
             Can is close but not detected by the narrow FOV of the front sensor
             Use the L5 distances from sensors to rotate to the can
             """
+            distMinLminusR = distMinL - distMinR
             if Lnum == 0 and Rnum == 0 :
                 next_state = "findCan"
             # elif Lnum > Rnum :        
             #     msg.angular.z = 0.1 #0.05   
             # elif Rnum > Lnum :    
             #     msg.angular.z = -0.1 #-0.05
-            elif distMinL < distMinR :        
+            # elif distMinL < distMinR :        
+            elif distMinLminusR < 0.05:        
                 msg.angular.z = 0.05 #0.05   
-            elif distMinR < distMinL :    
+            # elif distMinR < distMinL :    
+            elif distMinLminusR > 0.05 :    
                 msg.angular.z = -0.05 #-0.05
             self.get_logger().info(f"run_approachCan: rotating to detect the can {dist=:.3f} {distMin=:.3f} {distMinL=:.3f} {distMinR=:.3f} {Lnum=} {Rnum=} {msg=}")
                 
@@ -1268,7 +1288,7 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         else : 
             self.get_logger().info(f"run_gotoGoalOpening: Failed to get current pose, goto non adjusted xy {x=:.3f} {y=:.3f}")
 
-        self.gotoXY(x,y, 5.0,obstacle_layer_enabled=True)
+        self.gotoXY(x,y, 15.0,obstacle_layer_enabled=True)
 
 
         next_state = "gotoCanDrop"
@@ -1433,10 +1453,9 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         This sensor (with the Right sensors) is used to align the can to the center
         compute the distance from the sensor
         """      
-        nPoints = 8
+        nPoints = 16
         pc2_data = point_cloud2.read_points_list(msg, field_names=["x", "y"])
         data = []
-        # for i in range(10,15) : 
         for i in range(15-nPoints,15) : 
             x = pc2_data[i].x
             y = pc2_data[i].y
@@ -1451,10 +1470,9 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         This sensor (with the Left sensors) is used to align the can to the center
         compute the distance from the sensor
         """
-        nPoints = 8
+        nPoints = 16
         pc2_data = point_cloud2.read_points_list(msg, field_names=["x", "y"])
         data = []
-        # for i in range(10,15) : 
         for i in range(0,nPoints) : 
             x = pc2_data[i].x
             y = pc2_data[i].y
@@ -1474,7 +1492,7 @@ class Roborama25ControllerNodeLc(LifecycleNode):
         """
         sends (publish) a message to close the claw
         """
-        self.clawCmd(95, 100)
+        self.clawCmd(93, 100)
         
     def clawCmd(self, pct: int, msec: int) -> None:
         """
