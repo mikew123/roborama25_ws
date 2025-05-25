@@ -81,7 +81,7 @@ class Roborama25ControllerNodeLc(LifecycleNode):
     
     # DPRG 4C arena info in feet
     # needs to be updated on site for actual size 8-15 ft sq
-    d = 10.0 # dist between square corner markers
+    d = 9.0 # dist between square corner markers
     t = 1.5 # distance from actual corner of square, center of 3ft clear zone
     size4corner:dict = {
         "home" : 1.0, # meters
@@ -607,9 +607,9 @@ class Roborama25ControllerNodeLc(LifecycleNode):
                 
         # status = self.gotoXY(8*self.feetToMeter,0, 30)
         d = self.lengthQuickTrip[self.nav_arena]
-        vx = 0.25
+        vx = 0.75 #0.25
         self.driveDirectWiggle( d, vx)
-        time.sleep(1)
+        time.sleep(0)
         self.driveDirectWiggle(-d, vx)
         
     def run6Can(self) :    

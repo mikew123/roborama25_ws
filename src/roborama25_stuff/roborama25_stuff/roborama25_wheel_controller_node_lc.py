@@ -53,9 +53,9 @@ class Roborama25WheelControllerNodeLC(LifecycleNode):
     #TODO: remove odom pod stuff
     wheelEncoders = True
 
-    wheelDiameter = 0.0839 #0.084
+    wheelDiameter = 0.0840 #0.0839 #0.084
     wheelEncoderCounts = 48*20.408666666
-    wheelDistance = 0.279 #0.280
+    wheelDistance = 0.2785 #0.279 #0.280
 
     # odomDiameter = 0.048 * 65651/65910 # adjust for 5M-5cm travel, re-glued
     # odomEncoderCounts = 2000.0 #per rotation
